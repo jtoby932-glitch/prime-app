@@ -30,6 +30,10 @@ enum PrimeMigrationPlan: SchemaMigrationPlan {
 
 enum PrimeStore {
     static func makeContainer(inMemory: Bool = false) throws -> ModelContainer {
+        // The default store lives in Application Support, which doesn't exist on a fresh install.
+        if !inMemory {
+            try? FileManager.default.createDirectory(at: URL.applicationSupportDirectory, withIntermediateDirectories: true)
+        }
         let schema = Schema(versionedSchema: PrimeSchemaV1.self)
         // CloudKit stays off for now; sync is a future layer (it would need the unique constraints relaxed).
         let configuration = ModelConfiguration(

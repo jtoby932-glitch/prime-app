@@ -40,6 +40,7 @@
 		723D4679DB3C74FE04DFAFE0 = {isa = PBXBuildFile; fileRef = EE6BFBEDDF028BA3B23D9D39;};
 		7D1C2A2001BA40A23E40E5FF = {isa = PBXBuildFile; fileRef = 1D41883526BFFE5E61785E5C;};
 		81FA1FF874665F6C1D225B73 = {isa = PBXBuildFile; fileRef = C69EE4B7AA719962B63D710A;};
+		8497D8E9636A50BB13A4DC97 = {isa = PBXBuildFile; fileRef = 3E8C983E6A0532859D6E41FF;};
 		8525A6F2FF96F7090A1FBF48 = {isa = PBXBuildFile; fileRef = 3929F74BDE3952E3CD03CC0E;};
 		8B80F185BEE6E64F2297435E = {isa = PBXBuildFile; fileRef = C513A12C2931D4E088ADB75F;};
 		8BA1C083C10E3B29586244A2 = {isa = PBXBuildFile; fileRef = D6792EA5906D18DD1CB57AEC;};
@@ -88,6 +89,7 @@
 		37D2132D720A5E78992BDE11 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>";};
 		38370CD97E331D88D74BF3F5 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutSummaryView.swift; sourceTree = "<group>";};
 		3929F74BDE3952E3CD03CC0E = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingHistory.swift; sourceTree = "<group>";};
+		3E8C983E6A0532859D6E41FF = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoData.swift; sourceTree = "<group>";};
 		3EC63F01F445B0495B1C422C = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalyticsTests.swift; sourceTree = "<group>";};
 		4544A8F2D113C8CC5455F37A = {isa = PBXFileReference; lastKnownFileType = text.json; path = anatomy.json; sourceTree = "<group>";};
 		46C8CC0223EE2AB82194E81F = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutPlan.swift; sourceTree = "<group>";};
@@ -164,6 +166,7 @@
 			); name = Products; sourceTree = "<group>";};
 		454A4315A2ADEFE122CAE102 = {isa = PBXGroup; children = (
 				37D2132D720A5E78992BDE11,
+				3E8C983E6A0532859D6E41FF,
 				28195165E189139B2F557B03,
 				C295CB344DCEA14427EF6D88,
 				8A05C70D52A879904805DD20,
@@ -307,6 +310,7 @@
 /* Begin PBXSourcesBuildPhase section */
 		461B1FE938757D25CAF1D55A = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (
 				C835D36676A145BAE67E9CE4,
+				8497D8E9636A50BB13A4DC97,
 				247107BAFDACBF69EF98E820,
 				36B9AA2B809A8BD1B97F7E53,
 				638D29AE1B0D6923B0F1E12C,

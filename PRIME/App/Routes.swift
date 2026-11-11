@@ -17,6 +17,10 @@ enum Route: Hashable {
     case plan(UUID)
 }
 
+extension Route: Identifiable {
+    var id: Self { self }
+}
+
 extension View {
     func primeDestinations() -> some View {
         navigationDestination(for: Route.self) { route in

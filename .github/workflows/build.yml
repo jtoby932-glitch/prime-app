@@ -2,6 +2,7 @@ name: Build PRIME
 
 on:
   push:
+    branches: [main]
   workflow_dispatch:
 
 concurrency:
@@ -14,7 +15,7 @@ jobs:
     runs-on: macos-15
     timeout-minutes: 40
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Xcode version
         run: xcodebuild -version
@@ -30,9 +31,8 @@ jobs:
             -project PRIME.xcodeproj \
             -scheme PRIME \
             -destination "id=${{ steps.sim.outputs.udid }}" \
-            -resultBundlePath TestResults.xcresult \
             CODE_SIGNING_ALLOWED=NO \
-            2>&1 | tee test.log | grep -E "error:|warning: unreachable|Test Case .* (passed|failed)|Executed|BUILD|TEST" || true
+            2>&1 | tee test.log | grep -E "error:|Test Case .* (passed|failed)|Executed|BUILD|TEST" || true
           grep -q "TEST SUCCEEDED" test.log
 
       - name: Upload test log
@@ -44,10 +44,13 @@ jobs:
 
   ipa:
     name: Unsigned IPA
+    needs: test
     runs-on: macos-15
     timeout-minutes: 40
+    permissions:
+      contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Build for device (unsigned)
         run: |
@@ -60,7 +63,7 @@ jobs:
             -destination "generic/platform=iOS" \
             -derivedDataPath build \
             CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
-            2>&1 | tee build.log | grep -E "error:|BUILD" || true
+            2>&1 | tee build.log | grep -E "error:|warning:|BUILD" || true
           grep -q "BUILD SUCCEEDED" build.log
 
       - name: Package PRIME.ipa
@@ -70,15 +73,56 @@ jobs:
           zip -qry PRIME.ipa Payload
           ls -lh PRIME.ipa
 
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "build-${{ github.run_number }}" PRIME.ipa \
+            --title "PRIME build ${{ github.run_number }}" \
+            --notes "Unsigned build of ${GITHUB_SHA::7}. Install with Sideloadly or AltStore. Tests passed." \
+            --target "$GITHUB_SHA" --latest
+
       - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
           name: PRIME-ipa
           path: PRIME.ipa
 
-      - name: Upload build log
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-log
-          path: build.log
+  screenshots:
+    name: Screenshots (demo data)
+    runs-on: macos-15
+    timeout-minutes: 40
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Pick a simulator
+        id: sim
+        run: echo "udid=$(python3 tools/pick_simulator.py)" >> "$GITHUB_OUTPUT"
+
+      - name: Build for simulator (Debug)
+        run: |
+          set -o pipefail
+          xcodebuild build \
+            -project PRIME.xcodeproj \
+            -scheme PRIME \
+            -configuration Debug \
+            -destination "id=${{ steps.sim.outputs.udid }}" \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            2>&1 | tee build.log | grep -E "error:|BUILD" || true
+          grep -q "BUILD SUCCEEDED" build.log
+
+      - name: Capture screens
+        run: bash tools/screenshots.sh "${{ steps.sim.outputs.udid }}" build/Build/Products/Debug-iphonesimulator/PRIME.app shots
+
+      - name: Publish screenshots branch
+        run: |
+          cd shots
+          git init -q -b ci-screenshots
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add -A
+          git commit -qm "Screenshots for ${GITHUB_SHA::7}"
+          git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" ci-screenshots

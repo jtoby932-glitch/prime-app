@@ -30,6 +30,8 @@ final class AppState {
     var finishedSummary: WorkoutSummary?
     var toast: Toast?
     var showFirstWorkoutGuide = false
+    /// Opens a screen in a sheet on launch (used by debug screenshot runs).
+    var debugRoute: Route?
 
     private var toastTask: Task<Void, Never>?
 

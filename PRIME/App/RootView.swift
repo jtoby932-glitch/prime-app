@@ -44,6 +44,9 @@ struct RootView: View {
         _ = DataService.profile(in: context)
         store.refresh(context)
         appState.restoreActiveSession(context: context)
+        #if DEBUG
+        DemoData.apply(context: context, store: store, appState: appState)
+        #endif
         appState.refreshNotifications(context: context, history: store.history)
         isReady = true
     }
@@ -132,6 +135,11 @@ struct MainTabView: View {
         }
         .sheet(isPresented: $appState.showFirstWorkoutGuide) {
             FirstWorkoutGuide()
+        }
+        .sheet(item: $appState.debugRoute) { route in
+            NavigationStack {
+                RouteDestination(route: route).primeDestinations()
+            }
         }
         .overlay(alignment: .top) { ToastOverlay() }
     }
