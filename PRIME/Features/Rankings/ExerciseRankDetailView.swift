@@ -35,6 +35,12 @@ struct ExerciseRankDetailView: View {
                                 Text(line).font(.subheadline).foregroundStyle(Theme.textPrimary).fixedSize(horizontal: false, vertical: true)
                             }
                         }
+                        if !exercise.rankingNote.isEmpty {
+                            Label(exercise.rankingNote, systemImage: "info.circle")
+                                .font(.caption)
+                                .foregroundStyle(Theme.textTertiary)
+                                .padding(.top, 2)
+                        }
                     }
                     .primeCard(padding: 18)
                 }
@@ -85,7 +91,7 @@ struct ExerciseRankDetailView: View {
                 .font(.primeLargeTitle)
                 .foregroundStyle(result == nil ? Theme.textSecondary : tier.color)
             if let result {
-                Text(RankFormat.metric(result.metric, method: result.method) + (result.estimatedOneRepMaxKg.map { " · e1RM \(Format.weight($0, unit: unit))" } ?? ""))
+                Text(RankFormat.metric(result.metric, method: result.method) + (result.estimatedOneRepMaxKg.map { " · e1RM \(Format.estimate($0, unit: unit))" } ?? ""))
                     .font(.subheadline.weight(.semibold).monospacedDigit())
                     .foregroundStyle(.white)
                 if let next = tier.next {
@@ -114,7 +120,7 @@ struct ExerciseRankDetailView: View {
             if !records.hasHistory {
                 Text("Log this exercise to see your bests.").font(.subheadline).foregroundStyle(Theme.textSecondary)
             }
-            if let value = records.bestOneRepMaxKg { bestRow(RecordKind.bestOneRepMax, Format.weight(value, unit: unit)) }
+            if let value = records.bestOneRepMaxKg { bestRow(RecordKind.bestOneRepMax, Format.estimate(value, unit: unit)) }
             if let value = records.heaviestWeightKg { bestRow(RecordKind.heaviestWeight, Format.weight(value, unit: unit)) }
             if let value = records.bestSetVolume { bestRow(RecordKind.bestSetVolume, Format.volume(value, unit: unit)) }
             if let value = records.bestSessionVolume { bestRow(RecordKind.bestSessionVolume, Format.volume(value, unit: unit)) }
@@ -154,7 +160,7 @@ struct TierLadder: View {
                     VStack(alignment: .trailing, spacing: 1) {
                         Text(requirement(for: tier)).font(.subheadline.weight(.semibold).monospacedDigit()).foregroundStyle(Theme.textPrimary)
                         if method == .relativeLoad, tier != .beginner, let bodyweightKg, thresholds.count == 4 {
-                            Text("≈ \(Format.weight(thresholds[tier.rawValue - 1] * bodyweightKg, unit: unit)) 1RM")
+                            Text("≈ \(Format.estimate(thresholds[tier.rawValue - 1] * bodyweightKg, unit: unit, decimals: 0)) 1RM")
                                 .font(.caption2).foregroundStyle(Theme.textTertiary)
                         }
                     }

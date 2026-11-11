@@ -258,9 +258,9 @@ enum RankFormat {
             lines.append("Best set: \(Format.weight(set.weightKg, unit: unit)) × \(set.reps) (\(date)).")
             if let e1rm = result.estimatedOneRepMaxKg {
                 if set.reps == 1 {
-                    lines.append("A single rep is already a one-rep max: \(Format.weight(e1rm, unit: unit)).")
+                    lines.append("A single rep is already a one-rep max: \(Format.estimate(e1rm, unit: unit)).")
                 } else {
-                    lines.append("Estimated 1RM (Epley) = \(Format.number(unit.fromKilograms(set.weightKg))) × (1 + \(set.reps) ÷ 30) = \(Format.weight(e1rm, unit: unit)).")
+                    lines.append("Estimated 1RM (Epley) = \(Format.number(unit.fromKilograms(set.weightKg))) × (1 + \(set.reps) ÷ 30) = \(Format.estimate(e1rm, unit: unit)).")
                 }
                 if let bodyweight = set.bodyweightKg {
                     lines.append("Bodyweight on that day: \(Format.weight(bodyweight, unit: unit)).")
@@ -295,7 +295,6 @@ enum RankFormat {
         } else if abs(scale - 1) > 0.001 {
             lines.append("Tiers are scaled to \(Format.percent(scale)) of the provisional defaults (Settings).")
         }
-        if !note.isEmpty { lines.append(note) }
         return lines
     }
 }

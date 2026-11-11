@@ -124,7 +124,7 @@ struct SessionDetailView: View {
                                 if set.isWarmup { Tag(text: "Warm-up", color: Theme.info) }
                                 Spacer()
                                 if let w = set.weightKg, let r = set.reps, let e1rm = StrengthMath.estimatedOneRepMax(weight: w, reps: r) {
-                                    Text("e1RM " + Format.weight(e1rm, unit: unit)).font(.caption).foregroundStyle(Theme.textTertiary)
+                                    Text("e1RM " + Format.estimate(e1rm, unit: unit)).font(.caption).foregroundStyle(Theme.textTertiary)
                                 }
                             }
                         }

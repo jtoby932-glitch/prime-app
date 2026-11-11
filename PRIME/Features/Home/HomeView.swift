@@ -81,7 +81,7 @@ struct HomeView: View {
         let weekInterval = DateInterval(start: Calendar.prime.startOfWeek(for: Date()), end: Date())
         let weekVolume = Analytics.totalVolume(history.samples(in: weekInterval))
         return HStack(spacing: 10) {
-            StatTile(value: "\(streak)", label: streak == 1 ? "Week streak" : "Weeks streak", symbol: "flame.fill", tint: Theme.warning)
+            StatTile(value: "\(streak)", label: "Week streak", symbol: "flame.fill", tint: Theme.warning)
             StatTile(value: "\(history.sessions.count)", label: "Workouts", symbol: "checkmark.seal.fill")
             StatTile(value: Format.volume(weekVolume, unit: unit, includeUnit: false), label: "\(unit.symbol) this week", symbol: "chart.bar.fill", tint: Theme.info)
         }
@@ -487,9 +487,9 @@ struct RecentPerformanceCard: View {
             Spacer()
             if let e1rm = progression.last?.value {
                 VStack(alignment: .trailing, spacing: 2) {
-                    Text(Format.weight(e1rm, unit: unit)).font(.subheadline.weight(.bold)).foregroundStyle(.white).monospacedDigit()
+                    Text(Format.estimate(e1rm, unit: unit)).font(.subheadline.weight(.bold)).foregroundStyle(.white).monospacedDigit()
                     if let delta, abs(delta) > 0.01 {
-                        Text((delta > 0 ? "▲ " : "▼ ") + Format.weight(abs(delta), unit: unit))
+                        Text((delta > 0 ? "▲ " : "▼ ") + Format.estimate(abs(delta), unit: unit))
                             .font(.caption.weight(.semibold))
                             .foregroundStyle(delta > 0 ? Theme.accent : Theme.textTertiary)
                     } else {

@@ -154,7 +154,7 @@ struct ExerciseDetailView: View {
             }
             HStack(spacing: 10) {
                 if let best = records.bestOneRepMaxKg {
-                    miniStat(Format.weight(best, unit: unit), "Best e1RM")
+                    miniStat(Format.estimate(best, unit: unit), "Best e1RM")
                 }
                 if let heaviest = records.heaviestWeightKg {
                     miniStat(Format.weight(heaviest, unit: unit), "Heaviest")
@@ -164,18 +164,21 @@ struct ExerciseDetailView: View {
                 miniStat("\(store.history.sessionCount(for: exercise.slug))", "Sessions")
             }
             if progression.count >= 2 {
+                let values = progression.map { unit.fromKilograms($0.value) }
+                let floor = (values.min() ?? 0) * 0.9
+                let ceiling = (values.max() ?? 1) * 1.05
                 Chart(progression) { point in
                     LineMark(x: .value("Date", point.date), y: .value("e1RM", unit.fromKilograms(point.value)))
                         .interpolationMethod(.monotone)
                         .foregroundStyle(Theme.accent)
-                    AreaMark(x: .value("Date", point.date), y: .value("e1RM", unit.fromKilograms(point.value)))
+                    AreaMark(x: .value("Date", point.date), yStart: .value("Floor", floor), yEnd: .value("e1RM", unit.fromKilograms(point.value)))
                         .interpolationMethod(.monotone)
                         .foregroundStyle(LinearGradient(colors: [Theme.accent.opacity(0.25), .clear], startPoint: .top, endPoint: .bottom))
                     PointMark(x: .value("Date", point.date), y: .value("e1RM", unit.fromKilograms(point.value)))
                         .foregroundStyle(Theme.accent)
                         .symbolSize(18)
                 }
-                .chartYScale(domain: .automatic(includesZero: false))
+                .chartYScale(domain: floor...ceiling)
                 .chartYAxis {
                     AxisMarks(position: .trailing, values: .automatic(desiredCount: 3)) { _ in
                         AxisGridLine().foregroundStyle(Theme.stroke)
@@ -374,7 +377,7 @@ struct ExerciseHistoryView: View {
                                 Text(entry.sets.first?.date.relativeDayText ?? "").font(.subheadline.weight(.bold)).foregroundStyle(.white)
                                 Spacer()
                                 let best = entry.sets.compactMap(\.estimatedOneRepMax).max()
-                                if let best { Text("e1RM " + Format.weight(best, unit: unit)).font(.caption.weight(.semibold)).foregroundStyle(Theme.accent) }
+                                if let best { Text("e1RM " + Format.estimate(best, unit: unit)).font(.caption.weight(.semibold)).foregroundStyle(Theme.accent) }
                             }
                             Text(entry.sets.map { Format.set(weightKg: $0.weightKg, reps: $0.reps, unit: unit) }.joined(separator: "  ·  "))
                                 .font(.subheadline.monospacedDigit())

@@ -5,7 +5,7 @@ extension RecordKind {
     func valueText(value: Double, weightKg: Double, reps: Int, unit: WeightUnit) -> String {
         switch self {
         case .heaviestWeight: return Format.weight(value, unit: unit) + (reps > 0 ? " × \(reps)" : "")
-        case .bestOneRepMax: return "\(Format.weight(value, unit: unit)) e1RM"
+        case .bestOneRepMax: return "\(Format.estimate(value, unit: unit)) e1RM"
         case .bestSetVolume: return "\(Format.weight(weightKg, unit: unit)) × \(reps)"
         case .bestSessionVolume: return "\(Format.volume(value, unit: unit)) total"
         case .mostRepsAtWeight:

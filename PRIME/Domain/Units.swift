@@ -52,6 +52,11 @@ enum Format {
         return includeUnit ? "\(value) \(unit.symbol)" : value
     }
 
+    /// Estimated values (e1RM and the like) are rounded to one decimal so they don't look more precise than they are.
+    static func estimate(_ kilograms: Double, unit: WeightUnit, decimals: Int = 1) -> String {
+        "\(number(unit.fromKilograms(kilograms), maxFractionDigits: decimals)) \(unit.symbol)"
+    }
+
     /// Volume in the user's unit, compacted above 100k ("12,450 kg", "184k kg").
     static func volume(_ kilograms: Double, unit: WeightUnit, includeUnit: Bool = true) -> String {
         let value = unit.fromKilograms(kilograms)

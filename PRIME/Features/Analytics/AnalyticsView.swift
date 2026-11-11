@@ -68,14 +68,16 @@ struct AnalyticsView: View {
 
     private var rangePicker: some View {
         VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 6) {
-                ForEach(AnalyticsRange.allCases) { option in
-                    Chip(title: option.label, isSelected: !useCustom && range == option) {
-                        useCustom = false
-                        range = option
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 6) {
+                    ForEach(AnalyticsRange.allCases) { option in
+                        Chip(title: option.label, isSelected: !useCustom && range == option) {
+                            useCustom = false
+                            range = option
+                        }
                     }
+                    Chip(title: "Custom", symbol: "calendar", isSelected: useCustom) { useCustom.toggle() }
                 }
-                Chip(title: "Custom", symbol: "calendar", isSelected: useCustom) { useCustom.toggle() }
             }
             if useCustom {
                 HStack {
@@ -269,7 +271,17 @@ struct StrengthProgressCard: View {
             }
         }()
         let isWeight = effectiveMetric != .reps
-        let display: (Double) -> String = { isWeight ? Format.weight($0, unit: unit) : "\(Int($0)) reps" }
+        let display: (Double) -> String = { value in
+            switch effectiveMetric {
+            case .oneRepMax: return Format.estimate(value, unit: unit)
+            case .volume: return Format.volume(value, unit: unit)
+            case .weight: return Format.weight(value, unit: unit)
+            case .reps: return "\(Int(value)) reps"
+            }
+        }
+        let plotted = points.map { isWeight ? unit.fromKilograms($0.value) : $0.value }
+        let floor = (plotted.min() ?? 0) * 0.9
+        let ceiling = max(floor + 1, (plotted.max() ?? 1) * 1.05)
         let selectedPoint = selected.flatMap { date in points.min { abs($0.date.timeIntervalSince(date)) < abs($1.date.timeIntervalSince(date)) } }
         let best = points.max { $0.value < $1.value }
 
@@ -313,7 +325,7 @@ struct StrengthProgressCard: View {
                             .interpolationMethod(.monotone)
                             .foregroundStyle(Theme.accent)
                             .lineStyle(StrokeStyle(lineWidth: 2.5))
-                        AreaMark(x: .value("Date", point.date), y: .value("Value", isWeight ? unit.fromKilograms(point.value) : point.value))
+                        AreaMark(x: .value("Date", point.date), yStart: .value("Floor", floor), yEnd: .value("Value", isWeight ? unit.fromKilograms(point.value) : point.value))
                             .interpolationMethod(.monotone)
                             .foregroundStyle(LinearGradient(colors: [Theme.accent.opacity(0.22), .clear], startPoint: .top, endPoint: .bottom))
                         PointMark(x: .value("Date", point.date), y: .value("Value", isWeight ? unit.fromKilograms(point.value) : point.value))
@@ -324,7 +336,7 @@ struct StrengthProgressCard: View {
                         RuleMark(x: .value("Selected", selectedPoint.date)).foregroundStyle(Theme.strokeStrong)
                     }
                 }
-                .chartYScale(domain: .automatic(includesZero: false))
+                .chartYScale(domain: floor...ceiling)
                 .chartXSelection(value: $selected)
                 .chartYAxis {
                     AxisMarks(position: .trailing, values: .automatic(desiredCount: 4)) { _ in

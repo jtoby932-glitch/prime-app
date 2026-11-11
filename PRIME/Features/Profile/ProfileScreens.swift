@@ -155,7 +155,7 @@ struct PersonalRecordsView: View {
                                     Spacer()
                                     VStack(alignment: .trailing, spacing: 2) {
                                         if let e1rm = snapshot.bestOneRepMaxKg {
-                                            Text("e1RM \(Format.weight(e1rm, unit: unit))").font(.subheadline.weight(.bold).monospacedDigit()).foregroundStyle(.white)
+                                            Text("e1RM \(Format.estimate(e1rm, unit: unit))").font(.subheadline.weight(.bold).monospacedDigit()).foregroundStyle(.white)
                                         }
                                         if let heaviest = snapshot.heaviestWeightKg {
                                             Text("Heaviest \(Format.weight(heaviest, unit: unit))").font(.caption).foregroundStyle(Theme.textSecondary)
