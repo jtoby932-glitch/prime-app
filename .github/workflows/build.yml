@@ -1,0 +1,84 @@
+name: Build PRIME
+
+on:
+  push:
+  workflow_dispatch:
+
+concurrency:
+  group: prime-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Unit tests (iOS Simulator)
+    runs-on: macos-15
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Xcode version
+        run: xcodebuild -version
+
+      - name: Pick a simulator
+        id: sim
+        run: echo "udid=$(python3 tools/pick_simulator.py)" >> "$GITHUB_OUTPUT"
+
+      - name: Run tests
+        run: |
+          set -o pipefail
+          xcodebuild test \
+            -project PRIME.xcodeproj \
+            -scheme PRIME \
+            -destination "id=${{ steps.sim.outputs.udid }}" \
+            -resultBundlePath TestResults.xcresult \
+            CODE_SIGNING_ALLOWED=NO \
+            2>&1 | tee test.log | grep -E "error:|warning: unreachable|Test Case .* (passed|failed)|Executed|BUILD|TEST" || true
+          grep -q "TEST SUCCEEDED" test.log
+
+      - name: Upload test log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-log
+          path: test.log
+
+  ipa:
+    name: Unsigned IPA
+    runs-on: macos-15
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build for device (unsigned)
+        run: |
+          set -o pipefail
+          xcodebuild build \
+            -project PRIME.xcodeproj \
+            -scheme PRIME \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination "generic/platform=iOS" \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+            2>&1 | tee build.log | grep -E "error:|BUILD" || true
+          grep -q "BUILD SUCCEEDED" build.log
+
+      - name: Package PRIME.ipa
+        run: |
+          mkdir -p Payload
+          cp -R build/Build/Products/Release-iphoneos/PRIME.app Payload/
+          zip -qry PRIME.ipa Payload
+          ls -lh PRIME.ipa
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: PRIME-ipa
+          path: PRIME.ipa
+
+      - name: Upload build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: build.log

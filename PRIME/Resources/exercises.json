@@ -1,0 +1,3849 @@
+{
+ "version": 1,
+ "exercises": [
+  {
+   "slug": "barbell-bench-press",
+   "name": "Barbell Bench Press",
+   "primary": [
+    "chest"
+   ],
+   "secondary": [
+    "triceps",
+    "shoulders"
+   ],
+   "equipment": "barbell",
+   "mechanic": "compound",
+   "difficulty": "intermediate",
+   "instructions": [
+    "Lie on the bench with your eyes under the bar and feet flat on the floor.",
+    "Grip the bar slightly wider than shoulder width and squeeze your shoulder blades together.",
+    "Unrack and lower the bar under control to your lower chest.",
+    "Press up and slightly back until your arms are straight over your shoulders."
+   ],
+   "tips": [
+    "Keep a slight arch and your glutes on the bench.",
+    "Tuck your elbows to about 45–70° from your body.",
+    "Use a spotter or safety arms for heavy sets."
+   ],
+   "mistakes": [
+    "Bouncing the bar off the chest.",
+    "Flaring the elbows straight out to the sides.",
+    "Lifting the hips off the bench."
+   ],
+   "alternatives": [
+    "dumbbell-bench-press",
+    "machine-chest-press",
+    "push-up",
+    "incline-barbell-bench-press"
+   ],
+   "ranking": {
+    "method": "load",
+    "thresholds": [
+     0.6,
+     1.0,
+     1.35,
+     1.75
+    ],
+    "note": "Total weight including the bar."
+   }
+  },
+  {
+   "slug": "incline-barbell-bench-press",
+   "name": "Incline Barbell Bench Press",
+   "primary": [
+    "chest"
+   ],
+   "secondary": [
+    "shoulders",
+    "triceps"
+   ],
+   "equipment": "barbell",
+   "mechanic": "compound",
+   "difficulty": "intermediate",
+   "instructions": [
+    "Set the bench to 30–45° and lie back with the bar over your eyes.",
+    "Grip just wider than shoulder width with your shoulder blades pinned back.",
+    "Lower the bar to your upper chest just below the collarbones.",
+    "Press up until your arms lock out over your shoulders."
+   ],
+   "tips": [
+    "A lower incline keeps more of the work on the chest.",
+    "Keep your wrists stacked over your elbows."
+   ],
+   "mistakes": [
+    "Setting the bench so steep it becomes a shoulder press.",
+    "Letting the bar drift toward the face."
+   ],
+   "alternatives": [
+    "incline-dumbbell-press",
+    "barbell-bench-press",
+    "machine-chest-press"
+   ],
+   "ranking": {
+    "method": "load",
+    "thresholds": [
+     0.5,
+     0.85,
+     1.15,
+     1.5
+    ],
+    "note": "Total weight including the bar."
+   }
+  },
+  {
+   "slug": "dumbbell-bench-press",
+   "name": "Dumbbell Bench Press",
+   "primary": [
+    "chest"
+   ],
+   "secondary": [
+    "triceps",
+    "shoulders"
+   ],
+   "equipment": "dumbbell",
+   "mechanic": "compound",
+   "difficulty": "beginner",
+   "instructions": [
+    "Sit with the dumbbells on your thighs, then lie back and bring them to chest level.",
+    "Start with the dumbbells just outside your chest, palms facing forward.",
+    "Press up until your arms are straight, bringing the dumbbells slightly together.",
+    "Lower slowly until you feel a stretch across the chest."
+   ],
+   "tips": [
+    "Dumbbells allow a deeper stretch than a bar.",
+    "Kick the dumbbells up from your knees to get into position safely."
+   ],
+   "mistakes": [
+    "Dropping the dumbbells down too fast.",
+    "Clanging them together at the top."
+   ],
+   "alternatives": [
+    "barbell-bench-press",
+    "machine-chest-press",
+    "incline-dumbbell-press"
+   ],
+   "ranking": {
+    "method": "load",
+    "thresholds": [
+     0.25,
+     0.4,
+     0.55,
+     0.7
+    ],
+    "note": "Weight of one dumbbell."
+   }
+  },
+  {
+   "slug": "incline-dumbbell-press",
+   "name": "Incline Dumbbell Press",
+   "primary": [
+    "chest"
+   ],
+   "secondary": [
+    "shoulders",
+    "triceps"
+   ],
+   "equipment": "dumbbell",
+   "mechanic": "compound",
+   "difficulty": "beginner",
+   "instructions": [
+    "Set the bench to 30–45° and sit back with the dumbbells at shoulder level.",
+    "Press the dumbbells up over your upper chest.",
+    "Lower them under control until your elbows are just below the bench line."
+   ],
+   "tips": [
+    "Keep your shoulder blades back and down throughout.",
+    "Turn your palms slightly in if your shoulders feel pinched."
+   ],
+   "mistakes": [
+    "Arching so much that it becomes a flat press.",
+    "Cutting the range of motion short."
+   ],
+   "alternatives": [
+    "incline-barbell-bench-press",
+    "dumbbell-bench-press",
+    "low-to-high-cable-fly"
+   ],
+   "ranking": {
+    "method": "load",
+    "thresholds": [
+     0.2,
+     0.35,
+     0.5,
+     0.62
+    ],
+    "note": "Weight of one dumbbell."
+   }
+  },
+  {
+   "slug": "dumbbell-fly",
+   "name": "Dumbbell Fly",
+   "primary": [
+    "chest"
+   ],
+   "secondary": [
+    "shoulders"
+   ],
+   "equipment": "dumbbell",
+   "mechanic": "isolation",
+   "difficulty": "beginner",
+   "instructions": [
+    "Lie on a flat bench holding dumbbells above your chest, palms facing each other.",
+    "With a slight bend in your elbows, open your arms out in a wide arc.",
+    "Stop when you feel a strong stretch across your chest.",
+    "Squeeze your chest to bring the dumbbells back up the same arc."
+   ],
+   "tips": [
+    "Think of hugging a large tree.",
+    "Keep the elbow bend fixed throughout."
+   ],
+   "mistakes": [
+    "Turning it into a press by bending the elbows more.",
+    "Going too heavy and overstretching the shoulders."
+   ],
+   "alternatives": [
+    "cable-fly",
+    "pec-deck",
+    "low-to-high-cable-fly"
+   ],
+   "ranking": {
+    "method": "load",
+    "thresholds": [
+     0.08,
+     0.15,
+     0.22,
+     0.3
+    ],
+    "note": "Weight of one dumbbell."
+   }
+  },
+  {
+   "slug": "cable-fly",
+   "name": "Cable Fly",
+   "primary": [
+    "chest"
+   ],
+   "secondary": [
+    "shoulders"
+   ],
+   "equipment": "cable",
+   "mechanic": "isolation",
+   "difficulty": "beginner",
+   "instructions": [
+    "Set both pulleys at shoulder height and take a handle in each hand.",
+    "Step forward into a staggered stance with a slight lean.",
+    "Bring the handles together in front of your chest in a wide arc.",
+    "Return slowly until your hands are in line with your chest."
+   ],
+   "tips": [
+    "Cables keep tension on the chest at the top where dumbbells don't.",
+    "Pause and squeeze when the handles meet."
+   ],
+   "mistakes": [
+    "Bending and straightening the elbows.",
+    "Letting the weight yank your arms back."
+   ],
+   "alternatives": [
+    "dumbbell-fly",
+    "pec-deck",
+    "low-to-high-cable-fly"
+   ],
+   "ranking": {
+    "method": "load",
+    "thresholds": [
+     0.1,
+     0.18,
+     0.26,
+     0.34
+    ],
+    "note": "Machine and cable loads differ between manufacturers, so compare these tiers only on similar equipment."
+   }
+  },
+  {
+   "slug": "low-to-high-cable-fly",
+   "name": "Low-to-High Cable Fly",
+   "primary": [
+    "chest"
+   ],
+   "secondary": [
+    "shoulders"
+   ],
+   "equipment": "cable",
+   "mechanic": "isolation",
+   "difficulty": "beginner",
+   "instructions": [
+    "Set both pulleys at the lowest position and grab a handle in each hand.",
+    "With arms slightly bent, sweep the handles up and together to upper-chest height.",
+    "Lower them back along the same path under control."
+   ],
+   "tips": [
+    "Targets the upper chest fibres.",
+    "Keep your chest proud and shoulders down."
+   ],
+   "mistakes": [
+    "Shrugging the shoulders up.",
+    "Using momentum from the legs."
+   ],
+   "alternatives": [
+    "cable-fly",
+    "incline-dumbbell-press"
+   ],
+   "ranking": {
+    "method": "load",
+    "thresholds": [
+     0.08,
+     0.15,
+     0.22,
+     0.3
+    ],
+    "note": "Machine and cable loads differ between manufacturers, so compare these tiers only on similar equipment."
+   }
+  },
+  {
+   "slug": "pec-deck",
+   "name": "Pec Deck",
+   "primary": [
+    "chest"
+   ],
+   "secondary": [
+    "shoulders"
+   ],
+   "equipment": "machine",
+   "mechanic": "isolation",
+   "difficulty": "beginner",
+   "instructions": [
+    "Adjust the seat so the handles are at chest height.",
+    "Sit tall with your back against the pad and grip the handles.",
+    "Bring the handles together in front of you by squeezing your chest.",
+    "Return slowly until you feel a stretch."
+   ],
+   "tips": [
+    "Keep a soft bend in the elbows.",
+    "Pause for a second at full contraction."
+   ],
+   "mistakes": [
+    "Letting the shoulders roll forward.",
+    "Letting the weight stack crash between reps."
+   ],
+   "alternatives": [
+    "cable-fly",
+    "dumbbell-fly"
+   ],
+   "ranking": {
+    "method": "load",
+    "thresholds": [
+     0.3,
+     0.55,
+     0.8,
+     1.05
+    ],
+    "note": "Machine and cable loads differ between manufacturers, so compare these tiers only on similar equipment."
+   }
+  },
+  {
+   "slug": "machine-chest-press",
+   "name": "Machine Chest Press",
+   "primary": [
+    "chest"
+   ],
+   "secondary": [
+    "triceps",
+    "shoulders"
+   ],
+   "equipment": "machine",
+   "mechanic": "compound",
+   "difficulty": "beginner",
+   "instructions": [
+    "Set the seat so the handles line up with your mid-chest.",
+    "Press the handles forward until your arms are almost straight.",
+    "Return slowly until your hands are just in front of your chest."
+   ],
+   "tips": [
+    "A great way to train the press safely to failure.",
+    "Keep your shoulder blades against the pad."
+   ],
+   "mistakes": [
+    "Seat set too high or low.",
+    "Letting the elbows flare up to shoulder height."
+   ],
+   "alternatives": [
+    "barbell-bench-press",
+    "dumbbell-bench-press",
+    "push-up"
+   ],
+   "ranking": {
+    "method": "load",
+    "thresholds": [
+     0.5,
+     0.85,
+     1.15,
+     1.5
+    ],
+    "note": "Machine and cable loads differ between manufacturers, so compare these tiers only on similar equipment."
+   }
+  },
+  {
+   "slug": "push-up",
+   "name": "Push-Up",
+   "primary": [
+    "chest"
+   ],
+   "secondary": [
+    "triceps",
+    "shoulders",
+    "abdominals"
+   ],
+   "equipment": "bodyweight",
+   "mechanic": "compound",
+   "difficulty": "beginner",
+   "instructions": [
+    "Start in a high plank with hands just wider than your shoulders.",
+    "Brace your core so your body forms a straight line.",
+    "Lower until your chest is just above the floor.",
+    "Push back up to straight arms."
+   ],
+   "tips": [
+    "Elevate your hands on a bench to make it easier.",
+    "Squeeze your glutes to stop your hips sagging."
+   ],
+   "mistakes": [
+    "Sagging hips.",
+    "Half reps that stop well short of the floor."
+   ],
+   "alternatives": [
+    "diamond-push-up",
+    "dumbbell-bench-press",
+    "machine-chest-press"
+   ],
+   "ranking": {
+    "method": "reps",
+    "thresholds": [
+     10,
+     25,
+     40,
+     60
+    ],
+    "note": "Reps in one set. Weighted sets are converted to bodyweight-equivalent reps."
+   }
+  },
+  {
+   "slug": "chest-dip",
+   "name": "Chest Dip",
+   "primary": [
+    "chest"
+   ],
+   "secondary": [
+    "triceps",
+    "shoulders"
+   ],
+   "equipment": "bodyweight",
+   "mechanic": "compound",
+   "difficulty": "intermediate",
+   "instructions": [
+    "Support yourself on parallel bars with straight arms.",
+    "Lean your torso forward and lower until your shoulders are just below your elbows.",
+    "Press back up to straight arms."
+   ],
+   "tips": [
+    "The forward lean shifts work onto the chest.",
+    "Add weight with a belt once 15 reps feels easy."
+   ],
+   "mistakes": [
+    "Dropping too deep with no control.",
+    "Shrugging the shoulders up to the ears."
+   ],
+   "alternatives": [
+    "machine-dip",
+    "dumbbell-bench-press",
+    "push-up"
+   ],
+   "ranking": {
+    "method": "reps",
+    "thresholds": [
+     5,
+     12,
+     20,
+     30
+    ],
+    "note": "Reps in one set. Weighted sets are converted to bodyweight-equivalent reps."
+   }
+  },
+  {
+   "slug": "band-chest-press",
+   "name": "Band Chest Press",
+   "primary": [
+    "chest"
+   ],
+   "secondary": [
+    "triceps",
+    "shoulders"
+   ],
+   "equipment": "band",
+   "mechanic": "compound",
+   "difficulty": "beginner",
+   "instructions": [
+    "Anchor a band behind you at chest height and hold an end in each hand.",
+    "Step forward to create tension and press your hands straight out.",
+    "Return slowly to chest level."
+   ],
+   "tips": [
+    "Great for home or warm-ups.",
+    "Use a staggered stance for balance."
+   ],
+   "mistakes": [
+    "Letting the band snap back.",
+    "Arching the lower back."
+   ],
+   "alternatives": [
+    "push-up",
+    "dumbbell-bench-press"
+   ],
+   "ranking": {
+    "method": "none",
+    "thresholds": [],
+    "note": "Band tension varies too much to rank fairly."
+   }
+  },
+  {
+   "slug": "pull-up",
+   "name": "Pull-Up",
+   "primary": [
+    "back"
+   ],
+   "secondary": [
+    "biceps",
+    "forearms"
+   ],
+   "equipment": "bodyweight",
+   "mechanic": "compound",
+   "difficulty": "intermediate",
+   "instructions": [
+    "Hang from the bar with an overhand grip just wider than your shoulders.",
+    "Pull your shoulder blades down, then drive your elbows toward your ribs.",
+    "Pull until your chin clears the bar.",
+    "Lower all the way to straight arms."
+   ],
+   "tips": [
+    "Use a band or the assisted machine to build up reps.",
+    "Think about pulling the bar to your chest."
+   ],
+   "mistakes": [
+    "Kipping or swinging for momentum.",
+    "Not lowering to a full hang."
+   ],
+   "alternatives": [
+    "chin-up",
+    "lat-pulldown",
+    "inverted-row"
+   ],
+   "ranking": {
+    "method": "reps",
+    "thresholds": [
+     3,
+     8,
+     14,
+     20
+    ],
+    "note": "Reps in one set. Weighted sets are converted to bodyweight-equivalent reps."
+   }
+  },
+  {
+   "slug": "chin-up",
+   "name": "Chin-Up",
+   "primary": [
+    "back",
+    "biceps"
+   ],
+   "secondary": [
+    "forearms"
+   ],
+   "equipment": "bodyweight",
+   "mechanic": "compound",
+   "difficulty": "intermediate",
+   "instructions": [
+    "Hang from the bar with palms facing you, hands shoulder-width apart.",
+    "Pull your chest toward the bar, leading with your elbows.",
+    "Lower slowly to a full hang."
+   ],
+   "tips": [
+    "The underhand grip brings the biceps in more.",
+    "Keep your legs still."
+   ],
+   "mistakes": [
+    "Half reps.",
+    "Craning the neck to get the chin over."
+   ],
+   "alternatives": [
+    "pull-up",
+    "lat-pulldown"
+   ],
+   "ranking": {
+    "method": "reps",
+    "thresholds": [
+     4,
+     9,
+     15,
+     21
+    ],
+    "note": "Reps in one set. Weighted sets are converted to bodyweight-equivalent reps."
+   }
+  },
+  {
+   "slug": "lat-pulldown",
+   "name": "Lat Pulldown",
+   "primary": [
+    "back"
+   ],
+   "secondary": [
+    "biceps",
+    "forearms"
+   ],
+   "equipment": "cable",
+   "mechanic": "compound",
+   "difficulty": "beginner",
+   "instructions": [
+    "Sit with your thighs under the pads and grab the bar just wider than shoulder width.",
+    "Lean back slightly and pull the bar to your upper chest.",
+    "Squeeze your shoulder blades down and back at the bottom.",
+    "Let the bar rise slowly until your arms are straight."
+   ],
+   "tips": [
+    "Drive the elbows down, not back.",
+    "Use it to build toward bodyweight pull-ups."
+   ],
+   "mistakes": [
+    "Leaning way back to turn it into a row.",
+    "Pulling the bar behind the neck."
+   ],
+   "alternatives": [
+    "pull-up",
+    "straight-arm-pulldown",
+    "seated-cable-row"
+   ],
+   "ranking": {
+    "method": "load",
+    "thresholds": [
+     0.5,
+     0.8,
+     1.05,
+     1.3
+    ],
+    "note": "Machine and cable loads differ between manufacturers, so compare these tiers only on similar equipment."
+   }
+  },
+  {
+   "slug": "barbell-bent-over-row",
+   "name": "Barbell Bent-Over Row",
+   "primary": [
+    "back"
+   ],
+   "secondary": [
+    "biceps",
+    "lowerBack",
+    "forearms"
+   ],
+   "equipment": "barbell",
+   "mechanic": "compound",
+   "difficulty": "intermediate",
+   "instructions": [
+    "Hold the bar with a shoulder-width overhand grip.",
+    "Hinge at the hips until your torso is about 45° or lower, knees soft.",
+    "Row the bar to your lower ribs, squeezing your shoulder blades.",
+    "Lower it under control to straight arms."
+   ],
+   "tips": [
+    "Keep your back flat and neck neutral.",
+    "Brace hard before each rep."
+   ],
+   "mistakes": [
+    "Standing more upright with every rep.",
+    "Jerking the weight up with the hips."
+   ],
+   "alternatives": [
+    "dumbbell-row",
+    "seated-cable-row",
+    "machine-seated-row"
+   ],
+   "ranking": {
+    "method": "load",
+    "thresholds": [
+     0.5,
+     0.8,
+     1.1,
+     1.4
+    ],
+    "note": "Total weight including the bar."
+   }
+  },
+  {
+   "slug": "dumbbell-row",
+   "name": "One-Arm Dumbbell Row",
+   "primary": [
+    "back"
+   ],
+   "secondary": [
+    "biceps",
+    "forearms"
+   ],
+   "equipment": "dumbbell",
+   "mechanic": "compound",
+   "difficulty": "beginner",
+   "instructions": [
+    "Place one knee and hand on a bench, other foot on the floor.",
+    "Hold a dumbbell with your free arm hanging straight down.",
+    "Row the dumbbell toward your hip, keeping the elbow close.",
+    "Lower it until your arm is straight."
+   ],
+   "tips": [
+    "Keep your shoulders level.",
+    "Pull toward the hip to bias the lats."
+   ],
+   "mistakes": [
+    "Rotating the torso to heave the weight up.",
+    "Shrugging instead of rowing."
+   ],
+   "alternatives": [
+    "barbell-bent-over-row",
+    "seated-cable-row"
+   ],
+   "ranking": {
+    "method": "load",
+    "thresholds": [
+     0.25,
+     0.4,
+     0.55,
+     0.75
+    ],
+    "note": "Weight of one dumbbell."
+   }
+  },
+  {
+   "slug": "seated-cable-row",
+   "name": "Seated Cable Row",
+   "primary": [
+    "back"
+   ],
+   "secondary": [
+    "biceps",
+    "forearms"
+   ],
+   "equipment": "cable",
+   "mechanic": "compound",
+   "difficulty": "beginner",
+   "instructions": [
+    "Sit with feet on the platform and knees slightly bent, holding the handle.",
+    "Sit tall and row the handle to your stomach.",
+    "Squeeze your shoulder blades together.",
+    "Extend your arms slowly to return."
+   ],
+   "tips": [
+    "Lead with the elbows.",
+    "Keep your torso still."
+   ],
+   "mistakes": [
+    "Rocking back and forth.",
+    "Rounding forward at the end of each rep."
+   ],
+   "alternatives": [
+    "machine-seated-row",
+    "dumbbell-row",
+    "barbell-bent-over-row"
+   ],
+   "ranking": {
+    "method": "load",
+    "thresholds": [
+     0.5,
+     0.8,
+     1.1,
+     1.4
+    ],
+    "note": "Machine and cable loads differ between manufacturers, so compare these tiers only on similar equipment."
+   }
+  },
+  {
+   "slug": "machine-seated-row",
+   "name": "Machine Seated Row",
+   "primary": [
+    "back"
+   ],
+   "secondary": [
+    "biceps"
+   ],
+   "equipment": "machine",
+   "mechanic": "compound",
+   "difficulty": "beginner",
+   "instructions": [
+    "Set the chest pad so you can just reach the handles with straight arms.",
+    "Row the handles toward your torso.",
+    "Pause and squeeze, then return slowly."
+   ],
+   "tips": [
+    "Chest-supported rows remove lower-back fatigue.",
+    "Try different handles to change the grip."
+   ],
+   "mistakes": [
+    "Lifting the chest off the pad.",
+    "Using a short, jerky range."
+   ],
+   "alternatives": [
+    "seated-cable-row",
+    "dumbbell-row"
+   ],
+   "ranking": {
+    "method": "load",
+    "thresholds": [
+     0.5,
+     0.8,
+     1.1,
+     1.4
+    ],
+    "note": "Machine and cable loads differ between manufacturers, so compare these tiers only on similar equipment."
+   }
+  },
+  {
+   "slug": "straight-arm-pulldown",
+   "name": "Straight-Arm Pulldown",
+   "primary": [
+    "back"
+   ],
+   "secondary": [
+    "triceps"
+   ],
+   "equipment": "cable",
+   "mechanic": "isolation",
+   "difficulty": "beginner",
+   "instructions": [
+    "Stand facing a high pulley holding a straight bar or rope.",
+    "With arms nearly straight, sweep the bar down to your thighs.",
+    "Raise it slowly back to eye level."
+   ],
+   "tips": [
+    "A good way to feel the lats working.",
+    "Hinge forward slightly."
+   ],
+   "mistakes": [
+    "Bending the elbows to make it a pushdown.",
+    "Using the torso to swing the weight."
+   ],
+   "alternatives": [
+    "lat-pulldown",
+    "dumbbell-pullover"
+   ],
+   "ranking": {
+    "method": "load",
+    "thresholds": [
+     0.15,
+     0.27,
+     0.4,
+     0.52
+    ],
+    "note": "Machine and cable loads differ between manufacturers, so compare these tiers only on similar equipment."
+   }
+  },
+  {
+   "slug": "dumbbell-pullover",
+   "name": "Dumbbell Pullover",
+   "primary": [
+    "back",
+    "chest"
+   ],
+   "secondary": [
+    "triceps"
+   ],
+   "equipment": "dumbbell",
+   "mechanic": "isolation",
+   "difficulty": "intermediate",
+   "instructions": [
+    "Lie across or along a bench holding one dumbbell over your chest with both hands.",
+    "Lower it back over your head with slightly bent elbows.",
+    "Stop at a comfortable stretch and pull it back over your chest."
+   ],
+   "tips": [
+    "Keep the ribs down.",
+    "Move only at the shoulders."
+   ],
+   "mistakes": [
+    "Going too heavy for the shoulder stretch.",
+    "Bending the elbows a lot."
+   ],
+   "alternatives": [
+    "straight-arm-pulldown",
+    "lat-pulldown"
+   ],
+   "ranking": {
+    "method": "load",
+    "thresholds": [
+     0.15,
+     0.27,
+     0.38,
+     0.5
+    ],
+    "note": "Weight of the single dumbbell."
+   }
+  },
+  {
+   "slug": "inverted-row",
+   "name": "Inverted Row",
+   "primary": [
+    "back"
+   ],
+   "secondary": [
+    "biceps",
+    "abdominals"
+   ],
+   "equipment": "bodyweight",
+   "mechanic": "compound",
+   "difficulty": "beginner",
+   "instructions": [
+    "Set a bar at waist height and hang underneath it with straight arms.",
+    "Keep your body straight from head to heels.",
+    "Pull your chest to the bar.",
+    "Lower under control."
+   ],
+   "tips": [
+    "Bend your knees to make it easier.",
+    "A great step toward pull-ups."
+   ],
+   "mistakes": [
+    "Letting the hips sag.",
+    "Reaching the chin instead of the chest to the bar."
+   ],
+   "alternatives": [
+    "barbell-bent-over-row",
+    "pull-up"
+   ],
+   "ranking": {
+    "method": "reps",
+    "thresholds": [
+     6,
+     12,
+     20,
+     28
+    ],
+    "note": "Reps in one set. Weighted sets are converted to bodyweight-equivalent reps."
+   }
+  },
+  {
+   "slug": "face-pull",
+   "name": "Face Pull",
+   "primary": [
+    "shoulders"
+   ],
+   "secondary": [
+    "back"
+   ],
+   "equipment": "cable",
+   "mechanic": "isolation",
+   "difficulty": "beginner",
+   "instructions": [
+    "Set a rope at upper-chest height or higher.",
+    "Pull the rope toward your face, splitting the ends apart.",
+    "Finish with hands beside your ears and elbows high.",
+    "Return slowly."
+   ],
+   "tips": [
+    "Great for shoulder health and posture.",
+    "Think about pulling the rope apart."
+   ],
+   "mistakes": [
+    "Going too heavy and leaning back.",
+    "Letting the elbows drop."
+   ],
+   "alternatives": [
+    "reverse-pec-deck",
+    "band-pull-apart",
+    "dumbbell-rear-delt-fly"
+   ],
+   "ranking": {
+    "method": "load",
+    "thresholds": [
+     0.15,
+     0.25,
+     0.35,
+     0.45
+    ],
+    "note": "Machine and cable loads differ between manufacturers, so compare these tiers only on similar equipment."
+   }
+  },
+  {
+   "slug": "barbell-shrug",
+   "name": "Barbell Shrug",
+   "primary": [
+    "back"
+   ],
+   "secondary": [
+    "forearms"
+   ],
+   "equipment": "barbell",
+   "mechanic": "isolation",
+   "difficulty": "beginner",
+   "instructions": [
+    "Hold a barbell at arm's length in front of your thighs.",
+    "Lift your shoulders straight up toward your ears.",
+    "Pause, then lower slowly."
+   ],
+   "tips": [
+    "Use straps if grip limits you.",
+    "Think 'up', not round and round."
+   ],
+   "mistakes": [
+    "Rolling the shoulders.",
+    "Bending the elbows."
+   ],
+   "alternatives": [
+    "dumbbell-shrug"
+   ],
+   "ranking": {
+    "method": "load",
+    "thresholds": [
+     0.75,
+     1.25,
+     1.75,
+     2.25
+    ],
+    "note": "Total weight including the bar."
+   }
+  },
+  {
+   "slug": "dumbbell-shrug",
+   "name": "Dumbbell Shrug",
+   "primary": [
+    "back"
+   ],
+   "secondary": [
+    "forearms"
+   ],
+   "equipment": "dumbbell",
+   "mechanic": "isolation",
+   "difficulty": "beginner",
+   "instructions": [
+    "Hold dumbbells at your sides.",
+    "Shrug your shoulders straight up.",
+    "Pause and lower slowly."
+   ],
+   "tips": [
+    "Dumbbells let your arms hang naturally.",
+    "Hold the top for a second."
+   ],
+   "mistakes": [
+    "Rolling the shoulders.",
+    "Using a bouncing motion."
+   ],
+   "alternatives": [
+    "barbell-shrug"
+   ],
+   "ranking": {
+    "method": "load",
+    "thresholds": [
+     0.25,
+     0.4,
+     0.55,
+     0.7
+    ],
+    "note": "Weight of one dumbbell."
+   }
+  },
+  {
+   "slug": "band-row",
+   "name": "Band Row",
+   "primary": [
+    "back"
+   ],
+   "secondary": [
+    "biceps"
+   ],
+   "equipment": "band",
+   "mechanic": "compound",
+   "difficulty": "beginner",
+   "instructions": [
+    "Anchor a band at chest height and hold the ends.",
+    "Step back until there's tension.",
+    "Row your hands to your ribs and return slowly."
+   ],
+   "tips": [
+    "Great for travel or warm-ups."
+   ],
+   "mistakes": [
+    "Leaning back instead of rowing."
+   ],
+   "alternatives": [
+    "seated-cable-row",
+    "dumbbell-row"
+   ],
+   "ranking": {
+    "method": "none",
+    "thresholds": [],
+    "note": "Band tension varies too much to rank fairly."
+   }
+  },
+  {
+   "slug": "band-pull-apart",
+   "name": "Band Pull-Apart",
+   "primary": [
+    "shoulders"
+   ],
+   "secondary": [
+    "back"
+   ],
+   "equipment": "band",
+   "mechanic": "isolation",
+   "difficulty": "beginner",
+   "instructions": [
+    "Hold a light band in front of you at shoulder height with straight arms.",
+    "Pull the band apart until it touches your chest.",
+    "Return slowly."
+   ],
+   "tips": [
+    "Perfect between sets or as a warm-up.",
+    "Keep the shoulders down."
+   ],
+   "mistakes": [
+    "Shrugging up.",
+    "Bending the elbows a lot."
+   ],
+   "alternatives": [
+    "face-pull",
+    "reverse-pec-deck"
+   ],
+   "ranking": {
+    "method": "none",
+    "thresholds": [],
+    "note": "Band tension varies too much to rank fairly."
+   }
+  },
+  {
+   "slug": "conventional-deadlift",
+   "name": "Deadlift",
+   "primary": [
+    "hamstrings",
+    "glutes",
+    "lowerBack"
+   ],
+   "secondary": [
+    "back",
+    "forearms",
+    "quadriceps"
+   ],
+   "equipment": "barbell",
+   "mechanic": "compound",
+   "difficulty": "advanced",
+   "instructions": [
+    "Stand with the bar over your mid-foot, feet hip-width apart.",
+    "Hinge down and grip the bar just outside your legs.",
+    "Flatten your back, pull the slack out of the bar and brace.",
+    "Push the floor away and stand up tall, keeping the bar close.",
+    "Lower it by hinging at the hips, then bending the knees."
+   ],
+   "tips": [
+    "The bar should travel in a straight vertical line.",
+    "Brace like you're about to be punched."
+   ],
+   "mistakes": [
+    "Rounding the lower back.",
+    "Jerking the bar off the floor.",
+    "Leaning back at the top."
+   ],
+   "alternatives": [
+    "sumo-deadlift",
+    "romanian-deadlift",
+    "trap-bar-deadlift"
+   ],
+   "ranking": {
+    "method": "load",
+    "thresholds": [
+     1.0,
+     1.5,
+     2.0,
+     2.5
+    ],
+    "note": "Total weight including the bar."
+   }
+  },
+  {
+   "slug": "sumo-deadlift",
+   "name": "Sumo Deadlift",
+   "primary": [
+    "glutes",
+    "quadriceps",
+    "hamstrings"
+   ],
+   "secondary": [
+    "lowerBack",
+    "back",
+    "forearms"
+   ],
+   "equipment": "barbell",
+   "mechanic": "compound",
+   "difficulty": "advanced",
+   "instructions": [
+    "Take a wide stance with toes turned out and the bar over mid-foot.",
+    "Grip the bar inside your knees with straight arms.",
+    "Push your knees out, lift your chest and brace.",
+    "Drive through the floor to stand up, then lower under control."
+   ],
+   "tips": [
+    "Hips start closer to the bar than in a conventional pull.",
+    "Push the knees out the whole way."
+   ],
+   "mistakes": [
+    "Knees caving in.",
+    "Hips shooting up first."
+   ],
+   "alternatives": [
+    "conventional-deadlift",
+    "trap-bar-deadlift"
+   ],
+   "ranking": {
+    "method": "load",
+    "thresholds": [
+     1.0,
+     1.5,
+     2.0,
+     2.5
+    ],
+    "note": "Total weight including the bar."
+   }
+  },
+  {
+   "slug": "trap-bar-deadlift",
+   "name": "Trap Bar Deadlift",
+   "primary": [
+    "quadriceps",
+    "glutes",
+    "hamstrings"
+   ],
+   "secondary": [
+    "lowerBack",
+    "back",
+    "forearms"
+   ],
+   "equipment": "barbell",
+   "mechanic": "compound",
+   "difficulty": "intermediate",
+   "instructions": [
+    "Stand in the centre of the trap bar and grip the handles.",
+    "Sit your hips down with a flat back and chest up.",
+    "Drive through your legs to stand tall.",
+    "Lower by bending hips and knees together."
+   ],
+   "tips": [
+    "Easier on the lower back than a straight bar.",
+    "Great for learning to pull heavy."
+   ],
+   "mistakes": [
+    "Rounding the back.",
+    "Letting the hips rise first."
+   ],
+   "alternatives": [
+    "conventional-deadlift",
+    "leg-press"
+   ],
+   "ranking": {
+    "method": "load",
+    "thresholds": [
+     1.0,
+     1.6,
+     2.2,
+     2.75
+    ],
+    "note": "Total weight including the bar."
+   }
+  },
+  {
+   "slug": "romanian-deadlift",
+   "name": "Romanian Deadlift",
+   "primary": [
+    "hamstrings"
+   ],
+   "secondary": [
+    "glutes",
+    "lowerBack",
+    "forearms"
+   ],
+   "equipment": "barbell",
+   "mechanic": "compound",
+   "difficulty": "intermediate",
+   "instructions": [
+    "Hold the bar at hip height with an overhand grip.",
+    "Soften the knees and push your hips back, sliding the bar down your thighs.",
+    "Stop when you feel a strong hamstring stretch, usually just below the knees.",
+    "Drive the hips forward to stand back up."
+   ],
+   "tips": [
+    "Keep the bar in contact with your legs.",
+    "The movement is a hinge, not a squat."
+   ],
+   "mistakes": [
+    "Rounding the back to reach lower.",
+    "Bending the knees too much."
+   ],
+   "alternatives": [
+    "dumbbell-romanian-deadlift",
+    "lying-leg-curl",
+    "good-morning"
+   ],
+   "ranking": {
+    "method": "load",
+    "thresholds": [
+     0.75,
+     1.1,
+     1.5,
+     1.9
+    ],
+    "note": "Total weight including the bar."
+   }
+  },
+  {
+   "slug": "dumbbell-romanian-deadlift",
+   "name": "Dumbbell Romanian Deadlift",
+   "primary": [
+    "hamstrings"
+   ],
+   "secondary": [
+    "glutes",
+    "lowerBack"
+   ],
+   "equipment": "dumbbell",
+   "mechanic": "compound",
+   "difficulty": "beginner",
+   "instructions": [
+    "Hold dumbbells in front of your thighs.",
+    "Push your hips back and lower the dumbbells along your legs.",
+    "Stop at a strong hamstring stretch, then stand back up."
+   ],
+   "tips": [
+    "Keep the dumbbells close.",
+    "Squeeze the glutes at the top."
+   ],
+   "mistakes": [
+    "Rounding the back.",
+    "Turning it into a squat."
+   ],
+   "alternatives": [
+    "romanian-deadlift",
+    "seated-leg-curl"
+   ],
+   "ranking": {
+    "method": "load",
+    "thresholds": [
+     0.25,
+     0.4,
+     0.55,
+     0.7
+    ],
+    "note": "Weight of one dumbbell."
+   }
+  },
+  {
+   "slug": "good-morning",
+   "name": "Good Morning",
+   "primary": [
+    "hamstrings",
+    "lowerBack"
+   ],
+   "secondary": [
+    "glutes"
+   ],
+   "equipment": "barbell",
+   "mechanic": "compound",
+   "difficulty": "advanced",
+   "instructions": [
+    "Set a bar across your upper back as for a squat.",
+    "With soft knees, push your hips back and lower your torso.",
+    "Stop just above parallel and return to standing."
+   ],
+   "tips": [
+    "Start light; it's a strong lever on the lower back.",
+    "Keep the back flat throughout."
+   ],
+   "mistakes": [
+    "Going too heavy too soon.",
+    "Rounding the spine."
+   ],
+   "alternatives": [
+    "romanian-deadlift",
+    "back-extension"
+   ],
+   "ranking": {
+    "method": "load",
+    "thresholds": [
+     0.4,
+     0.65,
+     0.9,
+     1.15
+    ],
+    "note": "Total weight including the bar."
+   }
+  },
+  {
+   "slug": "back-extension",
+   "name": "Back Extension",
+   "primary": [
+    "lowerBack"
+   ],
+   "secondary": [
+    "glutes",
+    "hamstrings"
+   ],
+   "equipment": "bodyweight",
+   "mechanic": "isolation",
+   "difficulty": "beginner",
+   "instructions": [
+    "Set the pad just below your hips on a 45° or horizontal bench.",
+    "Cross your arms and lower your torso by hinging at the hips.",
+    "Raise back up until your body is in a straight line."
+   ],
+   "tips": [
+    "Hold a plate to your chest to add load.",
+    "Don't hyperextend at the top."
+   ],
+   "mistakes": [
+    "Swinging up fast.",
+    "Overarching past straight."
+   ],
+   "alternatives": [
+    "good-morning",
+    "romanian-deadlift"
+   ],
+   "ranking": {
+    "method": "reps",
+    "thresholds": [
+     10,
+     20,
+     30,
+     40
+    ],
+    "note": "Reps in one set. Weighted sets are converted to bodyweight-equivalent reps."
+   }
+  },
+  {
+   "slug": "cable-pull-through",
+   "name": "Cable Pull-Through",
+   "primary": [
+    "glutes"
+   ],
+   "secondary": [
+    "hamstrings",
+    "lowerBack"
+   ],
+   "equipment": "cable",
+   "mechanic": "compound",
+   "difficulty": "beginner",
+   "instructions": [
+    "Face away from a low pulley with a rope between your legs.",
+    "Hinge your hips back and let the rope pass between your legs.",
+    "Drive your hips forward to stand tall, squeezing your glutes."
+   ],
+   "tips": [
+    "A friendly way to learn the hip hinge.",
+    "Arms just hold the rope; the hips do the work."
+   ],
+   "mistakes": [
+    "Squatting down instead of hinging.",
+    "Pulling with the arms."
+   ],
+   "alternatives": [
+    "barbell-hip-thrust",
+    "romanian-deadlift"
+   ],
+   "ranking": {
+    "method": "load",
+    "thresholds": [
+     0.3,
+     0.5,
+     0.75,
+     1.0
+    ],
+    "note": "Machine and cable loads differ between manufacturers, so compare these tiers only on similar equipment."
+   }
+  },
+  {
+   "slug": "overhead-press",
+   "name": "Overhead Press",
+   "primary": [
+    "shoulders"
+   ],
+   "secondary": [
+    "triceps",
+    "abdominals"
+   ],
+   "equipment": "barbell",
+   "mechanic": "compound",
+   "difficulty": "intermediate",
+   "instructions": [
+    "Stand with the bar on your front shoulders, hands just outside shoulder width.",
+    "Brace your core and squeeze your glutes.",
+    "Press the bar straight up, moving your head back slightly to let it pass.",
+    "Lock out overhead with the bar over your mid-foot, then lower."
+   ],
+   "tips": [
+    "Push your head 'through the window' at the top.",
+    "Keep your ribs down."
+   ],
+   "mistakes": [
+    "Leaning back into a standing incline press.",
+    "Pressing the bar forward instead of up."
+   ],
+   "alternatives": [
+    "dumbbell-shoulder-press",
+    "machine-shoulder-press",
+    "pike-push-up"
+   ],
+   "ranking": {
+    "method": "load",
+    "thresholds": [
+     0.4,
+     0.6,
+     0.8,
+     1.05
+    ],
+    "note": "Total weight including the bar."
+   }
+  },
+  {
+   "slug": "dumbbell-shoulder-press",
+   "name": "Dumbbell Shoulder Press",
+   "primary": [
+    "shoulders"
+   ],
+   "secondary": [
+    "triceps"
+   ],
+   "equipment": "dumbbell",
+   "mechanic": "compound",
+   "difficulty": "beginner",
+   "instructions": [
+    "Sit on an upright bench with dumbbells at shoulder height, palms forward.",
+    "Press them overhead until your arms are straight.",
+    "Lower them back to shoulder height."
+   ],
+   "tips": [
+    "Keep your back against the pad.",
+    "Don't let the dumbbells drift too far forward."
+   ],
+   "mistakes": [
+    "Arching the lower back.",
+    "Cutting the depth short."
+   ],
+   "alternatives": [
+    "overhead-press",
+    "machine-shoulder-press",
+    "arnold-press"
+   ],
+   "ranking": {
+    "method": "load",
+    "thresholds": [
+     0.15,
+     0.27,
+     0.38,
+     0.5
+    ],
+    "note": "Weight of one dumbbell."
+   }
+  },
+  {
+   "slug": "arnold-press",
+   "name": "Arnold Press",
+   "primary": [
+    "shoulders"
+   ],
+   "secondary": [
+    "triceps"
+   ],
+   "equipment": "dumbbell",
+   "mechanic": "compound",
+   "difficulty": "intermediate",
+   "instructions": [
+    "Start with dumbbells in front of your shoulders, palms facing you.",
+    "Press up while rotating your palms to face forward.",
+    "Reverse the rotation as you lower."
+   ],
+   "tips": [
+    "The rotation works the front of the shoulder through a longer path.",
+    "Use a lighter weight than a normal press."
+   ],
+   "mistakes": [
+    "Rushing the rotation.",
+    "Arching the back."
+   ],
+   "alternatives": [
+    "dumbbell-shoulder-press",
+    "machine-shoulder-press"
+   ],
+   "ranking": {
+    "method": "load",
+    "thresholds": [
+     0.13,
+     0.24,
+     0.34,
+     0.45
+    ],
+    "note": "Weight of one dumbbell."
+   }
+  },
+  {
+   "slug": "machine-shoulder-press",
+   "name": "Machine Shoulder Press",
+   "primary": [
+    "shoulders"
+   ],
+   "secondary": [
+    "triceps"
+   ],
+   "equipment": "machine",
+   "mechanic": "compound",
+   "difficulty": "beginner",
+   "instructions": [
+    "Set the seat so the handles start at shoulder height.",
+    "Press the handles up until your arms are straight.",
+    "Lower under control."
+   ],
+   "tips": [
+    "Safe to push close to failure.",
+    "Keep your head against the pad."
+   ],
+   "mistakes": [
+    "Seat too low, which jams the shoulders.",
+    "Bouncing the weight stack."
+   ],
+   "alternatives": [
+    "dumbbell-shoulder-press",
+    "overhead-press"
+   ],
+   "ranking": {
+    "method": "load",
+    "thresholds": [
+     0.35,
+     0.6,
+     0.85,
+     1.1
+    ],
+    "note": "Machine and cable loads differ between manufacturers, so compare these tiers only on similar equipment."
+   }
+  },
+  {
+   "slug": "dumbbell-lateral-raise",
+   "name": "Dumbbell Lateral Raise",
+   "primary": [
+    "shoulders"
+   ],
+   "secondary": [],
+   "equipment": "dumbbell",
+   "mechanic": "isolation",
+   "difficulty": "beginner",
+   "instructions": [
+    "Stand holding light dumbbells at your sides.",
+    "With a slight bend in the elbows, raise your arms out to the side.",
+    "Stop at shoulder height, then lower slowly."
+   ],
+   "tips": [
+    "Lead with your elbows.",
+    "Light weight and strict form win here."
+   ],
+   "mistakes": [
+    "Swinging the weight up.",
+    "Shrugging the traps."
+   ],
+   "alternatives": [
+    "cable-lateral-raise",
+    "machine-shoulder-press"
+   ],
+   "ranking": {
+    "method": "load",
+    "thresholds": [
+     0.05,
+     0.1,
+     0.15,
+     0.2
+    ],
+    "note": "Weight of one dumbbell."
+   }
+  },
+  {
+   "slug": "cable-lateral-raise",
+   "name": "Cable Lateral Raise",
+   "primary": [
+    "shoulders"
+   ],
+   "secondary": [],
+   "equipment": "cable",
+   "mechanic": "isolation",
+   "difficulty": "beginner",
+   "instructions": [
+    "Stand side-on to a low pulley, holding the handle in your far hand.",
+    "Raise your arm out to the side to shoulder height.",
+    "Lower slowly to the start."
+   ],
+   "tips": [
+    "The cable keeps tension at the bottom.",
+    "Lean away slightly for a longer range."
+   ],
+   "mistakes": [
+    "Turning the torso.",
+    "Using momentum."
+   ],
+   "alternatives": [
+    "dumbbell-lateral-raise"
+   ],
+   "ranking": {
+    "method": "load",
+    "thresholds": [
+     0.04,
+     0.08,
+     0.12,
+     0.16
+    ],
+    "note": "Machine and cable loads differ between manufacturers, so compare these tiers only on similar equipment."
+   }
+  },
+  {
+   "slug": "dumbbell-front-raise",
+   "name": "Dumbbell Front Raise",
+   "primary": [
+    "shoulders"
+   ],
+   "secondary": [
+    "chest"
+   ],
+   "equipment": "dumbbell",
+   "mechanic": "isolation",
+   "difficulty": "beginner",
+   "instructions": [
+    "Hold dumbbells in front of your thighs.",
+    "Raise them straight in front of you to shoulder height.",
+    "Lower slowly."
+   ],
+   "tips": [
+    "Alternate arms if you like.",
+    "Keep your torso still."
+   ],
+   "mistakes": [
+    "Leaning back.",
+    "Swinging the weights."
+   ],
+   "alternatives": [
+    "overhead-press",
+    "dumbbell-lateral-raise"
+   ],
+   "ranking": {
+    "method": "load",
+    "thresholds": [
+     0.06,
+     0.11,
+     0.16,
+     0.21
+    ],
+    "note": "Weight of one dumbbell."
+   }
+  },
+  {
+   "slug": "dumbbell-rear-delt-fly",
+   "name": "Dumbbell Rear Delt Fly",
+   "primary": [
+    "shoulders"
+   ],
+   "secondary": [
+    "back"
+   ],
+   "equipment": "dumbbell",
+   "mechanic": "isolation",
+   "difficulty": "beginner",
+   "instructions": [
+    "Hinge forward with a flat back, dumbbells hanging below your chest.",
+    "Raise your arms out to the sides with slightly bent elbows.",
+    "Squeeze at the top and lower slowly."
+   ],
+   "tips": [
+    "Use light weights.",
+    "Lead with the back of your hands."
+   ],
+   "mistakes": [
+    "Using the traps to shrug the weight up.",
+    "Standing up as you lift."
+   ],
+   "alternatives": [
+    "reverse-pec-deck",
+    "face-pull",
+    "band-pull-apart"
+   ],
+   "ranking": {
+    "method": "load",
+    "thresholds": [
+     0.04,
+     0.08,
+     0.12,
+     0.17
+    ],
+    "note": "Weight of one dumbbell."
+   }
+  },
+  {
+   "slug": "reverse-pec-deck",
+   "name": "Reverse Pec Deck",
+   "primary": [
+    "shoulders"
+   ],
+   "secondary": [
+    "back"
+   ],
+   "equipment": "machine",
+   "mechanic": "isolation",
+   "difficulty": "beginner",
+   "instructions": [
+    "Sit facing the pec deck pad with the handles set behind.",
+    "Grip the handles with straight arms at shoulder height.",
+    "Sweep your arms back until they're in line with your body.",
+    "Return slowly."
+   ],
+   "tips": [
+    "A steady way to train the rear shoulders.",
+    "Keep your chest on the pad."
+   ],
+   "mistakes": [
+    "Bending the elbows.",
+    "Going too heavy."
+   ],
+   "alternatives": [
+    "dumbbell-rear-delt-fly",
+    "face-pull"
+   ],
+   "ranking": {
+    "method": "load",
+    "thresholds": [
+     0.2,
+     0.35,
+     0.5,
+     0.65
+    ],
+    "note": "Machine and cable loads differ between manufacturers, so compare these tiers only on similar equipment."
+   }
+  },
+  {
+   "slug": "pike-push-up",
+   "name": "Pike Push-Up",
+   "primary": [
+    "shoulders"
+   ],
+   "secondary": [
+    "triceps"
+   ],
+   "equipment": "bodyweight",
+   "mechanic": "compound",
+   "difficulty": "intermediate",
+   "instructions": [
+    "Start in a push-up position, then walk your feet in so your hips are high.",
+    "Bend your elbows to lower your head toward the floor in front of your hands.",
+    "Press back up."
+   ],
+   "tips": [
+    "Elevate your feet to make it harder.",
+    "A good step toward handstand push-ups."
+   ],
+   "mistakes": [
+    "Letting the hips drop.",
+    "Flaring the elbows out wide."
+   ],
+   "alternatives": [
+    "overhead-press",
+    "dumbbell-shoulder-press"
+   ],
+   "ranking": {
+    "method": "reps",
+    "thresholds": [
+     5,
+     12,
+     20,
+     30
+    ],
+    "note": "Reps in one set. Weighted sets are converted to bodyweight-equivalent reps."
+   }
+  },
+  {
+   "slug": "band-lateral-raise",
+   "name": "Band Lateral Raise",
+   "primary": [
+    "shoulders"
+   ],
+   "secondary": [],
+   "equipment": "band",
+   "mechanic": "isolation",
+   "difficulty": "beginner",
+   "instructions": [
+    "Stand on a band holding an end in each hand.",
+    "Raise your arms out to shoulder height.",
+    "Lower slowly."
+   ],
+   "tips": [
+    "Tension rises toward the top."
+   ],
+   "mistakes": [
+    "Shrugging."
+   ],
+   "alternatives": [
+    "dumbbell-lateral-raise",
+    "cable-lateral-raise"
+   ],
+   "ranking": {
+    "method": "none",
+    "thresholds": [],
+    "note": "Band tension varies too much to rank fairly."
+   }
+  },
+  {
+   "slug": "barbell-curl",
+   "name": "Barbell Curl",
+   "primary": [
+    "biceps"
+   ],
+   "secondary": [
+    "forearms"
+   ],
+   "equipment": "barbell",
+   "mechanic": "isolation",
+   "difficulty": "beginner",
+   "instructions": [
+    "Stand holding a barbell with an underhand, shoulder-width grip.",
+    "Keep your elbows at your sides and curl the bar toward your shoulders.",
+    "Squeeze, then lower slowly to straight arms."
+   ],
+   "tips": [
+    "An EZ bar is kinder on the wrists.",
+    "Control the lowering phase."
+   ],
+   "mistakes": [
+    "Swinging the hips to lift the bar.",
+    "Letting the elbows drift forward."
+   ],
+   "alternatives": [
+    "dumbbell-bicep-curl",
+    "cable-curl",
+    "machine-preacher-curl"
+   ],
+   "ranking": {
+    "method": "load",
+    "thresholds": [
+     0.25,
+     0.4,
+     0.55,
+     0.7
+    ],
+    "note": "Total weight including the bar."
+   }
+  },
+  {
+   "slug": "dumbbell-bicep-curl",
+   "name": "Dumbbell Bicep Curl",
+   "primary": [
+    "biceps"
+   ],
+   "secondary": [
+    "forearms"
+   ],
+   "equipment": "dumbbell",
+   "mechanic": "isolation",
+   "difficulty": "beginner",
+   "instructions": [
+    "Stand holding dumbbells at your sides, palms forward.",
+    "Curl them up while keeping your elbows pinned.",
+    "Lower slowly until your arms are straight."
+   ],
+   "tips": [
+    "Turn your little finger up at the top for a stronger squeeze.",
+    "Alternate arms if you like."
+   ],
+   "mistakes": [
+    "Swinging the weights.",
+    "Half reps."
+   ],
+   "alternatives": [
+    "barbell-curl",
+    "hammer-curl",
+    "cable-curl"
+   ],
+   "ranking": {
+    "method": "load",
+    "thresholds": [
+     0.1,
+     0.18,
+     0.27,
+     0.36
+    ],
+    "note": "Weight of one dumbbell."
+   }
+  },
+  {
+   "slug": "hammer-curl",
+   "name": "Hammer Curl",
+   "primary": [
+    "biceps",
+    "forearms"
+   ],
+   "secondary": [],
+   "equipment": "dumbbell",
+   "mechanic": "isolation",
+   "difficulty": "beginner",
+   "instructions": [
+    "Hold dumbbells at your sides with palms facing in.",
+    "Curl them up keeping your palms facing each other.",
+    "Lower under control."
+   ],
+   "tips": [
+    "Builds the brachialis and forearms.",
+    "Keep the wrists neutral."
+   ],
+   "mistakes": [
+    "Swinging.",
+    "Moving the elbows forward."
+   ],
+   "alternatives": [
+    "dumbbell-bicep-curl",
+    "reverse-curl"
+   ],
+   "ranking": {
+    "method": "load",
+    "thresholds": [
+     0.11,
+     0.2,
+     0.29,
+     0.38
+    ],
+    "note": "Weight of one dumbbell."
+   }
+  },
+  {
+   "slug": "concentration-curl",
+   "name": "Concentration Curl",
+   "primary": [
+    "biceps"
+   ],
+   "secondary": [],
+   "equipment": "dumbbell",
+   "mechanic": "isolation",
+   "difficulty": "beginner",
+   "instructions": [
+    "Sit with your elbow braced against your inner thigh.",
+    "Curl the dumbbell toward your shoulder.",
+    "Lower slowly."
+   ],
+   "tips": [
+    "No cheating possible, so go lighter.",
+    "Squeeze hard at the top."
+   ],
+   "mistakes": [
+    "Lifting the elbow off the thigh.",
+    "Rushing the lowering."
+   ],
+   "alternatives": [
+    "dumbbell-bicep-curl",
+    "machine-preacher-curl"
+   ],
+   "ranking": {
+    "method": "load",
+    "thresholds": [
+     0.08,
+     0.15,
+     0.22,
+     0.3
+    ],
+    "note": "Weight of one dumbbell."
+   }
+  },
+  {
+   "slug": "cable-curl",
+   "name": "Cable Curl",
+   "primary": [
+    "biceps"
+   ],
+   "secondary": [
+    "forearms"
+   ],
+   "equipment": "cable",
+   "mechanic": "isolation",
+   "difficulty": "beginner",
+   "instructions": [
+    "Stand facing a low pulley holding a straight bar or EZ attachment.",
+    "Curl the bar up while keeping your elbows still.",
+    "Lower slowly to straight arms."
+   ],
+   "tips": [
+    "Constant tension through the whole rep.",
+    "Step back slightly for tension at the bottom."
+   ],
+   "mistakes": [
+    "Leaning back.",
+    "Elbows drifting forward."
+   ],
+   "alternatives": [
+    "barbell-curl",
+    "dumbbell-bicep-curl"
+   ],
+   "ranking": {
+    "method": "load",
+    "thresholds": [
+     0.2,
+     0.32,
+     0.45,
+     0.58
+    ],
+    "note": "Machine and cable loads differ between manufacturers, so compare these tiers only on similar equipment."
+   }
+  },
+  {
+   "slug": "machine-preacher-curl",
+   "name": "Machine Preacher Curl",
+   "primary": [
+    "biceps"
+   ],
+   "secondary": [],
+   "equipment": "machine",
+   "mechanic": "isolation",
+   "difficulty": "beginner",
+   "instructions": [
+    "Adjust the seat so your upper arms rest flat on the pad.",
+    "Curl the handles up toward your shoulders.",
+    "Lower slowly to almost straight arms."
+   ],
+   "tips": [
+    "The pad stops you cheating.",
+    "Don't lock out hard at the bottom."
+   ],
+   "mistakes": [
+    "Lifting the elbows off the pad.",
+    "Dropping the weight."
+   ],
+   "alternatives": [
+    "concentration-curl",
+    "barbell-curl"
+   ],
+   "ranking": {
+    "method": "load",
+    "thresholds": [
+     0.2,
+     0.32,
+     0.45,
+     0.58
+    ],
+    "note": "Machine and cable loads differ between manufacturers, so compare these tiers only on similar equipment."
+   }
+  },
+  {
+   "slug": "band-bicep-curl",
+   "name": "Band Bicep Curl",
+   "primary": [
+    "biceps"
+   ],
+   "secondary": [
+    "forearms"
+   ],
+   "equipment": "band",
+   "mechanic": "isolation",
+   "difficulty": "beginner",
+   "instructions": [
+    "Stand on a band holding an end in each hand.",
+    "Curl your hands to your shoulders.",
+    "Lower slowly."
+   ],
+   "tips": [
+    "Good for high-rep finishers."
+   ],
+   "mistakes": [
+    "Letting the band snap down."
+   ],
+   "alternatives": [
+    "dumbbell-bicep-curl",
+    "cable-curl"
+   ],
+   "ranking": {
+    "method": "none",
+    "thresholds": [],
+    "note": "Band tension varies too much to rank fairly."
+   }
+  },
+  {
+   "slug": "close-grip-bench-press",
+   "name": "Close-Grip Bench Press",
+   "primary": [
+    "triceps"
+   ],
+   "secondary": [
+    "chest",
+    "shoulders"
+   ],
+   "equipment": "barbell",
+   "mechanic": "compound",
+   "difficulty": "intermediate",
+   "instructions": [
+    "Lie on a bench and grip the bar about shoulder-width apart.",
+    "Lower the bar to your lower chest with elbows tucked.",
+    "Press back up to lockout."
+   ],
+   "tips": [
+    "Shoulder-width is close enough; narrower strains the wrists.",
+    "Keep elbows close to your sides."
+   ],
+   "mistakes": [
+    "Gripping too narrow.",
+    "Flaring the elbows."
+   ],
+   "alternatives": [
+    "skull-crusher",
+    "cable-triceps-pushdown",
+    "diamond-push-up"
+   ],
+   "ranking": {
+    "method": "load",
+    "thresholds": [
+     0.5,
+     0.85,
+     1.15,
+     1.45
+    ],
+    "note": "Total weight including the bar."
+   }
+  },
+  {
+   "slug": "skull-crusher",
+   "name": "Skull Crusher",
+   "primary": [
+    "triceps"
+   ],
+   "secondary": [],
+   "equipment": "barbell",
+   "mechanic": "isolation",
+   "difficulty": "intermediate",
+   "instructions": [
+    "Lie on a bench holding an EZ bar over your chest with arms straight.",
+    "Bend your elbows to lower the bar toward your forehead.",
+    "Extend your arms to return."
+   ],
+   "tips": [
+    "Lower slightly behind the head for a bigger stretch.",
+    "Keep the upper arms still."
+   ],
+   "mistakes": [
+    "Flaring the elbows.",
+    "Moving the upper arms like a pullover."
+   ],
+   "alternatives": [
+    "overhead-dumbbell-extension",
+    "cable-triceps-pushdown"
+   ],
+   "ranking": {
+    "method": "load",
+    "thresholds": [
+     0.2,
+     0.35,
+     0.5,
+     0.65
+    ],
+    "note": "Total weight including the bar."
+   }
+  },
+  {
+   "slug": "cable-triceps-pushdown",
+   "name": "Cable Triceps Pushdown",
+   "primary": [
+    "triceps"
+   ],
+   "secondary": [],
+   "equipment": "cable",
+   "mechanic": "isolation",
+   "difficulty": "beginner",
+   "instructions": [
+    "Stand facing a high pulley with a bar or rope.",
+    "With elbows pinned at your sides, push the handle down until your arms are straight.",
+    "Let it rise slowly until your forearms are just above parallel."
+   ],
+   "tips": [
+    "Spread a rope apart at the bottom for a stronger squeeze.",
+    "Keep your shoulders down."
+   ],
+   "mistakes": [
+    "Leaning over the weight.",
+    "Letting the elbows flare forward."
+   ],
+   "alternatives": [
+    "overhead-cable-triceps-extension",
+    "skull-crusher",
+    "machine-dip"
+   ],
+   "ranking": {
+    "method": "load",
+    "thresholds": [
+     0.2,
+     0.35,
+     0.5,
+     0.65
+    ],
+    "note": "Machine and cable loads differ between manufacturers, so compare these tiers only on similar equipment."
+   }
+  },
+  {
+   "slug": "overhead-cable-triceps-extension",
+   "name": "Overhead Cable Triceps Extension",
+   "primary": [
+    "triceps"
+   ],
+   "secondary": [],
+   "equipment": "cable",
+   "mechanic": "isolation",
+   "difficulty": "beginner",
+   "instructions": [
+    "Face away from a pulley holding a rope behind your head.",
+    "Stagger your stance and keep your elbows high.",
+    "Extend your arms forward and up until straight.",
+    "Return slowly to a deep stretch."
+   ],
+   "tips": [
+    "The overhead position stretches the long head of the triceps.",
+    "Keep the elbows pointing forward."
+   ],
+   "mistakes": [
+    "Elbows flaring out wide.",
+    "Arching the lower back."
+   ],
+   "alternatives": [
+    "overhead-dumbbell-extension",
+    "cable-triceps-pushdown"
+   ],
+   "ranking": {
+    "method": "load",
+    "thresholds": [
+     0.15,
+     0.27,
+     0.38,
+     0.5
+    ],
+    "note": "Machine and cable loads differ between manufacturers, so compare these tiers only on similar equipment."
+   }
+  },
+  {
+   "slug": "overhead-dumbbell-extension",
+   "name": "Overhead Dumbbell Extension",
+   "primary": [
+    "triceps"
+   ],
+   "secondary": [],
+   "equipment": "dumbbell",
+   "mechanic": "isolation",
+   "difficulty": "beginner",
+   "instructions": [
+    "Sit tall holding one dumbbell overhead with both hands.",
+    "Lower it behind your head by bending your elbows.",
+    "Extend back up to straight arms."
+   ],
+   "tips": [
+    "Keep your elbows close to your head.",
+    "A bench with back support helps."
+   ],
+   "mistakes": [
+    "Flaring the elbows.",
+    "Arching the back."
+   ],
+   "alternatives": [
+    "overhead-cable-triceps-extension",
+    "skull-crusher"
+   ],
+   "ranking": {
+    "method": "load",
+    "thresholds": [
+     0.12,
+     0.22,
+     0.32,
+     0.42
+    ],
+    "note": "Weight of the single dumbbell."
+   }
+  },
+  {
+   "slug": "dumbbell-kickback",
+   "name": "Dumbbell Kickback",
+   "primary": [
+    "triceps"
+   ],
+   "secondary": [],
+   "equipment": "dumbbell",
+   "mechanic": "isolation",
+   "difficulty": "beginner",
+   "instructions": [
+    "Hinge forward with your upper arm parallel to the floor.",
+    "Extend your elbow until your arm is straight behind you.",
+    "Lower slowly."
+   ],
+   "tips": [
+    "Hold the top for a second.",
+    "Very light weights work."
+   ],
+   "mistakes": [
+    "Swinging the arm.",
+    "Dropping the elbow."
+   ],
+   "alternatives": [
+    "cable-triceps-pushdown"
+   ],
+   "ranking": {
+    "method": "load",
+    "thresholds": [
+     0.05,
+     0.09,
+     0.14,
+     0.19
+    ],
+    "note": "Weight of one dumbbell."
+   }
+  },
+  {
+   "slug": "triceps-dip",
+   "name": "Triceps Dip",
+   "primary": [
+    "triceps"
+   ],
+   "secondary": [
+    "chest",
+    "shoulders"
+   ],
+   "equipment": "bodyweight",
+   "mechanic": "compound",
+   "difficulty": "intermediate",
+   "instructions": [
+    "Support yourself on parallel bars with arms straight and body upright.",
+    "Bend your elbows to lower until your upper arms are about parallel to the floor.",
+    "Press back up to straight arms."
+   ],
+   "tips": [
+    "Stay upright to keep the triceps doing the work.",
+    "Use the assisted machine to build up."
+   ],
+   "mistakes": [
+    "Leaning far forward.",
+    "Bouncing at the bottom."
+   ],
+   "alternatives": [
+    "machine-dip",
+    "close-grip-bench-press",
+    "diamond-push-up"
+   ],
+   "ranking": {
+    "method": "reps",
+    "thresholds": [
+     5,
+     12,
+     20,
+     30
+    ],
+    "note": "Reps in one set. Weighted sets are converted to bodyweight-equivalent reps."
+   }
+  },
+  {
+   "slug": "diamond-push-up",
+   "name": "Diamond Push-Up",
+   "primary": [
+    "triceps"
+   ],
+   "secondary": [
+    "chest",
+    "shoulders"
+   ],
+   "equipment": "bodyweight",
+   "mechanic": "compound",
+   "difficulty": "intermediate",
+   "instructions": [
+    "Start in a push-up with your hands together under your chest, forming a diamond.",
+    "Lower your chest toward your hands, elbows close.",
+    "Push back up."
+   ],
+   "tips": [
+    "Drop to your knees to make it easier.",
+    "Keep your body straight."
+   ],
+   "mistakes": [
+    "Flaring the elbows.",
+    "Sagging hips."
+   ],
+   "alternatives": [
+    "push-up",
+    "close-grip-bench-press"
+   ],
+   "ranking": {
+    "method": "reps",
+    "thresholds": [
+     5,
+     15,
+     25,
+     40
+    ],
+    "note": "Reps in one set. Weighted sets are converted to bodyweight-equivalent reps."
+   }
+  },
+  {
+   "slug": "machine-dip",
+   "name": "Machine Dip",
+   "primary": [
+    "triceps"
+   ],
+   "secondary": [
+    "chest"
+   ],
+   "equipment": "machine",
+   "mechanic": "compound",
+   "difficulty": "beginner",
+   "instructions": [
+    "Sit with the handles beside your hips.",
+    "Press the handles down until your arms are straight.",
+    "Let them rise slowly."
+   ],
+   "tips": [
+    "Lets you load the dip safely.",
+    "Keep your chest up."
+   ],
+   "mistakes": [
+    "Shrugging the shoulders.",
+    "Partial reps."
+   ],
+   "alternatives": [
+    "triceps-dip",
+    "cable-triceps-pushdown"
+   ],
+   "ranking": {
+    "method": "load",
+    "thresholds": [
+     0.5,
+     0.85,
+     1.2,
+     1.55
+    ],
+    "note": "Machine and cable loads differ between manufacturers, so compare these tiers only on similar equipment."
+   }
+  },
+  {
+   "slug": "band-triceps-pushdown",
+   "name": "Band Triceps Pushdown",
+   "primary": [
+    "triceps"
+   ],
+   "secondary": [],
+   "equipment": "band",
+   "mechanic": "isolation",
+   "difficulty": "beginner",
+   "instructions": [
+    "Anchor a band overhead and hold an end in each hand.",
+    "Push down until your arms are straight.",
+    "Return slowly."
+   ],
+   "tips": [
+    "A handy home alternative."
+   ],
+   "mistakes": [
+    "Letting the elbows drift."
+   ],
+   "alternatives": [
+    "cable-triceps-pushdown"
+   ],
+   "ranking": {
+    "method": "none",
+    "thresholds": [],
+    "note": "Band tension varies too much to rank fairly."
+   }
+  },
+  {
+   "slug": "dumbbell-wrist-curl",
+   "name": "Dumbbell Wrist Curl",
+   "primary": [
+    "forearms"
+   ],
+   "secondary": [],
+   "equipment": "dumbbell",
+   "mechanic": "isolation",
+   "difficulty": "beginner",
+   "instructions": [
+    "Sit with your forearms on your thighs, palms up, wrists past your knees.",
+    "Let the dumbbells roll down to your fingertips.",
+    "Curl your wrists up as high as you can."
+   ],
+   "tips": [
+    "High reps work well.",
+    "Keep the forearms flat on your legs."
+   ],
+   "mistakes": [
+    "Lifting the forearms.",
+    "Using a tiny range."
+   ],
+   "alternatives": [
+    "reverse-curl",
+    "hammer-curl"
+   ],
+   "ranking": {
+    "method": "load",
+    "thresholds": [
+     0.08,
+     0.14,
+     0.2,
+     0.27
+    ],
+    "note": "Weight of one dumbbell."
+   }
+  },
+  {
+   "slug": "reverse-curl",
+   "name": "Reverse Curl",
+   "primary": [
+    "forearms"
+   ],
+   "secondary": [
+    "biceps"
+   ],
+   "equipment": "barbell",
+   "mechanic": "isolation",
+   "difficulty": "beginner",
+   "instructions": [
+    "Hold a barbell or EZ bar with an overhand grip.",
+    "Curl it up keeping your wrists straight.",
+    "Lower slowly."
+   ],
+   "tips": [
+    "Works the top of the forearm.",
+    "Go lighter than a normal curl."
+   ],
+   "mistakes": [
+    "Letting the wrists bend.",
+    "Swinging."
+   ],
+   "alternatives": [
+    "hammer-curl",
+    "dumbbell-wrist-curl"
+   ],
+   "ranking": {
+    "method": "load",
+    "thresholds": [
+     0.18,
+     0.3,
+     0.42,
+     0.55
+    ],
+    "note": "Total weight including the bar."
+   }
+  },
+  {
+   "slug": "barbell-back-squat",
+   "name": "Barbell Back Squat",
+   "primary": [
+    "quadriceps",
+    "glutes"
+   ],
+   "secondary": [
+    "hamstrings",
+    "lowerBack",
+    "abdominals"
+   ],
+   "equipment": "barbell",
+   "mechanic": "compound",
+   "difficulty": "intermediate",
+   "instructions": [
+    "Set the bar on your upper back and step out with feet about shoulder-width apart.",
+    "Brace your core and sit down between your heels.",
+    "Go to at least thigh-parallel, keeping your chest up.",
+    "Drive through the whole foot to stand back up."
+   ],
+   "tips": [
+    "Knees track over the toes.",
+    "Take a big breath and brace before each rep."
+   ],
+   "mistakes": [
+    "Knees caving in.",
+    "Heels lifting.",
+    "Cutting depth short."
+   ],
+   "alternatives": [
+    "front-squat",
+    "goblet-squat",
+    "leg-press",
+    "hack-squat"
+   ],
+   "ranking": {
+    "method": "load",
+    "thresholds": [
+     0.75,
+     1.25,
+     1.75,
+     2.25
+    ],
+    "note": "Total weight including the bar."
+   }
+  },
+  {
+   "slug": "front-squat",
+   "name": "Front Squat",
+   "primary": [
+    "quadriceps"
+   ],
+   "secondary": [
+    "glutes",
+    "abdominals",
+    "back"
+   ],
+   "equipment": "barbell",
+   "mechanic": "compound",
+   "difficulty": "advanced",
+   "instructions": [
+    "Rest the bar on your front shoulders with elbows high.",
+    "Sit straight down keeping your torso upright.",
+    "Drive up keeping your elbows high."
+   ],
+   "tips": [
+    "Crossed arms work if wrist mobility is limited.",
+    "Upright posture keeps the work on the quads."
+   ],
+   "mistakes": [
+    "Elbows dropping and the bar rolling forward.",
+    "Rounding the upper back."
+   ],
+   "alternatives": [
+    "barbell-back-squat",
+    "goblet-squat",
+    "hack-squat"
+   ],
+   "ranking": {
+    "method": "load",
+    "thresholds": [
+     0.6,
+     1.0,
+     1.4,
+     1.8
+    ],
+    "note": "Total weight including the bar."
+   }
+  },
+  {
+   "slug": "goblet-squat",
+   "name": "Goblet Squat",
+   "primary": [
+    "quadriceps",
+    "glutes"
+   ],
+   "secondary": [
+    "abdominals"
+   ],
+   "equipment": "dumbbell",
+   "mechanic": "compound",
+   "difficulty": "beginner",
+   "instructions": [
+    "Hold one dumbbell vertically against your chest.",
+    "Squat down between your knees, keeping your chest tall.",
+    "Stand back up driving through your heels."
+   ],
+   "tips": [
+    "The best way to learn the squat.",
+    "Elbows can gently push your knees out at the bottom."
+   ],
+   "mistakes": [
+    "Letting the dumbbell pull you forward.",
+    "Heels lifting."
+   ],
+   "alternatives": [
+    "barbell-back-squat",
+    "leg-press"
+   ],
+   "ranking": {
+    "method": "load",
+    "thresholds": [
+     0.25,
+     0.45,
+     0.65,
+     0.85
+    ],
+    "note": "Weight of the single dumbbell."
+   }
+  },
+  {
+   "slug": "leg-press",
+   "name": "Leg Press",
+   "primary": [
+    "quadriceps",
+    "glutes"
+   ],
+   "secondary": [
+    "hamstrings"
+   ],
+   "equipment": "machine",
+   "mechanic": "compound",
+   "difficulty": "beginner",
+   "instructions": [
+    "Sit with your back flat on the pad and feet shoulder-width on the platform.",
+    "Release the safeties and lower the platform until your knees reach about 90°.",
+    "Press back up without locking your knees hard."
+   ],
+   "tips": [
+    "Higher foot placement works the glutes more.",
+    "Keep your lower back on the pad."
+   ],
+   "mistakes": [
+    "Lowering so far the hips curl off the seat.",
+    "Locking out the knees."
+   ],
+   "alternatives": [
+    "barbell-back-squat",
+    "hack-squat",
+    "goblet-squat"
+   ],
+   "ranking": {
+    "method": "load",
+    "thresholds": [
+     1.0,
+     1.75,
+     2.5,
+     3.25
+    ],
+    "note": "Machine and cable loads differ between manufacturers, so compare these tiers only on similar equipment."
+   }
+  },
+  {
+   "slug": "hack-squat",
+   "name": "Hack Squat",
+   "primary": [
+    "quadriceps"
+   ],
+   "secondary": [
+    "glutes"
+   ],
+   "equipment": "machine",
+   "mechanic": "compound",
+   "difficulty": "intermediate",
+   "instructions": [
+    "Stand on the platform with your back against the pad and shoulders under the pads.",
+    "Release the safeties and squat down to at least parallel.",
+    "Drive back up through your feet."
+   ],
+   "tips": [
+    "A narrower stance hits the quads harder.",
+    "Control the bottom."
+   ],
+   "mistakes": [
+    "Knees caving.",
+    "Half reps."
+   ],
+   "alternatives": [
+    "leg-press",
+    "barbell-back-squat",
+    "smith-machine-squat"
+   ],
+   "ranking": {
+    "method": "load",
+    "thresholds": [
+     0.75,
+     1.25,
+     1.75,
+     2.25
+    ],
+    "note": "Machine and cable loads differ between manufacturers, so compare these tiers only on similar equipment."
+   }
+  },
+  {
+   "slug": "smith-machine-squat",
+   "name": "Smith Machine Squat",
+   "primary": [
+    "quadriceps",
+    "glutes"
+   ],
+   "secondary": [
+    "hamstrings"
+   ],
+   "equipment": "machine",
+   "mechanic": "compound",
+   "difficulty": "beginner",
+   "instructions": [
+    "Set the bar on your upper back with feet slightly in front of you.",
+    "Unhook the bar and squat down to parallel.",
+    "Push back up and re-rack using the hooks."
+   ],
+   "tips": [
+    "The fixed path lets you focus on the legs.",
+    "Set the safety stops just below your lowest point."
+   ],
+   "mistakes": [
+    "Feet directly under the bar, which strains the knees.",
+    "Bouncing at the bottom."
+   ],
+   "alternatives": [
+    "barbell-back-squat",
+    "hack-squat"
+   ],
+   "ranking": {
+    "method": "load",
+    "thresholds": [
+     0.6,
+     1.0,
+     1.5,
+     1.9
+    ],
+    "note": "Machine and cable loads differ between manufacturers, so compare these tiers only on similar equipment."
+   }
+  },
+  {
+   "slug": "leg-extension",
+   "name": "Leg Extension",
+   "primary": [
+    "quadriceps"
+   ],
+   "secondary": [],
+   "equipment": "machine",
+   "mechanic": "isolation",
+   "difficulty": "beginner",
+   "instructions": [
+    "Sit with the pad on your lower shins and knees lined up with the machine's pivot.",
+    "Straighten your legs fully.",
+    "Lower slowly to about 90°."
+   ],
+   "tips": [
+    "Pause at the top for a strong squeeze.",
+    "Point your toes up."
+   ],
+   "mistakes": [
+    "Swinging the weight up.",
+    "Lifting the hips off the seat."
+   ],
+   "alternatives": [
+    "leg-press",
+    "bulgarian-split-squat"
+   ],
+   "ranking": {
+    "method": "load",
+    "thresholds": [
+     0.35,
+     0.6,
+     0.85,
+     1.1
+    ],
+    "note": "Machine and cable loads differ between manufacturers, so compare these tiers only on similar equipment."
+   }
+  },
+  {
+   "slug": "bulgarian-split-squat",
+   "name": "Bulgarian Split Squat",
+   "primary": [
+    "quadriceps",
+    "glutes"
+   ],
+   "secondary": [
+    "hamstrings"
+   ],
+   "equipment": "dumbbell",
+   "mechanic": "compound",
+   "difficulty": "intermediate",
+   "instructions": [
+    "Stand in front of a bench and rest the top of your back foot on it.",
+    "Holding dumbbells, lower your back knee toward the floor.",
+    "Push through your front foot to stand back up."
+   ],
+   "tips": [
+    "A slight forward lean works the glutes more.",
+    "Find a stance where your front heel stays down."
+   ],
+   "mistakes": [
+    "Front foot too close to the bench.",
+    "Pushing off the back foot."
+   ],
+   "alternatives": [
+    "dumbbell-walking-lunge",
+    "goblet-squat"
+   ],
+   "ranking": {
+    "method": "load",
+    "thresholds": [
+     0.12,
+     0.22,
+     0.32,
+     0.42
+    ],
+    "note": "Weight of one dumbbell."
+   }
+  },
+  {
+   "slug": "dumbbell-walking-lunge",
+   "name": "Dumbbell Walking Lunge",
+   "primary": [
+    "quadriceps",
+    "glutes"
+   ],
+   "secondary": [
+    "hamstrings",
+    "calves"
+   ],
+   "equipment": "dumbbell",
+   "mechanic": "compound",
+   "difficulty": "beginner",
+   "instructions": [
+    "Hold dumbbells at your sides and step forward into a lunge.",
+    "Lower until your back knee nearly touches the floor.",
+    "Drive through your front foot and step straight into the next lunge."
+   ],
+   "tips": [
+    "Count each leg as one rep, or log reps per leg consistently.",
+    "Take long steps for more glute work."
+   ],
+   "mistakes": [
+    "Short steps that push the knee far past the toes.",
+    "Leaning the torso way forward."
+   ],
+   "alternatives": [
+    "bulgarian-split-squat",
+    "barbell-lunge"
+   ],
+   "ranking": {
+    "method": "load",
+    "thresholds": [
+     0.12,
+     0.22,
+     0.32,
+     0.42
+    ],
+    "note": "Weight of one dumbbell."
+   }
+  },
+  {
+   "slug": "barbell-lunge",
+   "name": "Barbell Reverse Lunge",
+   "primary": [
+    "quadriceps",
+    "glutes"
+   ],
+   "secondary": [
+    "hamstrings"
+   ],
+   "equipment": "barbell",
+   "mechanic": "compound",
+   "difficulty": "intermediate",
+   "instructions": [
+    "Set a bar on your upper back.",
+    "Step back and lower your back knee toward the floor.",
+    "Drive through the front foot to return."
+   ],
+   "tips": [
+    "Stepping back is easier on the knees.",
+    "Keep your torso upright."
+   ],
+   "mistakes": [
+    "Narrow tightrope stance.",
+    "Wobbling knees."
+   ],
+   "alternatives": [
+    "dumbbell-walking-lunge",
+    "bulgarian-split-squat"
+   ],
+   "ranking": {
+    "method": "load",
+    "thresholds": [
+     0.4,
+     0.7,
+     1.0,
+     1.3
+    ],
+    "note": "Total weight including the bar."
+   }
+  },
+  {
+   "slug": "bodyweight-squat",
+   "name": "Bodyweight Squat",
+   "primary": [
+    "quadriceps",
+    "glutes"
+   ],
+   "secondary": [],
+   "equipment": "bodyweight",
+   "mechanic": "compound",
+   "difficulty": "beginner",
+   "instructions": [
+    "Stand with feet shoulder-width apart, arms in front for balance.",
+    "Sit down as low as you comfortably can with your chest up.",
+    "Stand back up."
+   ],
+   "tips": [
+    "Great warm-up or home workout.",
+    "Keep the whole foot planted."
+   ],
+   "mistakes": [
+    "Heels lifting.",
+    "Knees collapsing inward."
+   ],
+   "alternatives": [
+    "goblet-squat",
+    "pistol-squat"
+   ],
+   "ranking": {
+    "method": "reps",
+    "thresholds": [
+     20,
+     40,
+     60,
+     80
+    ],
+    "note": "Reps in one set. Weighted sets are converted to bodyweight-equivalent reps."
+   }
+  },
+  {
+   "slug": "pistol-squat",
+   "name": "Pistol Squat",
+   "primary": [
+    "quadriceps",
+    "glutes"
+   ],
+   "secondary": [
+    "abdominals"
+   ],
+   "equipment": "bodyweight",
+   "mechanic": "compound",
+   "difficulty": "advanced",
+   "instructions": [
+    "Stand on one leg with the other straight out in front.",
+    "Squat down on the standing leg as low as you can.",
+    "Stand back up without touching the free foot down."
+   ],
+   "tips": [
+    "Hold a post or sit to a box while learning.",
+    "Count reps per leg."
+   ],
+   "mistakes": [
+    "Collapsing at the bottom.",
+    "Heel lifting."
+   ],
+   "alternatives": [
+    "bulgarian-split-squat",
+    "bodyweight-squat"
+   ],
+   "ranking": {
+    "method": "reps",
+    "thresholds": [
+     1,
+     5,
+     10,
+     15
+    ],
+    "note": "Reps in one set. Weighted sets are converted to bodyweight-equivalent reps."
+   }
+  },
+  {
+   "slug": "band-squat",
+   "name": "Band Squat",
+   "primary": [
+    "quadriceps",
+    "glutes"
+   ],
+   "secondary": [],
+   "equipment": "band",
+   "mechanic": "compound",
+   "difficulty": "beginner",
+   "instructions": [
+    "Stand on a band and loop it over your shoulders.",
+    "Squat down and stand back up against the band."
+   ],
+   "tips": [
+    "Hardest at the top where you're strongest."
+   ],
+   "mistakes": [
+    "Letting the band pull you forward."
+   ],
+   "alternatives": [
+    "goblet-squat",
+    "bodyweight-squat"
+   ],
+   "ranking": {
+    "method": "none",
+    "thresholds": [],
+    "note": "Band tension varies too much to rank fairly."
+   }
+  },
+  {
+   "slug": "lying-leg-curl",
+   "name": "Lying Leg Curl",
+   "primary": [
+    "hamstrings"
+   ],
+   "secondary": [
+    "calves"
+   ],
+   "equipment": "machine",
+   "mechanic": "isolation",
+   "difficulty": "beginner",
+   "instructions": [
+    "Lie face down with the pad just above your heels and knees just off the bench.",
+    "Curl your heels toward your glutes.",
+    "Lower slowly to straight legs."
+   ],
+   "tips": [
+    "Keep your hips pressed into the pad.",
+    "Control the way down."
+   ],
+   "mistakes": [
+    "Hips lifting off the pad.",
+    "Jerking the weight."
+   ],
+   "alternatives": [
+    "seated-leg-curl",
+    "romanian-deadlift",
+    "nordic-curl"
+   ],
+   "ranking": {
+    "method": "load",
+    "thresholds": [
+     0.25,
+     0.45,
+     0.65,
+     0.85
+    ],
+    "note": "Machine and cable loads differ between manufacturers, so compare these tiers only on similar equipment."
+   }
+  },
+  {
+   "slug": "seated-leg-curl",
+   "name": "Seated Leg Curl",
+   "primary": [
+    "hamstrings"
+   ],
+   "secondary": [
+    "calves"
+   ],
+   "equipment": "machine",
+   "mechanic": "isolation",
+   "difficulty": "beginner",
+   "instructions": [
+    "Sit with the pad behind your lower calves and the thigh pad snug.",
+    "Curl your heels down and back under the seat.",
+    "Let them rise slowly."
+   ],
+   "tips": [
+    "Lean forward slightly for a bigger hamstring stretch.",
+    "Pause at full contraction."
+   ],
+   "mistakes": [
+    "Loose thigh pad letting you lift up.",
+    "Partial reps."
+   ],
+   "alternatives": [
+    "lying-leg-curl",
+    "romanian-deadlift"
+   ],
+   "ranking": {
+    "method": "load",
+    "thresholds": [
+     0.3,
+     0.5,
+     0.7,
+     0.9
+    ],
+    "note": "Machine and cable loads differ between manufacturers, so compare these tiers only on similar equipment."
+   }
+  },
+  {
+   "slug": "nordic-curl",
+   "name": "Nordic Hamstring Curl",
+   "primary": [
+    "hamstrings"
+   ],
+   "secondary": [
+    "glutes"
+   ],
+   "equipment": "bodyweight",
+   "mechanic": "isolation",
+   "difficulty": "advanced",
+   "instructions": [
+    "Kneel with your ankles anchored under a pad or by a partner.",
+    "Keeping your hips straight, lower your body forward as slowly as you can.",
+    "Catch yourself with your hands and pull back up with your hamstrings."
+   ],
+   "tips": [
+    "Even slow lowering alone builds strength.",
+    "Keep a straight line from knees to head."
+   ],
+   "mistakes": [
+    "Bending at the hips.",
+    "Dropping fast."
+   ],
+   "alternatives": [
+    "lying-leg-curl",
+    "seated-leg-curl"
+   ],
+   "ranking": {
+    "method": "reps",
+    "thresholds": [
+     1,
+     3,
+     6,
+     10
+    ],
+    "note": "Reps in one set. Weighted sets are converted to bodyweight-equivalent reps."
+   }
+  },
+  {
+   "slug": "barbell-hip-thrust",
+   "name": "Barbell Hip Thrust",
+   "primary": [
+    "glutes"
+   ],
+   "secondary": [
+    "hamstrings"
+   ],
+   "equipment": "barbell",
+   "mechanic": "compound",
+   "difficulty": "intermediate",
+   "instructions": [
+    "Sit with your upper back against a bench and a padded bar over your hips.",
+    "Plant your feet so your shins are vertical at the top.",
+    "Drive your hips up until your body is flat from shoulders to knees.",
+    "Lower slowly."
+   ],
+   "tips": [
+    "Tuck your chin and keep ribs down.",
+    "Pause and squeeze at the top."
+   ],
+   "mistakes": [
+    "Overarching the lower back.",
+    "Feet too far out."
+   ],
+   "alternatives": [
+    "glute-bridge",
+    "cable-pull-through"
+   ],
+   "ranking": {
+    "method": "load",
+    "thresholds": [
+     1.0,
+     1.5,
+     2.0,
+     2.6
+    ],
+    "note": "Total weight including the bar."
+   }
+  },
+  {
+   "slug": "glute-bridge",
+   "name": "Glute Bridge",
+   "primary": [
+    "glutes"
+   ],
+   "secondary": [
+    "hamstrings"
+   ],
+   "equipment": "bodyweight",
+   "mechanic": "isolation",
+   "difficulty": "beginner",
+   "instructions": [
+    "Lie on your back with knees bent and feet flat.",
+    "Drive your hips up until your body is straight from shoulders to knees.",
+    "Lower slowly."
+   ],
+   "tips": [
+    "Push through your heels.",
+    "Do single-leg reps to make it harder."
+   ],
+   "mistakes": [
+    "Arching the back.",
+    "Feet too close."
+   ],
+   "alternatives": [
+    "barbell-hip-thrust",
+    "cable-glute-kickback"
+   ],
+   "ranking": {
+    "method": "reps",
+    "thresholds": [
+     15,
+     30,
+     45,
+     60
+    ],
+    "note": "Reps in one set. Weighted sets are converted to bodyweight-equivalent reps."
+   }
+  },
+  {
+   "slug": "cable-glute-kickback",
+   "name": "Cable Glute Kickback",
+   "primary": [
+    "glutes"
+   ],
+   "secondary": [
+    "hamstrings"
+   ],
+   "equipment": "cable",
+   "mechanic": "isolation",
+   "difficulty": "beginner",
+   "instructions": [
+    "Attach an ankle strap to a low pulley.",
+    "Hold the frame and kick your leg straight back.",
+    "Squeeze at the top and return slowly."
+   ],
+   "tips": [
+    "Keep your torso still.",
+    "Small range, full squeeze."
+   ],
+   "mistakes": [
+    "Arching the lower back to kick higher.",
+    "Swinging."
+   ],
+   "alternatives": [
+    "glute-bridge",
+    "barbell-hip-thrust"
+   ],
+   "ranking": {
+    "method": "load",
+    "thresholds": [
+     0.05,
+     0.1,
+     0.15,
+     0.2
+    ],
+    "note": "Machine and cable loads differ between manufacturers, so compare these tiers only on similar equipment."
+   }
+  },
+  {
+   "slug": "hip-abduction-machine",
+   "name": "Hip Abduction Machine",
+   "primary": [
+    "glutes"
+   ],
+   "secondary": [],
+   "equipment": "machine",
+   "mechanic": "isolation",
+   "difficulty": "beginner",
+   "instructions": [
+    "Sit with the pads against the outside of your knees.",
+    "Push your knees out as far as you can.",
+    "Return slowly."
+   ],
+   "tips": [
+    "Lean forward slightly to bias the upper glutes.",
+    "Pause when fully open."
+   ],
+   "mistakes": [
+    "Letting the weights slam.",
+    "Bouncing."
+   ],
+   "alternatives": [
+    "band-lateral-walk",
+    "cable-glute-kickback"
+   ],
+   "ranking": {
+    "method": "load",
+    "thresholds": [
+     0.4,
+     0.7,
+     1.0,
+     1.3
+    ],
+    "note": "Machine and cable loads differ between manufacturers, so compare these tiers only on similar equipment."
+   }
+  },
+  {
+   "slug": "band-lateral-walk",
+   "name": "Band Lateral Walk",
+   "primary": [
+    "glutes"
+   ],
+   "secondary": [],
+   "equipment": "band",
+   "mechanic": "isolation",
+   "difficulty": "beginner",
+   "instructions": [
+    "Place a loop band around your legs above the knees.",
+    "Sit into a quarter squat.",
+    "Step sideways, keeping tension on the band."
+   ],
+   "tips": [
+    "A great glute warm-up."
+   ],
+   "mistakes": [
+    "Standing up tall.",
+    "Knees caving in."
+   ],
+   "alternatives": [
+    "hip-abduction-machine"
+   ],
+   "ranking": {
+    "method": "none",
+    "thresholds": [],
+    "note": "Band tension varies too much to rank fairly."
+   }
+  },
+  {
+   "slug": "standing-calf-raise",
+   "name": "Standing Calf Raise",
+   "primary": [
+    "calves"
+   ],
+   "secondary": [],
+   "equipment": "machine",
+   "mechanic": "isolation",
+   "difficulty": "beginner",
+   "instructions": [
+    "Stand on the step with the pads on your shoulders and heels hanging off.",
+    "Lower your heels for a deep stretch.",
+    "Rise up onto your toes as high as you can."
+   ],
+   "tips": [
+    "Pause at the bottom to kill the bounce.",
+    "Straight knees work the upper calf."
+   ],
+   "mistakes": [
+    "Bouncing through short reps.",
+    "Bending the knees to help."
+   ],
+   "alternatives": [
+    "seated-calf-raise",
+    "single-leg-calf-raise"
+   ],
+   "ranking": {
+    "method": "load",
+    "thresholds": [
+     0.75,
+     1.25,
+     1.75,
+     2.25
+    ],
+    "note": "Machine and cable loads differ between manufacturers, so compare these tiers only on similar equipment."
+   }
+  },
+  {
+   "slug": "seated-calf-raise",
+   "name": "Seated Calf Raise",
+   "primary": [
+    "calves"
+   ],
+   "secondary": [],
+   "equipment": "machine",
+   "mechanic": "isolation",
+   "difficulty": "beginner",
+   "instructions": [
+    "Sit with the pad on your lower thighs and balls of your feet on the step.",
+    "Lower your heels for a full stretch.",
+    "Raise them as high as you can."
+   ],
+   "tips": [
+    "Bent knees target the deeper soleus.",
+    "Slow reps work best."
+   ],
+   "mistakes": [
+    "Short bouncing reps.",
+    "Using your hands to push."
+   ],
+   "alternatives": [
+    "standing-calf-raise"
+   ],
+   "ranking": {
+    "method": "load",
+    "thresholds": [
+     0.4,
+     0.75,
+     1.1,
+     1.5
+    ],
+    "note": "Machine and cable loads differ between manufacturers, so compare these tiers only on similar equipment."
+   }
+  },
+  {
+   "slug": "single-leg-calf-raise",
+   "name": "Single-Leg Calf Raise",
+   "primary": [
+    "calves"
+   ],
+   "secondary": [],
+   "equipment": "bodyweight",
+   "mechanic": "isolation",
+   "difficulty": "beginner",
+   "instructions": [
+    "Stand on one foot on a step, holding on for balance.",
+    "Lower your heel below the step.",
+    "Rise onto your toes as high as you can."
+   ],
+   "tips": [
+    "Hold a dumbbell to add load.",
+    "Count reps per leg."
+   ],
+   "mistakes": [
+    "Bouncing.",
+    "Bending the knee."
+   ],
+   "alternatives": [
+    "standing-calf-raise",
+    "seated-calf-raise"
+   ],
+   "ranking": {
+    "method": "reps",
+    "thresholds": [
+     10,
+     20,
+     30,
+     40
+    ],
+    "note": "Reps in one set. Weighted sets are converted to bodyweight-equivalent reps."
+   }
+  },
+  {
+   "slug": "hanging-leg-raise",
+   "name": "Hanging Leg Raise",
+   "primary": [
+    "abdominals"
+   ],
+   "secondary": [
+    "forearms"
+   ],
+   "equipment": "bodyweight",
+   "mechanic": "isolation",
+   "difficulty": "intermediate",
+   "instructions": [
+    "Hang from a pull-up bar with straight arms.",
+    "Raise your legs by curling your pelvis up.",
+    "Lower slowly without swinging."
+   ],
+   "tips": [
+    "Bent knees make it easier.",
+    "Think about curling the hips, not just lifting the legs."
+   ],
+   "mistakes": [
+    "Swinging for momentum.",
+    "Only lifting the legs to hip height."
+   ],
+   "alternatives": [
+    "cable-crunch",
+    "ab-wheel-rollout",
+    "crunch"
+   ],
+   "ranking": {
+    "method": "reps",
+    "thresholds": [
+     5,
+     12,
+     20,
+     28
+    ],
+    "note": "Reps in one set. Weighted sets are converted to bodyweight-equivalent reps."
+   }
+  },
+  {
+   "slug": "cable-crunch",
+   "name": "Cable Crunch",
+   "primary": [
+    "abdominals"
+   ],
+   "secondary": [],
+   "equipment": "cable",
+   "mechanic": "isolation",
+   "difficulty": "beginner",
+   "instructions": [
+    "Kneel facing a high pulley holding a rope beside your head.",
+    "Crunch down by curling your ribs toward your hips.",
+    "Return slowly."
+   ],
+   "tips": [
+    "Keep the hips still; only the spine moves.",
+    "Exhale hard at the bottom."
+   ],
+   "mistakes": [
+    "Sitting back on the heels to pull with the hips.",
+    "Pulling with the arms."
+   ],
+   "alternatives": [
+    "machine-crunch",
+    "hanging-leg-raise",
+    "crunch"
+   ],
+   "ranking": {
+    "method": "load",
+    "thresholds": [
+     0.3,
+     0.5,
+     0.75,
+     1.0
+    ],
+    "note": "Machine and cable loads differ between manufacturers, so compare these tiers only on similar equipment."
+   }
+  },
+  {
+   "slug": "machine-crunch",
+   "name": "Ab Crunch Machine",
+   "primary": [
+    "abdominals"
+   ],
+   "secondary": [],
+   "equipment": "machine",
+   "mechanic": "isolation",
+   "difficulty": "beginner",
+   "instructions": [
+    "Sit in the machine with the pads on your chest or the handles in hand.",
+    "Curl your torso forward and down.",
+    "Return slowly."
+   ],
+   "tips": [
+    "Lets you add load progressively.",
+    "Move through the spine, not the hips."
+   ],
+   "mistakes": [
+    "Using momentum.",
+    "Pulling with the arms."
+   ],
+   "alternatives": [
+    "cable-crunch",
+    "crunch"
+   ],
+   "ranking": {
+    "method": "load",
+    "thresholds": [
+     0.3,
+     0.55,
+     0.8,
+     1.05
+    ],
+    "note": "Machine and cable loads differ between manufacturers, so compare these tiers only on similar equipment."
+   }
+  },
+  {
+   "slug": "crunch",
+   "name": "Crunch",
+   "primary": [
+    "abdominals"
+   ],
+   "secondary": [],
+   "equipment": "bodyweight",
+   "mechanic": "isolation",
+   "difficulty": "beginner",
+   "instructions": [
+    "Lie on your back with knees bent and hands by your temples.",
+    "Curl your shoulders off the floor toward your hips.",
+    "Lower slowly."
+   ],
+   "tips": [
+    "Exhale as you curl up.",
+    "Keep your chin off your chest."
+   ],
+   "mistakes": [
+    "Yanking the head with the hands.",
+    "Sitting all the way up with the hip flexors."
+   ],
+   "alternatives": [
+    "cable-crunch",
+    "hanging-leg-raise"
+   ],
+   "ranking": {
+    "method": "reps",
+    "thresholds": [
+     20,
+     40,
+     60,
+     80
+    ],
+    "note": "Reps in one set. Weighted sets are converted to bodyweight-equivalent reps."
+   }
+  },
+  {
+   "slug": "ab-wheel-rollout",
+   "name": "Ab Wheel Rollout",
+   "primary": [
+    "abdominals"
+   ],
+   "secondary": [
+    "lowerBack",
+    "shoulders"
+   ],
+   "equipment": "bodyweight",
+   "mechanic": "compound",
+   "difficulty": "advanced",
+   "instructions": [
+    "Kneel holding an ab wheel under your shoulders.",
+    "Roll forward slowly, keeping your back from sagging.",
+    "Go as far as you can control, then pull back with your abs."
+   ],
+   "tips": [
+    "Roll toward a wall to limit range while learning.",
+    "Squeeze your glutes."
+   ],
+   "mistakes": [
+    "Lower back sagging.",
+    "Leading with the hips on the way back."
+   ],
+   "alternatives": [
+    "hanging-leg-raise",
+    "cable-crunch"
+   ],
+   "ranking": {
+    "method": "reps",
+    "thresholds": [
+     3,
+     10,
+     20,
+     30
+    ],
+    "note": "Reps in one set. Weighted sets are converted to bodyweight-equivalent reps."
+   }
+  },
+  {
+   "slug": "cable-woodchop",
+   "name": "Cable Woodchop",
+   "primary": [
+    "abdominals"
+   ],
+   "secondary": [
+    "shoulders"
+   ],
+   "equipment": "cable",
+   "mechanic": "compound",
+   "difficulty": "beginner",
+   "instructions": [
+    "Set a pulley high and stand side-on, holding the handle with both hands.",
+    "Pull the handle diagonally down across your body, rotating through your torso.",
+    "Return slowly and repeat, then switch sides."
+   ],
+   "tips": [
+    "Pivot your back foot.",
+    "Keep the arms fairly straight."
+   ],
+   "mistakes": [
+    "Pulling with only the arms.",
+    "Twisting the lower back without moving the hips."
+   ],
+   "alternatives": [
+    "cable-crunch",
+    "russian-twist"
+   ],
+   "ranking": {
+    "method": "none",
+    "thresholds": [],
+    "note": "Rotation loads aren't comparable enough to rank."
+   }
+  },
+  {
+   "slug": "russian-twist",
+   "name": "Russian Twist",
+   "primary": [
+    "abdominals"
+   ],
+   "secondary": [],
+   "equipment": "bodyweight",
+   "mechanic": "isolation",
+   "difficulty": "beginner",
+   "instructions": [
+    "Sit with knees bent and lean back slightly.",
+    "Rotate your torso to touch the floor beside each hip.",
+    "Count each side as one rep."
+   ],
+   "tips": [
+    "Hold a plate to add load.",
+    "Lift your feet to make it harder."
+   ],
+   "mistakes": [
+    "Rounding the back.",
+    "Only moving the arms."
+   ],
+   "alternatives": [
+    "cable-woodchop",
+    "crunch"
+   ],
+   "ranking": {
+    "method": "reps",
+    "thresholds": [
+     20,
+     40,
+     60,
+     80
+    ],
+    "note": "Reps in one set. Weighted sets are converted to bodyweight-equivalent reps."
+   }
+  }
+ ]
+}
