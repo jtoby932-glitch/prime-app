@@ -1,6 +1,7 @@
 #if DEBUG
 import Foundation
 import SwiftData
+import SwiftUI
 
 /// Debug-only sample data for screenshots and simulator checks. Never compiled into release builds.
 /// Launch arguments: `-demo` seeds six weeks of training, `-tab <home|workouts|exercises|rankings|profile>`
