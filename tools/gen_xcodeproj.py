@@ -157,7 +157,7 @@ def build():
     }
     app_settings = {
         "ASSETCATALOG_COMPILER_APPICON_NAME": "AppIcon", "ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME": "AccentColor",
-        "CODE_SIGN_STYLE": "Automatic", "CURRENT_PROJECT_VERSION": "1", "ENABLE_PREVIEWS": "YES",
+        "CODE_SIGN_STYLE": "Automatic", "CURRENT_PROJECT_VERSION": "2", "ENABLE_PREVIEWS": "YES",
         "GENERATE_INFOPLIST_FILE": "YES", "INFOPLIST_KEY_CFBundleDisplayName": "PRIME",
         "INFOPLIST_KEY_LSApplicationCategoryType": "public.app-category.healthcare-fitness",
         "INFOPLIST_KEY_UIApplicationSceneManifest_Generation": "YES",
@@ -167,13 +167,13 @@ def build():
         "INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone": "UIInterfaceOrientationPortrait",
         "INFOPLIST_KEY_UIUserInterfaceStyle": "Dark",
         "LD_RUNPATH_SEARCH_PATHS": ["$(inherited)", "@executable_path/Frameworks"],
-        "MARKETING_VERSION": "1.0", "PRODUCT_BUNDLE_IDENTIFIER": BUNDLE_ID, "PRODUCT_NAME": "$(TARGET_NAME)",
+        "MARKETING_VERSION": "2.0", "PRODUCT_BUNDLE_IDENTIFIER": BUNDLE_ID, "PRODUCT_NAME": "$(TARGET_NAME)",
         "SUPPORTED_PLATFORMS": "iphoneos iphonesimulator", "SUPPORTS_MACCATALYST": "NO",
         "SWIFT_EMIT_LOC_STRINGS": "YES", "SWIFT_VERSION": "5.0", "TARGETED_DEVICE_FAMILY": "1",
     }
     test_settings = {
-        "BUNDLE_LOADER": "$(TEST_HOST)", "CODE_SIGN_STYLE": "Automatic", "CURRENT_PROJECT_VERSION": "1",
-        "GENERATE_INFOPLIST_FILE": "YES", "IPHONEOS_DEPLOYMENT_TARGET": DEPLOYMENT, "MARKETING_VERSION": "1.0",
+        "BUNDLE_LOADER": "$(TEST_HOST)", "CODE_SIGN_STYLE": "Automatic", "CURRENT_PROJECT_VERSION": "2",
+        "GENERATE_INFOPLIST_FILE": "YES", "IPHONEOS_DEPLOYMENT_TARGET": DEPLOYMENT, "MARKETING_VERSION": "2.0",
         "PRODUCT_BUNDLE_IDENTIFIER": BUNDLE_ID + "Tests", "PRODUCT_NAME": "$(TARGET_NAME)",
         "SWIFT_EMIT_LOC_STRINGS": "NO", "SWIFT_VERSION": "5.0", "TARGETED_DEVICE_FAMILY": "1",
         "TEST_HOST": f"$(BUILT_PRODUCTS_DIR)/{APP}.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/{APP}",
