@@ -681,14 +681,18 @@ struct MuscleDistributionCard: View {
     @Environment(TrainingStore.self) private var store
     @Environment(\.bodyModel) private var model
 
+    private static func ranking(_ a: MuscleScore, _ b: MuscleScore) -> Bool {
+        if a.score != b.score { return a.score > b.score }
+        return a.muscle.displayName < b.muscle.displayName
+    }
+
     var body: some View {
         let start = Calendar.prime.date(byAdding: .day, value: -7, to: Date()) ?? Date()
         let samples = store.history.samples(in: DateInterval(start: start, end: Date()))
         let sets = Analytics.setsByMuscle(samples)
-        let top = sets.map { MuscleScore(muscle: $0.key, score: Double($0.value)) }
-            .sorted { $0.score == $1.score ? $0.muscle.displayName < $1.muscle.displayName : $0.score > $1.score }
-            .prefix(5)
-        let maxSets = max(1, top.first?.score ?? 1)
+        let scores: [MuscleScore] = sets.map { MuscleScore(muscle: $0.key, score: Double($0.value)) }
+        let top: [MuscleScore] = Array(scores.sorted(by: Self.ranking).prefix(5))
+        let maxSets: Double = max(1, top.first?.score ?? 1)
         let heat = sets.mapValues { min(1, Double($0) / 10) }
 
         VStack(alignment: .leading, spacing: 14) {
@@ -707,7 +711,7 @@ struct MuscleDistributionCard: View {
                         AnatomyCanvas(side: .back, heat: heat, model: model).frame(width: 56, height: 120)
                     }
                     VStack(alignment: .leading, spacing: 8) {
-                        ForEach(Array(top)) { row in
+                        ForEach(top) { row in
                             VStack(alignment: .leading, spacing: 4) {
                                 HStack {
                                     Text(row.muscle.displayName).font(.caption.weight(.semibold)).foregroundStyle(Theme.textPrimary)
