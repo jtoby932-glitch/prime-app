@@ -1,48 +1,122 @@
 import SwiftUI
 
+// MARK: - Preferences that shape the look
+
+enum AccentChoice: String, CaseIterable, Identifiable {
+    case electric, glacier, violet
+
+    var id: String { rawValue }
+    var displayName: String {
+        switch self {
+        case .electric: return "Electric blue"
+        case .glacier: return "Glacier"
+        case .violet: return "Ultraviolet"
+        }
+    }
+    var base: Color {
+        switch self {
+        case .electric: return Color(hex: 0x397BFF)
+        case .glacier: return Color(hex: 0x2FA8E8)
+        case .violet: return Color(hex: 0x7064FF)
+        }
+    }
+    var highlight: Color {
+        switch self {
+        case .electric: return Color(hex: 0x69B7FF)
+        case .glacier: return Color(hex: 0x8EE1FF)
+        case .violet: return Color(hex: 0xB3A9FF)
+        }
+    }
+    var deep: Color {
+        switch self {
+        case .electric: return Color(hex: 0x1F4FD1)
+        case .glacier: return Color(hex: 0x1373B8)
+        case .violet: return Color(hex: 0x4433D6)
+        }
+    }
+}
+
+enum AnimationLevel: String, CaseIterable, Identifiable {
+    case full, reduced, off
+    var id: String { rawValue }
+    var displayName: String {
+        switch self {
+        case .full: return "Full"
+        case .reduced: return "Reduced"
+        case .off: return "Off"
+        }
+    }
+}
+
+enum BodyModel: String, CaseIterable, Identifiable {
+    case male, female
+    var id: String { rawValue }
+    var displayName: String { self == .male ? "Male figure" : "Female figure" }
+}
+
+// MARK: - Tokens
+
 enum Theme {
-    // Surfaces
-    static let background = Color(hex: 0x050506)
-    static let surface = Color(hex: 0x0D0D0F)
-    static let card = Color(hex: 0x151518)
-    static let cardRaised = Color(hex: 0x1C1C20)
-    static let field = Color(hex: 0x232328)
-    static let stroke = Color.white.opacity(0.07)
-    static let strokeStrong = Color.white.opacity(0.14)
+    /// Set at launch and when the user changes it; the root view is rebuilt on change.
+    static var accentChoice: AccentChoice = .electric
+
+    // Surfaces (black → navy depth)
+    static let background = Color(hex: 0x05070B)
+    static let surface = Color(hex: 0x0A1020)
+    static let card = Color(hex: 0x101A2D)
+    static let cardRaised = Color(hex: 0x15223A)
+    static let field = Color(hex: 0x182742)
+    static let border = Color(hex: 0x1D2B43)
+    static let borderStrong = Color(hex: 0x2A3C5C)
+    static let stroke = border
+    static let strokeStrong = borderStrong
 
     // Text
-    static let textPrimary = Color.white
-    static let textSecondary = Color(hex: 0x9A9AA3)
-    static let textTertiary = Color(hex: 0x5E5E67)
+    static let textPrimary = Color(hex: 0xF5F7FA)
+    static let textSecondary = Color(hex: 0x8795AA)
+    static let textTertiary = Color(hex: 0x56647A)
 
-    // Brand
-    static let accent = Color(hex: 0xC8FF3C)
-    static let accentDeep = Color(hex: 0x8FCB12)
-    static let onAccent = Color(hex: 0x0A0C02)
-    static let accentSoft = Color(hex: 0xC8FF3C).opacity(0.14)
+    // Accent
+    static var accent: Color { accentChoice.base }
+    static var accentHighlight: Color { accentChoice.highlight }
+    static var accentDeep: Color { accentChoice.deep }
+    static let onAccent = Color.white
+    static var accentSoft: Color { accentChoice.base.opacity(0.16) }
 
     // Status
-    static let danger = Color(hex: 0xFF5D5D)
+    static let success = Color(hex: 0x3DD9A4)
+    static let danger = Color(hex: 0xFF5C6C)
     static let warning = Color(hex: 0xFFB547)
-    static let info = Color(hex: 0x6CC6FF)
+    static var info: Color { accentHighlight }
 
-    /// Routine colours.
+    /// Routine colours: distinct but tuned to sit on navy.
     static let palette: [Color] = [
-        Color(hex: 0xC8FF3C), Color(hex: 0x6CC6FF), Color(hex: 0xFF8A5C),
-        Color(hex: 0xB79CFF), Color(hex: 0xFF6FA8), Color(hex: 0x5CE1C6),
+        Color(hex: 0x397BFF), Color(hex: 0x3DD9A4), Color(hex: 0xFF8A5C),
+        Color(hex: 0xA48BFF), Color(hex: 0xFF6FA8), Color(hex: 0x56D4F5),
     ]
 
     static func planColor(_ index: Int) -> Color { palette[((index % palette.count) + palette.count) % palette.count] }
 
-    static let accentGradient = LinearGradient(colors: [Color(hex: 0xDFFF7A), accent, accentDeep], startPoint: .topLeading, endPoint: .bottomTrailing)
+    static var accentGradient: LinearGradient {
+        LinearGradient(colors: [accentHighlight, accent, accentDeep], startPoint: .topLeading, endPoint: .bottomTrailing)
+    }
 
-    static let cardGradient = LinearGradient(colors: [Color(hex: 0x19191D), Color(hex: 0x121215)], startPoint: .top, endPoint: .bottom)
+    static let cardGradient = LinearGradient(colors: [Color(hex: 0x13203A), Color(hex: 0x0E1728)], startPoint: .top, endPoint: .bottom)
 
-    // Geometry
-    static let radius: CGFloat = 22
-    static let radiusSmall: CGFloat = 14
+    /// Faint navy light from the top of the screen.
+    static var backdrop: some View {
+        ZStack {
+            background
+            RadialGradient(colors: [Color(hex: 0x10224A).opacity(0.55), .clear], center: .top, startRadius: 0, endRadius: 520)
+        }
+        .ignoresSafeArea()
+    }
+
+    // Geometry: restrained radii, not pill-shaped
+    static let radius: CGFloat = 18
+    static let radiusSmall: CGFloat = 12
     static let padding: CGFloat = 16
-    static let gutter: CGFloat = 20
+    static let gutter: CGFloat = 18
 }
 
 extension Color {
@@ -57,62 +131,76 @@ extension Color {
     }
 }
 
+// MARK: - Rank colours
+
 extension RankTier {
+    /// The colour used for text and accents.
     var color: Color {
         switch self {
-        case .beginner: return Color(hex: 0x8C93A1)
-        case .bronze: return Color(hex: 0xD08B57)
-        case .silver: return Color(hex: 0xD5DCE6)
-        case .gold: return Color(hex: 0xF2C94C)
-        case .elite: return Theme.accent
+        case .unranked: return Color(hex: 0x7A879C)
+        case .bronze: return Color(hex: 0xD98A52)
+        case .silver: return Color(hex: 0xD3DBE6)
+        case .gold: return Color(hex: 0xF2C14E)
+        case .platinum: return Color(hex: 0x9FE3DA)
+        case .diamond: return Color(hex: 0x6EC8FF)
+        case .elite: return Color(hex: 0x9C82FF)
+        case .master: return Color(hex: 0xFFB648)
+        }
+    }
+
+    var gradientStops: [Color] {
+        switch self {
+        case .unranked: return [Color(hex: 0x2A3650), Color(hex: 0x141D30)]
+        case .bronze: return [Color(hex: 0xF3B886), Color(hex: 0xB8693A), Color(hex: 0x5E2F12)]
+        case .silver: return [Color(hex: 0xFFFFFF), Color(hex: 0xB9C3D1), Color(hex: 0x5F6B7D)]
+        case .gold: return [Color(hex: 0xFFF3B0), Color(hex: 0xF2C14E), Color(hex: 0x946205)]
+        case .platinum: return [Color(hex: 0xF4FFFD), Color(hex: 0xA6E6DD), Color(hex: 0x3B8C86)]
+        case .diamond: return [Color(hex: 0xE6F8FF), Color(hex: 0x6EC8FF), Color(hex: 0x1D58D8)]
+        case .elite: return [Color(hex: 0xE6DCFF), Color(hex: 0x9172FF), Color(hex: 0x3A1CB0)]
+        case .master: return [Color(hex: 0xFFEFB0), Color(hex: 0xF2B33D), Color(hex: 0x9A5A05)]
         }
     }
 
     var gradient: LinearGradient {
-        let colors: [Color]
-        switch self {
-        case .beginner: colors = [Color(hex: 0xB4BAC6), Color(hex: 0x5F6573)]
-        case .bronze: colors = [Color(hex: 0xF2B485), Color(hex: 0x8E5126)]
-        case .silver: colors = [Color(hex: 0xFFFFFF), Color(hex: 0x8D96A3)]
-        case .gold: colors = [Color(hex: 0xFFE89A), Color(hex: 0xB8860B)]
-        case .elite: colors = [Color(hex: 0xEFFFB8), Theme.accent, Color(hex: 0x4E8F00)]
-        }
-        return LinearGradient(colors: colors, startPoint: .topLeading, endPoint: .bottomTrailing)
+        LinearGradient(colors: gradientStops, startPoint: .topLeading, endPoint: .bottomTrailing)
     }
 
-    var glyph: String {
+    /// Light colour behind the emblem during a reveal.
+    var glow: Color {
         switch self {
-        case .beginner: return "circle.dotted"
-        case .bronze: return "1.circle.fill"
-        case .silver: return "2.circle.fill"
-        case .gold: return "3.circle.fill"
-        case .elite: return "crown.fill"
+        case .unranked: return Color(hex: 0x3A4A66)
+        case .master: return Color(hex: 0xFF8A3D)
+        default: return color
         }
     }
+
+    /// 0...1 — higher tiers get more light, particles and haptics.
+    var prestige: Double { Double(rawValue) / 7 }
 }
 
 // MARK: - Typography
 
 extension Font {
-    /// Big condensed numerals for stats and timers.
-    static func primeNumber(_ size: CGFloat, weight: Font.Weight = .heavy) -> Font {
-        .system(size: size, weight: weight, design: .default).width(.condensed)
+    /// Condensed, tabular numerals for statistics, weights and timers.
+    static func primeNumber(_ size: CGFloat, weight: Font.Weight = .bold) -> Font {
+        .system(size: size, weight: weight, design: .default).width(.condensed).monospacedDigit()
     }
 
-    static let primeLargeTitle = Font.system(.largeTitle, design: .default, weight: .heavy).width(.condensed)
+    static let primeLargeTitle = Font.system(.largeTitle, design: .default, weight: .bold)
     static let primeTitle = Font.system(.title2, design: .default, weight: .bold)
+    static let primeTitle3 = Font.system(.title3, design: .default, weight: .semibold)
     static let primeHeadline = Font.system(.headline, design: .default, weight: .semibold)
     static let primeBody = Font.system(.body)
     static let primeCaption = Font.system(.caption, design: .default, weight: .medium)
-    static let primeEyebrow = Font.system(.caption2, design: .default, weight: .bold)
+    static let primeEyebrow = Font.system(.caption2, design: .default, weight: .semibold)
 }
 
 extension View {
     /// Small uppercase label used above sections and stats.
-    func eyebrow() -> some View {
+    func eyebrow(_ color: Color = Theme.textSecondary) -> some View {
         font(.primeEyebrow)
-            .tracking(1.2)
+            .tracking(1.4)
             .textCase(.uppercase)
-            .foregroundStyle(Theme.textSecondary)
+            .foregroundStyle(color)
     }
 }

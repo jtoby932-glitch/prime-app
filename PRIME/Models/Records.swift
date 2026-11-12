@@ -50,8 +50,12 @@ final class PerformanceRanking {
     var standardsVersion: Int = RankingStandard.version
     var recordedAt: Date = Date()
     var sessionID: UUID? = nil
+    /// Entered through "Log a ranked performance" rather than derived from a workout (schema v2).
+    /// Submitted entries are never rebuilt or overwritten.
+    var isSubmitted: Bool = false
 
-    init(exerciseSlug: String, exerciseName: String, result: RankResult, recordedAt: Date, sessionID: UUID?) {
+    init(exerciseSlug: String, exerciseName: String, result: RankResult, recordedAt: Date, sessionID: UUID?, isSubmitted: Bool = false) {
+        self.isSubmitted = isSubmitted
         self.uuid = UUID()
         self.exerciseSlug = exerciseSlug
         self.exerciseName = exerciseName
@@ -69,6 +73,8 @@ final class PerformanceRanking {
         self.sessionID = sessionID
     }
 
-    var tier: RankTier { RankTier(rawValue: tierRaw) ?? .beginner }
+    var tier: RankTier { RankTier(rawValue: tierRaw) ?? .unranked }
+    var isTestedMax: Bool { reps == 1 && method == .relativeLoad }
+    var rankableSet: RankableSet { RankableSet(weightKg: weightKg, reps: reps, date: recordedAt, bodyweightKg: bodyweightKg) }
     var method: RankingMethod { RankingMethod(rawValue: methodRaw) ?? .relativeLoad }
 }

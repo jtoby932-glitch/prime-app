@@ -41,12 +41,12 @@ struct AnalyticsView: View {
                 } else {
                     summaryTiles(samples: samples, sessions: sessions)
                     VolumeOverTimeCard(samples: samples, interval: interval, bucket: bucket, unit: unit)
-                    MuscleVolumeCard(samples: samples, unit: unit)
+                    MuscleVolumeCard(samples: samples, interval: interval, bucket: bucket, unit: unit)
                     ExerciseVolumeCard(samples: samples, unit: unit)
                     StrengthProgressCard(interval: interval, unit: unit)
                     ConsistencyCard(sessions: sessions, interval: interval, bucket: bucket, plannedPerWeek: days.filter { $0.state == .training }.count,
                                     weeklyGoal: profiles.first?.weeklyGoal ?? 3)
-                    CalendarHistoryCard()
+                    CalendarHistoryCard(planned: Set(days.filter { $0.state == .training }.map(\.weekday)))
                     NavigationLink(value: Route.records) {
                         HStack {
                             Label("All personal records", systemImage: "trophy.fill").font(.headline).foregroundStyle(.white)
@@ -93,11 +93,18 @@ struct AnalyticsView: View {
 
     private func summaryTiles(samples: [SetSample], sessions: [SessionSummary]) -> some View {
         let average = sessions.isEmpty ? 0 : sessions.reduce(0) { $0 + $1.duration } / Double(sessions.count)
-        return LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)], spacing: 10) {
-            StatTile(value: "\(sessions.count)", label: "Workouts", symbol: "checkmark.seal.fill")
-            StatTile(value: Format.volume(Analytics.totalVolume(samples), unit: unit, includeUnit: false), label: "Volume (\(unit.symbol))", symbol: "scalemass.fill", tint: Theme.info)
-            StatTile(value: "\(samples.count)", label: "Working sets", symbol: "square.stack.3d.up.fill", tint: Theme.warning)
-            StatTile(value: sessions.isEmpty ? "–" : Format.duration(average), label: "Avg. duration", symbol: "clock.fill")
+        let weeks = max(1, interval.duration / (7 * 86_400))
+        return VStack(alignment: .leading, spacing: 8) {
+            LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)], spacing: 10) {
+                StatTile(count: sessions.count, label: "Workouts", symbol: "checkmark.seal.fill")
+                StatTile(count: samples.count, label: "Sets", symbol: "square.stack.3d.up.fill", tint: Theme.warning)
+                StatTile(count: Analytics.totalReps(samples), label: "Reps", symbol: "repeat")
+                StatTile(value: Format.volume(Analytics.totalVolume(samples), unit: unit, includeUnit: false), label: "Volume \(unit.symbol)", symbol: "scalemass.fill", tint: Theme.info)
+                StatTile(value: Format.number(Double(sessions.count) / weeks, maxFractionDigits: 1), label: "Per week", symbol: "calendar")
+                StatTile(value: sessions.isEmpty ? "–" : Format.duration(average), label: "Avg. time", symbol: "clock.fill")
+            }
+            Text("Everything here is recorded activity from \(useCustom ? "the dates you picked" : range.longLabel). It describes what you did, not how much muscle you've built.")
+                .font(.caption).foregroundStyle(Theme.textTertiary)
         }
     }
 }
@@ -166,8 +173,12 @@ struct VolumeOverTimeCard: View {
 
 struct MuscleVolumeCard: View {
     let samples: [SetSample]
+    let interval: DateInterval
+    let bucket: BucketSize
     let unit: WeightUnit
-    @State private var showSets = false
+    @Environment(\.bodyModel) private var model
+    @State private var showSets = true
+    @State private var focus: MuscleGroup?
 
     var body: some View {
         let volume = Analytics.volumeByMuscle(samples)
@@ -176,12 +187,14 @@ struct MuscleVolumeCard: View {
             .map { MuscleScore(muscle: $0, score: showSets ? Double(sets[$0] ?? 0) : unit.fromKilograms(volume[$0] ?? 0)) }
             .filter { $0.score > 0 }
             .sorted { $0.score > $1.score }
+        let top = rows.first?.score ?? 1
+        let heat = Dictionary(uniqueKeysWithValues: rows.map { ($0.muscle, $0.score / max(top, 1)) })
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 SectionHeader(title: "By muscle group")
                 Picker("Measure", selection: $showSets) {
-                    Text("Volume").tag(false)
                     Text("Sets").tag(true)
+                    Text("Volume").tag(false)
                 }
                 .pickerStyle(.segmented)
                 .frame(width: 150)
@@ -189,23 +202,138 @@ struct MuscleVolumeCard: View {
             if rows.isEmpty {
                 Text("No working sets in this range.").font(.subheadline).foregroundStyle(Theme.textSecondary)
             } else {
-                Chart(rows) { row in
-                    BarMark(x: .value(showSets ? "Sets" : "Volume", row.score), y: .value("Muscle", row.muscle.displayName))
-                        .foregroundStyle(Theme.accent.opacity(0.35 + 0.65 * row.score / (rows.first?.score ?? 1)))
-                        .cornerRadius(3)
-                        .annotation(position: .trailing) {
-                            Text(showSets ? "\(Int(row.score))" : Format.number(row.score, maxFractionDigits: 0))
-                                .font(.caption2.monospacedDigit()).foregroundStyle(Theme.textSecondary)
-                        }
+                HStack(spacing: 8) {
+                    AnatomyCanvas(side: .front, heat: heat, model: model).frame(height: 170)
+                    AnatomyCanvas(side: .back, heat: heat, model: model).frame(height: 170)
                 }
-                .chartXAxis(.hidden)
-                .chartYAxis { AxisMarks { _ in AxisValueLabel().foregroundStyle(Theme.textSecondary) } }
-                .frame(height: CGFloat(rows.count) * 28 + 10)
+                .frame(maxWidth: .infinity)
+                .accessibilityHidden(true)
+                VStack(spacing: 4) {
+                    ForEach(rows) { row in
+                        Button { focus = row.muscle } label: {
+                            HStack(spacing: 10) {
+                                Text(row.muscle.displayName).font(.subheadline.weight(.semibold)).foregroundStyle(Theme.textPrimary)
+                                    .frame(width: 96, alignment: .leading)
+                                ProgressBar(progress: row.score / top, tint: AnyShapeStyle(Theme.accent.opacity(0.4 + 0.6 * row.score / top)), height: 6)
+                                Text(showSets ? "\(Int(row.score))" : Format.number(row.score, maxFractionDigits: 0))
+                                    .font(.caption.monospacedDigit()).foregroundStyle(Theme.textSecondary)
+                                    .frame(width: 52, alignment: .trailing)
+                                Image(systemName: "chevron.right").font(.caption2).foregroundStyle(Theme.textTertiary)
+                            }
+                            .padding(.vertical, 6)
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(PressableStyle())
+                        .accessibilityLabel("\(row.muscle.displayName), \(showSets ? "\(Int(row.score)) sets" : Format.volume(unit.toKilograms(row.score), unit: unit))")
+                        .accessibilityHint("Shows the trend and exercises for this muscle")
+                    }
+                }
             }
-            Text(showSets ? "Working sets that list the muscle as a primary target." : "Weight × reps credited to each exercise's primary muscles (\(unit.symbol)). Bodyweight sets add reps, not volume — switch to Sets to see them.")
+            Text(showSets
+                 ? "Working sets credited once to each exercise's primary muscles. Secondary muscles aren't added, so nothing is counted twice."
+                 : "Weight × reps credited to each exercise's primary muscles (\(unit.symbol)). Bodyweight sets and holds add sets, not volume.")
                 .font(.caption).foregroundStyle(Theme.textTertiary)
         }
         .primeCard(padding: 18)
+        .sheet(item: $focus) { muscle in
+            MuscleActivitySheet(muscle: muscle, samples: samples, interval: interval, bucket: bucket, unit: unit)
+                .presentationDetents([.medium, .large])
+                .presentationBackground(Theme.surface)
+        }
+    }
+}
+
+/// Trend and exercise breakdown for one muscle over the selected range.
+struct MuscleActivitySheet: View {
+    let muscle: MuscleGroup
+    let samples: [SetSample]
+    let interval: DateInterval
+    let bucket: BucketSize
+    let unit: WeightUnit
+    @Environment(\.bodyModel) private var model
+
+    var body: some View {
+        let trend = Analytics.sets(for: muscle, in: samples, by: bucket, interval: interval)
+        let exercises = Analytics.exercises(for: muscle, in: samples)
+        let direct = samples.filter { $0.primaryMuscles.contains(muscle) }
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    HStack(spacing: 14) {
+                        AnatomyCanvas(side: AnatomyFigure.figure(model).bestSide(for: [muscle]), primary: [muscle], model: model)
+                            .frame(width: 80, height: 120)
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(muscle.displayName).font(.primeTitle).foregroundStyle(Theme.textPrimary)
+                            Text(MuscleInfo.of(muscle).anatomicalName).font(.caption).foregroundStyle(Theme.textSecondary)
+                            HStack(spacing: 14) {
+                                miniValue("\(direct.count)", "sets")
+                                miniValue("\(Analytics.totalReps(direct))", "reps")
+                                miniValue(Format.volume(Analytics.totalVolume(direct), unit: unit, includeUnit: false), unit.symbol)
+                            }
+                            .padding(.top, 4)
+                        }
+                    }
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("\(bucket.displayName) sets").eyebrow()
+                        Chart(trend) { item in
+                            BarMark(x: .value("Period", item.start, unit: bucket == .week ? .weekOfYear : .month), y: .value("Sets", item.value))
+                                .foregroundStyle(Theme.accentGradient)
+                                .cornerRadius(3)
+                        }
+                        .chartYAxis {
+                            AxisMarks(position: .trailing, values: .automatic(desiredCount: 3)) { _ in
+                                AxisGridLine().foregroundStyle(Theme.stroke)
+                                AxisValueLabel().foregroundStyle(Theme.textTertiary)
+                            }
+                        }
+                        .chartXAxis {
+                            AxisMarks(values: .automatic(desiredCount: 4)) { _ in
+                                AxisValueLabel(format: axisFormat).foregroundStyle(Theme.textTertiary)
+                            }
+                        }
+                        .frame(height: 150)
+                    }
+                    .primeCard(padding: 16)
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("Exercises").eyebrow()
+                        ForEach(exercises, id: \.slug) { item in
+                            NavigationLink(value: Route.exercise(item.slug)) {
+                                HStack {
+                                    Text(item.name).font(.subheadline.weight(.semibold)).foregroundStyle(Theme.textPrimary)
+                                    Spacer()
+                                    Text("\(item.sets) set\(item.sets == 1 ? "" : "s")").font(.subheadline.monospacedDigit()).foregroundStyle(Theme.textSecondary)
+                                    Image(systemName: "chevron.right").font(.caption2).foregroundStyle(Theme.textTertiary)
+                                }
+                                .padding(.vertical, 4)
+                            }
+                            .buttonStyle(PressableStyle())
+                        }
+                    }
+                    .primeCard(padding: 16)
+                    NavigationLink(value: Route.muscle(muscle)) {
+                        Label("Anatomy and exercises for \(muscle.displayName.lowercased())", systemImage: "figure.arms.open")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.primeSecondary)
+                }
+                .padding(Theme.gutter)
+            }
+            .primeBackground()
+            .navigationTitle(muscle.displayName)
+            .navigationBarTitleDisplayMode(.inline)
+            .primeDestinations()
+        }
+    }
+
+    private var axisFormat: Date.FormatStyle {
+        bucket == .week ? Date.FormatStyle().day().month(.abbreviated) : Date.FormatStyle().month(.abbreviated)
+    }
+
+    private func miniValue(_ value: String, _ label: String) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text(value).font(.primeNumber(18)).foregroundStyle(Theme.textPrimary)
+            Text(label).font(.caption2).foregroundStyle(Theme.textTertiary)
+        }
     }
 }
 
@@ -218,8 +346,9 @@ struct ExerciseVolumeCard: View {
     var body: some View {
         let rows = Array(Analytics.volumeByExercise(samples).prefix(8))
         let top = rows.first?.volume ?? 1
+        let sessionsBySlug = Dictionary(grouping: samples, by: \.exerciseSlug).mapValues { Set($0.map(\.sessionID)).count }
         VStack(alignment: .leading, spacing: 12) {
-            SectionHeader(title: "By exercise")
+            SectionHeader(title: "By exercise", subtitle: "Volume and how many workouts included it. Tap for history and records.")
             if rows.isEmpty {
                 Text("No loaded sets in this range.").font(.subheadline).foregroundStyle(Theme.textSecondary)
             }
@@ -229,6 +358,9 @@ struct ExerciseVolumeCard: View {
                         HStack {
                             Text(row.name).font(.subheadline.weight(.semibold)).foregroundStyle(.white).lineLimit(1)
                             Spacer()
+                            let count = sessionsBySlug[row.slug] ?? 0
+                            Text("\(count)×").font(.caption.monospacedDigit()).foregroundStyle(Theme.textTertiary)
+                                .accessibilityLabel("\(count) workouts")
                             Text(Format.volume(row.volume, unit: unit)).font(.subheadline.monospacedDigit()).foregroundStyle(Theme.textSecondary)
                         }
                         ProgressBar(progress: row.volume / top, tint: AnyShapeStyle(Theme.accentGradient), height: 5)
@@ -437,6 +569,8 @@ struct ConsistencyCard: View {
 // MARK: - Calendar
 
 struct CalendarHistoryCard: View {
+    /// Weekdays (0 = Monday) with a workout planned in the timetable.
+    var planned: Set<Int> = []
     @Environment(TrainingStore.self) private var store
     @State private var month = Calendar.prime.startOfMonth(for: Date())
 
@@ -463,6 +597,10 @@ struct CalendarHistoryCard: View {
                     .disabled(calendar.isDate(month, equalTo: Date(), toGranularity: .month))
                     .accessibilityLabel("Next month")
             }
+            HStack(spacing: 14) {
+                legend(fill: Theme.accent, dashed: false, "Completed")
+                legend(fill: .clear, dashed: true, "Planned")
+            }
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 7), spacing: 6) {
                 ForEach(0..<7, id: \.self) { Text(Weekday.initials[$0]).font(.caption2.weight(.bold)).foregroundStyle(Theme.textTertiary) }
                 ForEach(0..<(leading + daysInMonth), id: \.self) { cell in
@@ -472,18 +610,28 @@ struct CalendarHistoryCard: View {
                         let date = calendar.date(byAdding: .day, value: cell - leading, to: month) ?? month
                         let done = trained.contains(calendar.startOfDay(for: date))
                         let isToday = calendar.isDateInToday(date)
+                        let isPlanned = !done && date >= calendar.startOfDay(for: Date()) && planned.contains(Weekday.index(of: date, calendar: calendar))
                         Text(date.formatted(.dateTime.day()))
                             .font(.caption.weight(done ? .heavy : .medium).monospacedDigit())
                             .foregroundStyle(done ? Theme.onAccent : (date > Date() ? Theme.textTertiary : Theme.textSecondary))
                             .frame(maxWidth: .infinity, minHeight: 34)
                             .background(RoundedRectangle(cornerRadius: 9).fill(done ? Theme.accent : Theme.surface))
                             .overlay(RoundedRectangle(cornerRadius: 9).strokeBorder(isToday ? .white.opacity(0.6) : .clear, lineWidth: 1))
-                            .accessibilityLabel(date.formatted(date: .long, time: .omitted) + (done ? ", trained" : ""))
+                            .overlay(RoundedRectangle(cornerRadius: 9).strokeBorder(isPlanned ? Theme.accent.opacity(0.7) : .clear, style: StrokeStyle(lineWidth: 1, dash: [3, 3])))
+                            .accessibilityLabel(date.formatted(date: .long, time: .omitted) + (done ? ", trained" : isPlanned ? ", planned" : ""))
                     }
                 }
             }
         }
         .primeCard(padding: 18)
+    }
+
+    private func legend(fill: Color, dashed: Bool, _ text: String) -> some View {
+        HStack(spacing: 6) {
+            RoundedRectangle(cornerRadius: 3).fill(fill).frame(width: 12, height: 12)
+                .overlay(RoundedRectangle(cornerRadius: 3).strokeBorder(dashed ? Theme.accent : .clear, style: StrokeStyle(lineWidth: 1, dash: [2, 2])))
+            Text(text).font(.caption).foregroundStyle(Theme.textSecondary)
+        }
     }
 
     private func shift(_ months: Int) {

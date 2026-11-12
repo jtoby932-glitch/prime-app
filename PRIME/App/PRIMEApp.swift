@@ -28,54 +28,36 @@ struct PRIMEApp: App {
                 }
             }
             .preferredColorScheme(.dark)
-            .tint(Theme.accent)
         }
     }
 }
 
 enum Appearance {
     static func configure() {
-        let tab = UITabBarAppearance()
-        tab.configureWithDefaultBackground()
-        tab.backgroundEffect = UIBlurEffect(style: .systemChromeMaterialDark)
-        tab.backgroundColor = UIColor(red: 0.02, green: 0.02, blue: 0.024, alpha: 0.78)
-        tab.shadowColor = UIColor.white.withAlphaComponent(0.06)
-        let accent = UIColor(Theme.accent)
-        let idle = UIColor(Theme.textTertiary)
-        for layout in [tab.stackedLayoutAppearance, tab.inlineLayoutAppearance, tab.compactInlineLayoutAppearance] {
-            layout.selected.iconColor = accent
-            layout.selected.titleTextAttributes = [.foregroundColor: accent]
-            layout.normal.iconColor = idle
-            layout.normal.titleTextAttributes = [.foregroundColor: idle]
-        }
-        UITabBar.appearance().standardAppearance = tab
-        UITabBar.appearance().scrollEdgeAppearance = tab
+        let titleColor = UIColor(red: 0.96, green: 0.97, blue: 0.98, alpha: 1)
+        let navy = UIColor(red: 0.02, green: 0.03, blue: 0.045, alpha: 0.82)
 
-        let nav = UINavigationBarAppearance()
-        nav.configureWithTransparentBackground()
-        nav.backgroundColor = .clear
-        let large = UIFont.systemFont(ofSize: 34, weight: .heavy)
-        let condensed = large.fontDescriptor.withSymbolicTraits(.traitCondensed).map { UIFont(descriptor: $0, size: 34) } ?? large
-        nav.largeTitleTextAttributes = [.foregroundColor: UIColor.white, .font: UIFontMetrics(forTextStyle: .largeTitle).scaledFont(for: condensed)]
-        nav.titleTextAttributes = [.foregroundColor: UIColor.white, .font: UIFont.systemFont(ofSize: 17, weight: .semibold)]
-        UINavigationBar.appearance().standardAppearance = {
-            let scrolled = UINavigationBarAppearance()
-            scrolled.configureWithDefaultBackground()
-            scrolled.backgroundEffect = UIBlurEffect(style: .systemChromeMaterialDark)
-            scrolled.backgroundColor = UIColor(red: 0.02, green: 0.02, blue: 0.024, alpha: 0.7)
-            scrolled.shadowColor = .clear
-            scrolled.largeTitleTextAttributes = nav.largeTitleTextAttributes
-            scrolled.titleTextAttributes = nav.titleTextAttributes
-            return scrolled
-        }()
-        UINavigationBar.appearance().scrollEdgeAppearance = nav
-        UINavigationBar.appearance().compactAppearance = nav
-        UINavigationBar.appearance().tintColor = accent
+        let transparent = UINavigationBarAppearance()
+        transparent.configureWithTransparentBackground()
+        transparent.largeTitleTextAttributes = [.foregroundColor: titleColor, .font: UIFontMetrics(forTextStyle: .largeTitle).scaledFont(for: .systemFont(ofSize: 32, weight: .bold))]
+        transparent.titleTextAttributes = [.foregroundColor: titleColor, .font: UIFont.systemFont(ofSize: 17, weight: .semibold)]
 
-        UISegmentedControl.appearance().selectedSegmentTintColor = accent
-        UISegmentedControl.appearance().setTitleTextAttributes([.foregroundColor: UIColor.black, .font: UIFont.systemFont(ofSize: 13, weight: .semibold)], for: .selected)
-        UISegmentedControl.appearance().setTitleTextAttributes([.foregroundColor: UIColor.white.withAlphaComponent(0.8)], for: .normal)
-        UISegmentedControl.appearance().backgroundColor = UIColor(Theme.card)
+        let scrolled = UINavigationBarAppearance()
+        scrolled.configureWithDefaultBackground()
+        scrolled.backgroundEffect = UIBlurEffect(style: .systemChromeMaterialDark)
+        scrolled.backgroundColor = navy
+        scrolled.shadowColor = UIColor(red: 0.11, green: 0.17, blue: 0.26, alpha: 1)
+        scrolled.largeTitleTextAttributes = transparent.largeTitleTextAttributes
+        scrolled.titleTextAttributes = transparent.titleTextAttributes
+
+        UINavigationBar.appearance().standardAppearance = scrolled
+        UINavigationBar.appearance().compactAppearance = scrolled
+        UINavigationBar.appearance().scrollEdgeAppearance = transparent
+
+        UISegmentedControl.appearance().selectedSegmentTintColor = UIColor(red: 0.22, green: 0.48, blue: 1, alpha: 1)
+        UISegmentedControl.appearance().setTitleTextAttributes([.foregroundColor: UIColor.white, .font: UIFont.systemFont(ofSize: 13, weight: .semibold)], for: .selected)
+        UISegmentedControl.appearance().setTitleTextAttributes([.foregroundColor: UIColor.white.withAlphaComponent(0.75)], for: .normal)
+        UISegmentedControl.appearance().backgroundColor = UIColor(red: 0.063, green: 0.102, blue: 0.176, alpha: 1)
     }
 }
 
@@ -90,7 +72,7 @@ struct StoreErrorView: View {
                 .foregroundStyle(Theme.warning)
             Text("PRIME couldn't open your data")
                 .font(.primeTitle)
-                .foregroundStyle(.white)
+                .foregroundStyle(Theme.textPrimary)
             Text("Your workouts haven't been deleted. Close PRIME completely and open it again. If this keeps happening, free up some storage on your iPhone.")
                 .multilineTextAlignment(.center)
                 .foregroundStyle(Theme.textSecondary)

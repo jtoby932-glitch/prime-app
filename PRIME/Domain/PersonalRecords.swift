@@ -8,6 +8,8 @@ struct RecordSnapshot: Equatable {
     var bestSessionVolume: Double?
     /// Weight (in grams, to avoid floating point keys) → most reps done at it.
     var mostRepsByWeight: [Int: Int] = [:]
+    /// Longest timed hold in seconds.
+    var longestHoldSeconds: Int?
     var hasHistory: Bool = false
 
     static let empty = RecordSnapshot()
@@ -16,7 +18,13 @@ struct RecordSnapshot: Equatable {
         var snapshot = RecordSnapshot()
         guard !samples.isEmpty else { return snapshot }
         snapshot.hasHistory = true
-        for sample in samples { snapshot.absorb(weightKg: sample.weightKg, reps: sample.reps) }
+        for sample in samples {
+            if sample.isTimed {
+                if sample.reps > 0 { snapshot.longestHoldSeconds = max(snapshot.longestHoldSeconds ?? 0, sample.reps) }
+            } else {
+                snapshot.absorb(weightKg: sample.weightKg, reps: sample.reps)
+            }
+        }
         for (_, sets) in Dictionary(grouping: samples, by: \.sessionID) {
             let volume = Analytics.totalVolume(sets)
             if volume > 0 { snapshot.bestSessionVolume = max(snapshot.bestSessionVolume ?? 0, volume) }
@@ -25,9 +33,13 @@ struct RecordSnapshot: Equatable {
     }
 
     /// Adds one session's sets for this exercise.
-    mutating func absorbSession(_ sets: [(weightKg: Double, reps: Int)]) {
+    mutating func absorbSession(_ sets: [(weightKg: Double, reps: Int)], timed: Bool = false) {
         guard !sets.isEmpty else { return }
         hasHistory = true
+        if timed {
+            if let best = sets.map(\.reps).max(), best > 0 { longestHoldSeconds = max(longestHoldSeconds ?? 0, best) }
+            return
+        }
         for set in sets { absorb(weightKg: set.weightKg, reps: set.reps) }
         let volume = sets.reduce(0) { $0 + StrengthMath.setVolume(weight: $1.weightKg, reps: $1.reps) }
         if volume > 0 { bestSessionVolume = max(bestSessionVolume ?? 0, volume) }
@@ -60,8 +72,12 @@ enum PRDetector {
 
     /// Records a single set beats. Empty when the exercise has no earlier history:
     /// a first attempt sets the baseline rather than "beating" anything.
-    static func recordsBeaten(weightKg: Double, reps: Int, against snapshot: RecordSnapshot) -> [RecordKind] {
+    static func recordsBeaten(weightKg: Double, reps: Int, against snapshot: RecordSnapshot, timed: Bool = false) -> [RecordKind] {
         guard snapshot.hasHistory, reps > 0, weightKg >= 0 else { return [] }
+        if timed {
+            if let best = snapshot.longestHoldSeconds, reps > best { return [.longestHold] }
+            return []
+        }
         var kinds: [RecordKind] = []
         if weightKg > 0, let best = snapshot.heaviestWeightKg, weightKg > best + 1e-9 { kinds.append(.heaviestWeight) }
         if let estimate = StrengthMath.estimatedOneRepMax(weight: weightKg, reps: reps),
@@ -73,9 +89,13 @@ enum PRDetector {
     }
 
     /// New records from one exercise's sets in a finished session, compared with history before it.
-    static func sessionRecords(sets: [(weightKg: Double, reps: Int)], against history: RecordSnapshot) -> [PRAchievement] {
+    static func sessionRecords(sets: [(weightKg: Double, reps: Int)], against history: RecordSnapshot, timed: Bool = false) -> [PRAchievement] {
         let valid = sets.filter { $0.reps > 0 && $0.weightKg >= 0 && $0.weightKg.isFinite }
         guard history.hasHistory, !valid.isEmpty else { return [] }
+        if timed {
+            guard let best = valid.map(\.reps).max(), let previous = history.longestHoldSeconds, best > previous else { return [] }
+            return [PRAchievement(kind: .longestHold, value: Double(best), weightKg: 0, reps: best, previous: Double(previous))]
+        }
         var achievements: [PRAchievement] = []
 
         if let top = valid.filter({ $0.weightKg > 0 }).max(by: { $0.weightKg < $1.weightKg }),

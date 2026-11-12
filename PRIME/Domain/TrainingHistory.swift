@@ -14,12 +14,15 @@ struct SetSample: Equatable, Identifiable {
     let bodyweightKg: Double?
     /// Order within its exercise in the session.
     let setIndex: Int
+    /// Timed holds store seconds in `reps` and carry no volume.
+    let isTimed: Bool
 
     init(id: UUID = UUID(), sessionID: UUID, date: Date, exerciseSlug: String, exerciseName: String,
          equipment: Equipment?, primaryMuscles: [MuscleGroup], weightKg: Double, reps: Int,
-         bodyweightKg: Double? = nil, setIndex: Int = 0) {
+         bodyweightKg: Double? = nil, setIndex: Int = 0, isTimed: Bool = false) {
         self.id = id
         self.setIndex = setIndex
+        self.isTimed = isTimed
         self.sessionID = sessionID
         self.date = date
         self.exerciseSlug = exerciseSlug
@@ -31,8 +34,10 @@ struct SetSample: Equatable, Identifiable {
         self.bodyweightKg = bodyweightKg
     }
 
-    var volume: Double { StrengthMath.setVolume(weight: weightKg, reps: reps) }
-    var estimatedOneRepMax: Double? { StrengthMath.estimatedOneRepMax(weight: weightKg, reps: reps) }
+    var volume: Double { isTimed ? 0 : StrengthMath.setVolume(weight: weightKg, reps: reps) }
+    var estimatedOneRepMax: Double? { isTimed ? nil : StrengthMath.estimatedOneRepMax(weight: weightKg, reps: reps) }
+    /// Repetitions performed; timed holds count as none.
+    var repCount: Int { isTimed ? 0 : reps }
     var rankable: RankableSet { RankableSet(weightKg: weightKg, reps: reps, date: date, bodyweightKg: bodyweightKg) }
 }
 
@@ -44,6 +49,9 @@ struct SessionSummary: Equatable, Identifiable {
     let volume: Double
     let setCount: Int
     let exerciseCount: Int
+    var repCount: Int = 0
+    var fromRoutine: Bool = false
+    var readiness: Int? = nil
 }
 
 struct BodyweightPoint: Equatable {

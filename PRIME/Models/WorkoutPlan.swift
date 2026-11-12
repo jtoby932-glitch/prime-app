@@ -10,6 +10,8 @@ final class WorkoutPlan {
     var colorIndex: Int = 0
     var createdAt: Date = Date()
     var updatedAt: Date = Date()
+    /// The preset template this routine was copied from, if any (schema v2).
+    var sourceTemplateID: String? = nil
 
     @Relationship(deleteRule: .cascade, inverse: \PlannedExercise.plan)
     var entries: [PlannedExercise] = []

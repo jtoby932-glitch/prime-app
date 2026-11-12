@@ -7,6 +7,7 @@ struct ExercisePickerView: View {
     let mode: Mode
     var title = "Choose exercise"
     var excluding: Set<String> = []
+    var rankedOnly = false
     let onPick: ([Exercise]) -> Void
 
     @Environment(\.dismiss) private var dismiss
@@ -17,7 +18,7 @@ struct ExercisePickerView: View {
     @State private var recentOnly = false
 
     private var results: [Exercise] {
-        var items = filter.apply(to: exercises.filter { !excluding.contains($0.slug) })
+        var items = filter.apply(to: exercises.filter { !excluding.contains($0.slug) && (!rankedOnly || $0.isRanked) })
         if recentOnly {
             let recent = store.history.exerciseSlugsByRecency
             let order = Dictionary(recent.enumerated().map { ($0.element, $0.offset) }, uniquingKeysWith: { first, _ in first })

@@ -18,7 +18,7 @@ struct CustomExerciseEditor: View {
     @State private var instructions = ""
     @State private var tips = ""
     @State private var ranked = false
-    @State private var thresholdTexts = ["", "", "", ""]
+    @State private var thresholdTexts = Array(repeating: "", count: RankTier.thresholdCount)
     @State private var errors: [String] = []
     @State private var loaded = false
 
@@ -59,10 +59,10 @@ struct CustomExerciseEditor: View {
                     Section {
                         Toggle("Rank this exercise", isOn: $ranked)
                         if ranked {
-                            ForEach(1..<5, id: \.self) { index in
+                            ForEach(1...RankTier.thresholdCount, id: \.self) { index in
                                 let tier = RankTier(rawValue: index) ?? .bronze
                                 HStack {
-                                    TierBadgeView(tier: tier, size: 22)
+                                    RankEmblem(tier: tier, size: 26)
                                     Text(tier.name)
                                     Spacer()
                                     TextField(method == .relativeLoad ? "× BW" : "reps", text: $thresholdTexts[index - 1])
@@ -74,7 +74,7 @@ struct CustomExerciseEditor: View {
                         }
                     } header: { Text("Your tiers") } footer: {
                         Text(method == .relativeLoad
-                             ? "Enter the estimated 1RM ÷ bodyweight needed for each tier, e.g. 1.0 means lifting your bodyweight. PRIME has no data for custom exercises, so these are yours to set."
+                             ? "Enter the estimated 1RM ÷ bodyweight needed for each of the seven tiers, e.g. 1.0 means lifting your bodyweight. PRIME has no data for custom exercises, so these are yours to set."
                              : "Enter the reps in one set needed for each tier.")
                     }
                 } else {

@@ -211,3 +211,124 @@ final class ExerciseFilterTests: XCTestCase {
         XCTAssertEqual(triceps.first, "Triceps Dip")
     }
 }
+
+final class OverhaulDomainTests: XCTestCase {
+    func testRepsTotalSkipsTimedHolds() {
+        let id = UUID()
+        let hold = SetSample(sessionID: id, date: Dates.now, exerciseSlug: "plank", exerciseName: "Plank", equipment: .bodyweight,
+                             primaryMuscles: [.abdominals], weightKg: 0, reps: 60, isTimed: true)
+        let sets = [sample(id, Dates.now, weight: 100, reps: 5), hold]
+        XCTAssertEqual(Analytics.totalReps(sets), 5)
+        XCTAssertEqual(Analytics.totalVolume(sets), 500)
+    }
+
+    func testMuscleSetsCountPrimaryOnlySoNothingIsDoubleCounted() {
+        let id = UUID()
+        let sets = [
+            sample(id, Dates.day(2026, 11, 2), weight: 100, reps: 5, muscles: [.chest]),
+            sample(id, Dates.day(2026, 11, 9), weight: 100, reps: 5, muscles: [.chest]),
+            sample(id, Dates.day(2026, 11, 9), slug: "dip", weight: 0, reps: 10, muscles: [.triceps]),
+        ]
+        let interval = DateInterval(start: Dates.day(2026, 11, 2, hour: 0), end: Dates.now)
+        XCTAssertEqual(Analytics.sets(for: .chest, in: sets, by: .week, interval: interval).map(\.value), [1, 1])
+        XCTAssertEqual(Analytics.exercises(for: .chest, in: sets).map(\.sets), [2])
+        XCTAssertTrue(Analytics.exercises(for: .shoulders, in: sets).isEmpty)
+    }
+
+    func testRangesHaveExpectedLabels() {
+        XCTAssertEqual(AnalyticsRange.allCases.map(\.label), ["7D", "30D", "90D", "6M", "1Y", "All"])
+        let week = AnalyticsRange.week.interval(now: Dates.now, earliest: nil)
+        XCTAssertEqual(Calendar.prime.dateComponents([.day], from: week.start, to: week.end).day, 6)
+    }
+
+    func testTimedRecordsTrackLongestHold() {
+        let id = UUID()
+        let history = RecordSnapshot.from([
+            SetSample(sessionID: id, date: Dates.day(2026, 11, 2), exerciseSlug: "plank", exerciseName: "Plank", equipment: .bodyweight,
+                      primaryMuscles: [.abdominals], weightKg: 0, reps: 60, isTimed: true),
+        ])
+        XCTAssertEqual(history.longestHoldSeconds, 60)
+        XCTAssertEqual(PRDetector.recordsBeaten(weightKg: 0, reps: 75, against: history, timed: true), [.longestHold])
+        XCTAssertTrue(PRDetector.recordsBeaten(weightKg: 0, reps: 45, against: history, timed: true).isEmpty)
+    }
+
+    // MARK: Insights
+
+    private func sessions(_ values: [(day: Int, weight: Double)], slug: String = "bench") -> [SetSample] {
+        values.map { sample(UUID(), Dates.day(2026, 10, $0.day), slug: slug, weight: $0.weight, reps: 5) }
+    }
+
+    func testNewBestInsightComesFromRealData() {
+        let samples = sessions([(1, 100), (8, 100), (15, 105)])
+        let insights = InsightEngine.exerciseInsights(slug: "bench", name: "Bench", samples: samples, isTimed: false, now: Dates.day(2026, 10, 16))
+        XCTAssertTrue(insights.contains { $0.kind == .newBest })
+        XCTAssertFalse(insights.contains { $0.kind == .plateau })
+    }
+
+    func testPlateauNeedsEnoughHistoryAndOffersAnOptionalSuggestion() {
+        let samples = sessions([(1, 110), (8, 105), (15, 105), (22, 107.5)])
+        let insights = InsightEngine.exerciseInsights(slug: "bench", name: "Bench", samples: samples, isTimed: false, now: Dates.day(2026, 10, 23))
+        let plateau = insights.first { $0.kind == .plateau }
+        XCTAssertNotNil(plateau)
+        XCTAssertTrue(plateau?.suggestion?.hasPrefix("If you want") ?? false)
+        let short = InsightEngine.exerciseInsights(slug: "bench", name: "Bench", samples: Array(samples.prefix(2)), isTimed: false, now: Dates.day(2026, 10, 9))
+        XCTAssertFalse(short.contains { $0.kind == .plateau })
+    }
+
+    func testImprovingTrendOverFourSessions() {
+        let samples = sessions([(1, 100), (8, 102.5), (15, 105), (22, 107.5)])
+        let insights = InsightEngine.exerciseInsights(slug: "bench", name: "Bench", samples: samples, isTimed: false, now: Dates.day(2026, 10, 23))
+        XCTAssertTrue(insights.contains { $0.kind == .improving })
+    }
+
+    func testNotRecentOnlyForRegularExercises() {
+        let samples = sessions([(1, 100), (3, 100), (5, 100)])
+        let insights = InsightEngine.exerciseInsights(slug: "bench", name: "Bench", samples: samples, isTimed: false, now: Dates.day(2026, 11, 5))
+        XCTAssertEqual(insights.map(\.kind), [.notRecent])
+        XCTAssertTrue(InsightEngine.exerciseInsights(slug: "bench", name: "Bench", samples: Array(samples.prefix(1)), isTimed: false, now: Dates.day(2026, 11, 5)).isEmpty)
+    }
+
+    func testMissedSessionsUseTheTimetable() {
+        let insight = InsightEngine.missedSessionInsight(plannedWeekdays: [0, 2, 4], sessionDates: [Dates.day(2026, 11, 9)],
+                                                         trackingSince: Dates.day(2026, 10, 1), now: Dates.now)
+        XCTAssertNotNil(insight)
+        XCTAssertNil(InsightEngine.missedSessionInsight(plannedWeekdays: [], sessionDates: [], trackingSince: Dates.day(2026, 10, 1), now: Dates.now))
+    }
+
+    // MARK: Badges
+
+    func testBadgesNeverRewardVolume() {
+        let badges = BadgeEngine.globalBadges(workouts: 12, routineWorkouts: 3, bestStreak: 5, recordCount: 2, peakTier: .gold)
+        XCTAssertFalse(badges.contains { $0.title.lowercased().contains("volume") || $0.detail.lowercased().contains("volume") })
+        XCTAssertTrue(badges.first { $0.id == "w10" }?.isEarned ?? false)
+        XCTAssertFalse(badges.first { $0.id == "w50" }?.isEarned ?? true)
+        XCTAssertTrue(badges.first { $0.id == "rank-\(RankTier.gold.rawValue)" }?.isEarned ?? false)
+        XCTAssertFalse(badges.first { $0.id == "rank-\(RankTier.diamond.rawValue)" }?.isEarned ?? true)
+        XCTAssertEqual(badges.first { $0.id == "w50" }?.progress ?? 0, 12.0 / 50, accuracy: 0.0001)
+    }
+
+    // MARK: Split presets
+
+    func testPresetStartDayRotatesTheWeek() {
+        let ppl = try! XCTUnwrap(SplitPreset.all.first { $0.id == "ppl" })
+        // Starting Wednesday: Wed Push, Thu Pull, Fri Legs, Sat Rest, Sun Push, Mon Pull, Tue Legs.
+        let layout = ppl.layout(startingOn: 2)
+        XCTAssertEqual(layout[2] ?? nil, "push")
+        XCTAssertEqual(layout[3] ?? nil, "pull")
+        XCTAssertEqual(layout[4] ?? nil, "legs")
+        XCTAssertEqual(layout[5] ?? "x", nil)
+        XCTAssertEqual(layout[6] ?? nil, "push")
+        XCTAssertEqual(layout[0] ?? nil, "pull")
+        XCTAssertEqual(layout[1] ?? nil, "legs")
+        XCTAssertEqual(layout.count, 7)
+    }
+
+    func testEveryPresetIsAWeekOfKnownTemplates() {
+        for preset in SplitPreset.all {
+            XCTAssertEqual(preset.cycle.count, 7, preset.id)
+            XCTAssertGreaterThan(preset.sessionsPerWeek, 0, preset.id)
+            for id in preset.templateIDs { XCTAssertNotNil(WorkoutTemplate.library[id], "\(preset.id) uses unknown template \(id)") }
+        }
+        XCTAssertEqual(Set(SplitPreset.all.map(\.id)).count, SplitPreset.all.count)
+    }
+}

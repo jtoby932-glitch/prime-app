@@ -1,27 +1,36 @@
 import Foundation
 
+/// PRIME's own progression ladder. Each exercise has its own thresholds for every tier.
 enum RankTier: Int, CaseIterable, Comparable, Identifiable, Codable {
-    case beginner = 0, bronze, silver, gold, elite
+    case unranked = 0, bronze, silver, gold, platinum, diamond, elite, master
 
     var id: Int { rawValue }
 
     var name: String {
         switch self {
-        case .beginner: return "Beginner"
+        case .unranked: return "Unranked"
         case .bronze: return "Bronze"
         case .silver: return "Silver"
         case .gold: return "Gold"
+        case .platinum: return "Platinum"
+        case .diamond: return "Diamond"
         case .elite: return "Elite"
+        case .master: return "Master"
         }
     }
 
     var next: RankTier? { RankTier(rawValue: rawValue + 1) }
+    var previous: RankTier? { RankTier(rawValue: rawValue - 1) }
+
+    /// Tiers that have a threshold (everything except Unranked).
+    static var ranked: [RankTier] { allCases.filter { $0 != .unranked } }
+    static let thresholdCount = 7
 
     static func < (lhs: RankTier, rhs: RankTier) -> Bool { lhs.rawValue < rhs.rawValue }
 
-    /// Tier for a continuous score in 0...5.
+    /// Tier for a continuous score in 0...8.
     static func forScore(_ score: Double) -> RankTier {
-        RankTier(rawValue: min(4, max(0, Int(score.rounded(.down))))) ?? .beginner
+        RankTier(rawValue: min(7, max(0, Int(score.rounded(.down))))) ?? .unranked
     }
 }
 
@@ -42,21 +51,41 @@ enum RankingMethod: String, CaseIterable, Codable {
     }
 }
 
-/// Thresholds are the minimum metric for Bronze, Silver, Gold and Elite.
-/// Anything under the Bronze threshold is Beginner.
+/// Thresholds are the minimum metric for Bronze through Master (seven values).
+/// Anything under the Bronze threshold is Unranked.
 struct RankingStandard: Equatable {
     var method: RankingMethod
     var thresholds: [Double]
     var isCustom: Bool
     var note: String
 
-    static let version = 1
-    static let sourceLabel = "Provisional PRIME tiers v\(version)"
-    static let sourceDetail = "These tiers are PRIME's own starting points, not a validated population dataset. They aren't adjusted for sex, age or bodyweight class. Scale them in Settings or set your own per exercise."
+    static let version = 2
+    static let sourceLabel = "PRIME progression tiers v\(version)"
+    static let sourceDetail = "These tiers are PRIME's own progression system, not an official or population-based strength standard. They aren't adjusted for sex, age or bodyweight class. Scale them in Profile or set your own per exercise."
 
     static func isValid(_ thresholds: [Double]) -> Bool {
-        guard thresholds.count == 4, thresholds.allSatisfy({ $0.isFinite && $0 > 0 }) else { return false }
+        guard thresholds.count == RankTier.thresholdCount, thresholds.allSatisfy({ $0.isFinite && $0 > 0 }) else { return false }
         return zip(thresholds, thresholds.dropFirst()).allSatisfy { $0 < $1 }
+    }
+
+    /// Seven evenly spaced thresholds from Bronze (`low`) to Master (`high`).
+    static func ladder(low: Double, high: Double, wholeNumbers: Bool = false) -> [Double] {
+        let step = (high - low) / Double(RankTier.thresholdCount - 1)
+        var values = (0..<RankTier.thresholdCount).map { low + step * Double($0) }
+        if wholeNumbers {
+            values = values.map { $0.rounded() }
+            for index in 1..<values.count where values[index] <= values[index - 1] { values[index] = values[index - 1] + 1 }
+        }
+        return values
+    }
+
+    /// Converts thresholds saved by PRIME 1.0 (Bronze, Silver, Gold, Elite) to the seven-tier ladder,
+    /// keeping the four values the user chose and filling the new tiers in between and above.
+    static func upgradeLegacy(_ old: [Double]) -> [Double]? {
+        guard old.count == 4, zip(old, old.dropFirst()).allSatisfy({ $0 < $1 }), old[0] > 0 else { return nil }
+        let (bronze, silver, gold, elite) = (old[0], old[1], old[2], old[3])
+        let gap = elite - gold
+        return [bronze, silver, gold, gold + gap / 3, gold + 2 * gap / 3, elite, elite + gap / 2]
     }
 
     /// Default thresholds multiplied by the user's tier scale. Custom thresholds are used as typed.
@@ -69,10 +98,10 @@ struct RankingStandard: Equatable {
 
 struct RankPlacement: Equatable {
     let tier: RankTier
-    /// 0...1 progress from this tier's floor to the next tier's floor. 1 at Elite.
+    /// 0...1 progress from this tier's floor to the next tier's floor. 1 at Master.
     let progress: Double
     let nextThreshold: Double?
-    /// Continuous score 0...5 (tier index + progress). Elite caps at 5.
+    /// Continuous score 0...8 (tier index + progress). Master caps at 8.
     let score: Double
 }
 
@@ -82,6 +111,9 @@ struct RankableSet: Equatable {
     var reps: Int
     var date: Date
     var bodyweightKg: Double?
+
+    /// A single rep is a tested maximum; anything more is an estimate.
+    var isTestedMax: Bool { reps == 1 }
 }
 
 enum RankingFailure: Error, Equatable {
@@ -118,13 +150,14 @@ struct RankResult: Equatable {
 
 enum RankingEngine {
     static func placement(metric: Double, thresholds: [Double]) -> RankPlacement {
-        precondition(thresholds.count == 4, "Expected four thresholds")
+        precondition(thresholds.count == RankTier.thresholdCount, "Expected seven thresholds")
+        let top = RankTier.thresholdCount
         let reached = thresholds.filter { metric >= $0 }.count
-        let tier = RankTier(rawValue: reached) ?? .beginner
-        if reached >= 4 {
-            let gap = thresholds[3] - thresholds[2]
-            let beyond = gap > 0 ? min(1, max(0, (metric - thresholds[3]) / gap)) : 0
-            return RankPlacement(tier: .elite, progress: 1, nextThreshold: nil, score: min(5, 4 + beyond))
+        let tier = RankTier(rawValue: reached) ?? .unranked
+        if reached >= top {
+            let gap = thresholds[top - 1] - thresholds[top - 2]
+            let beyond = gap > 0 ? min(1, max(0, (metric - thresholds[top - 1]) / gap)) : 0
+            return RankPlacement(tier: .master, progress: 1, nextThreshold: nil, score: min(Double(top + 1), Double(top) + beyond))
         }
         let lower = reached == 0 ? 0 : thresholds[reached - 1]
         let upper = thresholds[reached]
@@ -197,28 +230,48 @@ enum RankingEngine {
     }
 }
 
-/// Averages exercise scores into an overall profile, keeping free weights and machines apart.
-struct TrainingProfileSummary: Equatable {
-    struct Group: Equatable {
-        let score: Double
-        let count: Int
-        var tier: RankTier { RankTier.forScore(score) }
-    }
-
-    let overall: Group?
-    let freeWeights: Group?
-    let machines: Group?
+/// Counts of exercise ranks. PRIME deliberately has no single overall rank: unrelated lifts
+/// can't be averaged into one meaningful number.
+struct RankDistribution: Equatable {
     let tierCounts: [RankTier: Int]
+    let highest: RankTier?
+    let rankedCount: Int
 
-    init(entries: [(score: Double, isFreeWeight: Bool)]) {
-        func group(_ scores: [Double]) -> Group? {
-            scores.isEmpty ? nil : Group(score: scores.reduce(0, +) / Double(scores.count), count: scores.count)
-        }
-        overall = group(entries.map(\.score))
-        freeWeights = group(entries.filter(\.isFreeWeight).map(\.score))
-        machines = group(entries.filter { !$0.isFreeWeight }.map(\.score))
+    init(tiers: [RankTier]) {
         var counts: [RankTier: Int] = [:]
-        for entry in entries { counts[RankTier.forScore(entry.score), default: 0] += 1 }
+        for tier in tiers { counts[tier, default: 0] += 1 }
         tierCounts = counts
+        highest = tiers.max()
+        rankedCount = tiers.filter { $0 != .unranked }.count
+    }
+}
+
+/// What it takes to reach the next tier, in terms the user can act on.
+struct NextTierTarget: Equatable {
+    let tier: RankTier
+    /// Estimated 1RM needed (relative-load exercises).
+    let oneRepMaxKg: Double?
+    /// Weight needed at the same rep count, rounded up to a loadable increment.
+    let weightKg: Double?
+    let reps: Int
+    /// Bodyweight-equivalent reps needed (rep-ranked exercises).
+    let repsNeeded: Int?
+
+    static func make(for result: RankResult, increment: Double) -> NextTierTarget? {
+        guard let next = result.placement.tier.next, let threshold = result.placement.nextThreshold else { return nil }
+        switch result.method {
+        case .relativeLoad:
+            guard let bodyweight = result.set.bodyweightKg, bodyweight > 0 else { return nil }
+            let target = threshold * bodyweight
+            let reps = max(1, min(result.set.reps, StrengthMath.reliableRepLimit))
+            let raw = reps == 1 ? target : target / (1 + Double(reps) / 30)
+            let step = increment > 0 ? increment : 2.5
+            let weight = (raw / step).rounded(.up) * step
+            return NextTierTarget(tier: next, oneRepMaxKg: target, weightKg: weight, reps: reps, repsNeeded: nil)
+        case .repetitions:
+            return NextTierTarget(tier: next, oneRepMaxKg: nil, weightKg: nil, reps: result.set.reps, repsNeeded: Int(threshold.rounded(.up)))
+        case .unranked:
+            return nil
+        }
     }
 }

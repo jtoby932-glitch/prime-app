@@ -28,7 +28,28 @@ final class UserProfile {
     var scheduledReminderMinutes: Int = 1050
     var missedReminderMinutes: Int = 1200
 
+    // Added in schema v2.
+    var hapticsEnabled: Bool = true
+    var animationLevelRaw: String = "full"
+    var accentRaw: String = "electric"
+    var bodyModelRaw: String = "male"
+    var dashboardOrder: [String] = []
+    var dashboardHidden: [String] = []
+    var recentExerciseSlugs: [String] = []
+    var recentSearches: [String] = []
+
     init() {}
+
+    /// Keeps the most recent eight, newest first.
+    func noteViewed(_ slug: String) {
+        recentExerciseSlugs = Array(([slug] + recentExerciseSlugs.filter { $0 != slug }).prefix(8))
+    }
+
+    func noteSearch(_ text: String) {
+        let trimmed = text.trimmingCharacters(in: .whitespaces)
+        guard trimmed.count >= 2 else { return }
+        recentSearches = Array(([trimmed] + recentSearches.filter { $0.caseInsensitiveCompare(trimmed) != .orderedSame }).prefix(6))
+    }
 
     var weightUnit: WeightUnit {
         get { WeightUnit(rawValue: weightUnitRaw) ?? .kg }

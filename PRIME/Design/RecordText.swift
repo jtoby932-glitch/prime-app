@@ -10,6 +10,7 @@ extension RecordKind {
         case .bestSessionVolume: return "\(Format.volume(value, unit: unit)) total"
         case .mostRepsAtWeight:
             return weightKg > 0 ? "\(Int(value)) reps at \(Format.weight(weightKg, unit: unit))" : "\(Int(value)) reps"
+        case .longestHold: return Format.hold(Int(value))
         }
     }
 
@@ -19,6 +20,9 @@ extension RecordKind {
         case .mostRepsAtWeight:
             let gain = Int(value - previous)
             return gain > 0 ? "+\(gain) rep\(gain == 1 ? "" : "s")" : nil
+        case .longestHold:
+            let gain = Int(value - previous)
+            return gain > 0 ? "+\(gain) s" : nil
         default:
             let gain = value - previous
             guard gain > 0 else { return nil }
@@ -47,20 +51,5 @@ extension Date {
             return formatted(.dateTime.weekday(.abbreviated).day().month(.abbreviated))
         }
         return formatted(.dateTime.day().month(.abbreviated).year())
-    }
-}
-
-@MainActor
-extension AppState {
-    /// Starts a workout, or reopens the one already in progress.
-    func startWorkout(plan: WorkoutPlan?, context: ModelContext, store: TrainingStore) {
-        if activeSession != nil {
-            isWorkoutPresented = true
-            show(Toast(title: "Workout already running", message: "Finish or discard it before starting another.", style: .warning))
-            return
-        }
-        let session = WorkoutService.start(plan: plan, context: context, history: store.history)
-        Haptics.thud()
-        begin(session)
     }
 }

@@ -13,6 +13,7 @@ struct RankChange: Identifiable, Equatable {
     let exerciseName: String
     let from: RankTier?
     let to: RankTier
+    let result: RankResult
     var id: String { exerciseSlug }
 }
 
@@ -24,6 +25,8 @@ struct WorkoutSummary: Identifiable {
     let volumeKg: Double
     let setCount: Int
     let exerciseCount: Int
+    let repCount: Int
+    let muscles: [MuscleGroup]
     let records: [RecordLine]
     let rankChanges: [RankChange]
 }
@@ -101,6 +104,15 @@ enum WorkoutService {
             }
         }
         try? context.save()
+        return session
+    }
+
+    /// Starts an empty workout with one exercise in it.
+    @discardableResult
+    static func start(exercise: Exercise, restSeconds: Int, context: ModelContext, history: TrainingHistory, now: Date = Date()) -> WorkoutSession {
+        let session = start(plan: nil, context: context, history: history, now: now)
+        session.name = exercise.name
+        addExercise(exercise, to: session, restSeconds: restSeconds, context: context, history: history)
         return session
     }
 
@@ -189,7 +201,8 @@ enum WorkoutService {
     /// Marks a set done after validating it. Returns the records it beats so the UI can celebrate.
     static func complete(_ set: ExerciseSet, in item: ExerciseSession, session: WorkoutSession, history: TrainingHistory,
                          context: ModelContext, now: Date = Date()) throws -> [RecordKind] {
-        if let error = InputValidator.completedSetError(weightKg: set.weightKg, reps: set.reps, requiresLoad: item.equipment.requiresLoad) {
+        let timed = ExerciseLibrary.shared.isTimed(item.exerciseSlug)
+        if let error = InputValidator.completedSetError(weightKg: set.weightKg, reps: set.reps, requiresLoad: item.equipment.requiresLoad && !timed, timed: timed) {
             throw WorkoutError.invalidSet(error.errorDescription ?? "Check this set")
         }
         set.isCompleted = true
@@ -204,8 +217,12 @@ enum WorkoutService {
             .filter { $0.exerciseSlug == item.exerciseSlug }
             .flatMap(\.sets)
             .filter { $0.isCompleted && !$0.isWarmup && $0.persistentModelID != set.persistentModelID }
-        for other in earlier { snapshot.absorb(weightKg: other.weightKg ?? 0, reps: other.reps ?? 0) }
-        return PRDetector.recordsBeaten(weightKg: set.weightKg ?? 0, reps: reps, against: snapshot)
+        if timed {
+            snapshot.absorbSession(earlier.map { (weightKg: $0.weightKg ?? 0, reps: $0.reps ?? 0) }, timed: true)
+        } else {
+            for other in earlier { snapshot.absorb(weightKg: other.weightKg ?? 0, reps: other.reps ?? 0) }
+        }
+        return PRDetector.recordsBeaten(weightKg: set.weightKg ?? 0, reps: reps, against: snapshot, timed: timed)
     }
 
     static func uncomplete(_ set: ExerciseSet, context: ModelContext) {
@@ -218,6 +235,7 @@ enum WorkoutService {
 
     static func startRest(_ session: WorkoutSession, seconds: Int, label: String, notify: Bool, now: Date = Date()) {
         guard seconds > 0 else { return }
+        session.restPausedRemaining = nil
         session.restEndsAt = now.addingTimeInterval(TimeInterval(seconds))
         session.restTotalSeconds = seconds
         session.restExerciseName = label
@@ -236,7 +254,28 @@ enum WorkoutService {
 
     static func endRest(_ session: WorkoutSession) {
         session.restEndsAt = nil
+        session.restPausedRemaining = nil
         NotificationService.shared.cancelRestTimer()
+    }
+
+    static func pauseRest(_ session: WorkoutSession, now: Date = Date()) {
+        guard let end = session.restEndsAt else { return }
+        session.restPausedRemaining = max(1, Int(end.timeIntervalSince(now).rounded(.up)))
+        session.restEndsAt = nil
+        NotificationService.shared.cancelRestTimer()
+    }
+
+    static func resumeRest(_ session: WorkoutSession, notify: Bool, now: Date = Date()) {
+        guard let remaining = session.restPausedRemaining else { return }
+        session.restPausedRemaining = nil
+        session.restEndsAt = now.addingTimeInterval(TimeInterval(remaining))
+        if notify, let end = session.restEndsAt { NotificationService.shared.scheduleRestTimer(endsAt: end, label: session.restExerciseName) }
+    }
+
+    /// Restarts the timer at a preset length, keeping the same exercise label.
+    static func setRest(_ session: WorkoutSession, seconds: Int, notify: Bool, now: Date = Date()) {
+        session.restPausedRemaining = nil
+        startRest(session, seconds: seconds, label: session.restExerciseName, notify: notify, now: now)
     }
 
     // MARK: Finishing
@@ -262,6 +301,7 @@ enum WorkoutService {
         session.status = .completed
         session.endedAt = now
         session.restEndsAt = nil
+        session.restPausedRemaining = nil
         if session.bodyweightKg == nil { session.bodyweightKg = previousHistory.latestBodyweightKg }
         try context.save()
         NotificationService.shared.cancelRestTimer()
@@ -282,7 +322,7 @@ enum WorkoutService {
                                               result: result, recordedAt: session.startedAt, sessionID: session.uuid))
             if previousPeak == nil || result.placement.tier > previousPeak! {
                 changes.append(RankChange(exerciseSlug: slug, exerciseName: exercisesBySlug[slug]?.name ?? slug,
-                                          from: previousPeak, to: result.placement.tier))
+                                          from: previousPeak, to: result.placement.tier, result: result))
             }
         }
         for line in evaluation.records {
@@ -298,11 +338,13 @@ enum WorkoutService {
         }
 
         let summary = store.history.sessions.first { $0.id == session.uuid }
+        var muscles: [MuscleGroup] = []
+        for sample in sessionSamples { for muscle in sample.primaryMuscles where !muscles.contains(muscle) { muscles.append(muscle) } }
         return WorkoutSummary(
             sessionID: session.uuid, name: session.name, duration: session.duration,
             volumeKg: summary?.volume ?? session.totalVolume, setCount: summary?.setCount ?? session.completedSets.count,
-            exerciseCount: summary?.exerciseCount ?? 0, records: evaluation.records,
-            rankChanges: changes.sorted { $0.to > $1.to }
+            exerciseCount: summary?.exerciseCount ?? 0, repCount: summary?.repCount ?? 0, muscles: muscles,
+            records: evaluation.records, rankChanges: changes.sorted { $0.to > $1.to }
         )
     }
 
@@ -337,10 +379,11 @@ enum RecordService {
             guard let sets = bySlug[slug] else { continue }
             let name = sets.first?.exerciseName ?? slug
             let pairs = sets.map { (weightKg: $0.weightKg, reps: $0.reps) }
-            for achievement in PRDetector.sessionRecords(sets: pairs, against: snapshotFor(slug)) {
+            let timed = sets.first?.isTimed ?? false
+            for achievement in PRDetector.sessionRecords(sets: pairs, against: snapshotFor(slug), timed: timed) {
                 evaluation.records.append(RecordLine(exerciseSlug: slug, exerciseName: name, achievement: achievement))
             }
-            if let exercise = exercisesBySlug[slug], exercise.isRanked {
+            if !timed, let exercise = exercisesBySlug[slug], exercise.isRanked {
                 let rankable = sets.map { sample -> RankableSet in
                     var set = sample.rankable
                     set.bodyweightKg = sample.bodyweightKg ?? history.bodyweight(on: date)
@@ -364,10 +407,11 @@ enum RecordService {
         return top.tier
     }
 
-    /// Replays every completed workout in order and regenerates records and rank snapshots.
+    /// Replays every completed workout in order and regenerates records and workout rank snapshots.
+    /// Performances the user submitted for ranking are their own history and are kept as recorded.
     static func rebuildAll(context: ModelContext, history: TrainingHistory, exercises: [Exercise], scale: Double) {
         for record in (try? context.fetch(FetchDescriptor<PersonalRecord>())) ?? [] { context.delete(record) }
-        for ranking in (try? context.fetch(FetchDescriptor<PerformanceRanking>())) ?? [] { context.delete(ranking) }
+        for ranking in (try? context.fetch(FetchDescriptor<PerformanceRanking>())) ?? [] where !ranking.isSubmitted { context.delete(ranking) }
 
         let exercisesBySlug = Dictionary(exercises.map { ($0.slug, $0) }, uniquingKeysWith: { first, _ in first })
         let bySession = Dictionary(grouping: history.samples, by: \.sessionID)
@@ -391,7 +435,7 @@ enum RecordService {
             }
             for (slug, sets) in Dictionary(grouping: samples, by: \.exerciseSlug) {
                 var snapshot = snapshots[slug] ?? .empty
-                snapshot.absorbSession(sets.map { (weightKg: $0.weightKg, reps: $0.reps) })
+                snapshot.absorbSession(sets.map { (weightKg: $0.weightKg, reps: $0.reps) }, timed: sets.first?.isTimed ?? false)
                 snapshots[slug] = snapshot
             }
         }

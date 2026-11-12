@@ -167,7 +167,8 @@ struct PlanEditorView: View {
             .sheet(isPresented: $showPicker) {
                 ExercisePickerView(mode: .multiple, title: "Add exercises") { picked in
                     for exercise in picked {
-                        draft.entries.append(.init(exercise: exercise, sets: 3, reps: exercise.rankingMethod == .repetitions ? 10 : (exercise.mechanic == .compound ? 8 : 12),
+                        let timed = ExerciseLibrary.shared.isTimed(exercise.slug)
+                        draft.entries.append(.init(exercise: exercise, sets: 3, reps: timed ? 30 : (exercise.rankingMethod == .repetitions ? 10 : (exercise.mechanic == .compound ? 8 : 12)),
                                                    weightText: "", rest: exercise.mechanic == .compound ? max(defaultRest, 120) : defaultRest))
                     }
                 }
@@ -256,7 +257,11 @@ struct PlanEntryRow: View {
             }
             HStack(spacing: 14) {
                 MiniStepper(label: "Sets", value: $entry.sets, range: InputValidator.setRange)
-                MiniStepper(label: "Reps", value: $entry.reps, range: 1...100)
+                if ExerciseLibrary.shared.isTimed(entry.exercise.slug) {
+                    MiniStepper(label: "Sec", value: $entry.reps, range: 5...600, step: 5)
+                } else {
+                    MiniStepper(label: "Reps", value: $entry.reps, range: 1...100)
+                }
             }
             HStack(spacing: 14) {
                 HStack(spacing: 6) {
@@ -294,14 +299,15 @@ struct MiniStepper: View {
     let label: String
     @Binding var value: Int
     let range: ClosedRange<Int>
+    var step: Int = 1
 
     var body: some View {
         HStack(spacing: 6) {
             Text(label).font(.caption).foregroundStyle(Theme.textSecondary)
             HStack(spacing: 0) {
-                button("minus") { value = max(range.lowerBound, value - 1) }
+                button("minus") { value = max(range.lowerBound, value - step) }
                 Text("\(value)").font(.subheadline.weight(.bold).monospacedDigit()).frame(minWidth: 28)
-                button("plus") { value = min(range.upperBound, value + 1) }
+                button("plus") { value = min(range.upperBound, value + step) }
             }
             .background(Capsule().fill(Theme.field))
         }
@@ -310,8 +316,8 @@ struct MiniStepper: View {
         .accessibilityValue("\(value)")
         .accessibilityAdjustableAction { direction in
             switch direction {
-            case .increment: value = min(range.upperBound, value + 1)
-            case .decrement: value = max(range.lowerBound, value - 1)
+            case .increment: value = min(range.upperBound, value + step)
+            case .decrement: value = max(range.lowerBound, value - step)
             @unknown default: break
             }
         }

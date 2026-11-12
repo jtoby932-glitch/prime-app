@@ -69,6 +69,16 @@ enum Format {
         return includeUnit ? "\(text) \(unit.symbol)" : text
     }
 
+    /// "45 s" or "1:30" for timed holds.
+    static func hold(_ seconds: Int) -> String {
+        seconds < 60 ? "\(seconds) s" : String(format: "%d:%02d", seconds / 60, seconds % 60)
+    }
+
+    static func set(weightKg: Double?, reps: Int?, unit: WeightUnit, timed: Bool) -> String {
+        if timed, let reps { return hold(reps) + ((weightKg ?? 0) > 0 ? " +\(weight(weightKg ?? 0, unit: unit))" : "") }
+        return set(weightKg: weightKg, reps: reps, unit: unit)
+    }
+
     static func set(weightKg: Double?, reps: Int?, unit: WeightUnit) -> String {
         switch (weightKg, reps) {
         case let (w?, r?) where w > 0: return "\(weight(w, unit: unit)) × \(r)"

@@ -18,11 +18,12 @@ struct ExerciseCatalogue: Codable {
         var equipment: String
         var mechanic: String
         var difficulty: String
-        var instructions: [String]
-        var tips: [String]
-        var mistakes: [String]
+        var instructions: [String]?
+        var tips: [String]?
+        var mistakes: [String]?
         var alternatives: [String]
         var ranking: Ranking?
+        var guide: ExerciseGuide?
         var id: String { slug }
     }
 
@@ -42,7 +43,9 @@ enum CatalogueService {
     static func loadBundled(bundle: Bundle = .main) throws -> ExerciseCatalogue {
         guard let url = bundle.url(forResource: "exercises", withExtension: "json") else { throw CatalogueError.missingResource }
         let data = try Data(contentsOf: url)
-        return try JSONDecoder().decode(ExerciseCatalogue.self, from: data)
+        let catalogue = try JSONDecoder().decode(ExerciseCatalogue.self, from: data)
+        ExerciseLibrary.shared.install(catalogue)
+        return catalogue
     }
 
     /// Inserts new catalogue exercises and refreshes the text of existing ones, keeping
@@ -84,9 +87,9 @@ enum CatalogueService {
         exercise.equipmentRaw = Equipment(rawValue: entry.equipment)?.rawValue ?? Equipment.machine.rawValue
         exercise.mechanicRaw = Mechanic(rawValue: entry.mechanic)?.rawValue ?? Mechanic.compound.rawValue
         exercise.difficultyRaw = Difficulty(rawValue: entry.difficulty)?.rawValue ?? Difficulty.beginner.rawValue
-        exercise.instructions = entry.instructions
-        exercise.techniqueTips = entry.tips
-        exercise.commonMistakes = entry.mistakes
+        exercise.instructions = entry.guide?.steps ?? entry.instructions ?? []
+        exercise.techniqueTips = entry.guide?.form ?? entry.tips ?? []
+        exercise.commonMistakes = entry.guide?.mistakes.map(\.what) ?? entry.mistakes ?? []
         exercise.alternativeSlugs = entry.alternatives
         if let ranking = entry.ranking, let method = RankingMethod(rawValue: ranking.method),
            method == .unranked || RankingStandard.isValid(ranking.thresholds) {

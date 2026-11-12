@@ -1,76 +1,73 @@
 import SwiftData
 import SwiftUI
-import UserNotifications
 
+/// Short, skippable first run: what PRIME is, how ranking works, a few preferences,
+/// an optional training split, optional bodyweight.
 struct OnboardingFlow: View {
     enum Step: Int, CaseIterable {
-        case welcome, name, units, experience, interests, days, bodyweight, notifications, ready
-
-        var isOptional: Bool {
-            switch self {
-            case .welcome, .units, .ready: return false
-            default: return true
-            }
-        }
+        case welcome, ranking, profile, schedule, bodyweight, ready
     }
 
     @Environment(\.modelContext) private var context
     @Environment(AppState.self) private var appState
     @Environment(TrainingStore.self) private var store
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @Query private var profiles: [UserProfile]
+    @Environment(\.motion) private var motion
+    @Query(sort: \Exercise.name) private var exercises: [Exercise]
 
     @State private var step: Step = .welcome
     @State private var forward = true
     @State private var name = ""
     @State private var unit: WeightUnit = Locale.current.measurementSystem == .us ? .lb : .kg
     @State private var system: MeasurementSystem = Locale.current.measurementSystem == .metric ? .metric : .imperial
-    @State private var experience: ExperienceLevel?
-    @State private var interests: Set<TrainingInterest> = []
-    @State private var days: Set<Int> = []
+    @State private var experience: ExperienceLevel = .beginner
+    @State private var presetID: String?
+    @State private var startDay = Weekday.index(of: Date())
     @State private var bodyweightText = ""
     @State private var bodyweightError: String?
+    @State private var notificationsAsked = false
+    @State private var emblemsShown = false
     @FocusState private var focused: Bool
 
     var body: some View {
         VStack(spacing: 0) {
-            if step != .welcome {
-                HStack(spacing: 12) {
+            HStack(spacing: 12) {
+                if step != .welcome {
                     Button { go(back: true) } label: { Image(systemName: "chevron.left").font(.headline) }
                         .accessibilityLabel("Back")
-                    ProgressBar(progress: Double(step.rawValue) / Double(Step.allCases.count - 1), height: 4)
-                    if step.isOptional {
-                        Button("Skip") { skip() }.font(.subheadline.weight(.semibold)).foregroundStyle(Theme.textSecondary)
-                    }
                 }
-                .padding(.horizontal, Theme.gutter)
-                .padding(.top, 8)
+                ProgressBar(progress: Double(step.rawValue) / Double(Step.allCases.count - 1), height: 4)
+                if step != .ready {
+                    Button(step == .welcome ? "Skip setup" : "Skip") { skip() }
+                        .font(.subheadline.weight(.semibold)).foregroundStyle(Theme.textSecondary)
+                }
             }
+            .frame(height: 32)
+            .padding(.horizontal, Theme.gutter)
+            .padding(.top, 8)
 
             ZStack {
                 page
                     .id(step)
-                    .transition(reduceMotion ? .opacity : .asymmetric(
-                        insertion: .move(edge: forward ? .trailing : .leading).combined(with: .opacity),
-                        removal: .move(edge: forward ? .leading : .trailing).combined(with: .opacity)))
+                    .transition(motion.allowsMovement
+                        ? .asymmetric(insertion: .move(edge: forward ? .trailing : .leading).combined(with: .opacity),
+                                      removal: .move(edge: forward ? .leading : .trailing).combined(with: .opacity))
+                        : .opacity)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-            Button(action: next) {
-                Text(primaryTitle)
-            }
-            .buttonStyle(.primePrimary)
-            .padding(.horizontal, Theme.gutter)
-            .padding(.bottom, 16)
+            Button(action: next) { Text(primaryTitle) }
+                .buttonStyle(.primePrimary)
+                .padding(.horizontal, Theme.gutter)
+                .padding(.bottom, 16)
         }
-        .background(Theme.background.ignoresSafeArea())
+        .background(Theme.backdrop.ignoresSafeArea())
     }
 
     private var primaryTitle: String {
         switch step {
         case .welcome: return "Get started"
-        case .notifications: return "Continue"
-        case .ready: return "Build my first week"
+        case .schedule: return presetID == nil ? "Continue without a split" : "Use this split"
+        case .ready: return "Start training"
         default: return "Continue"
         }
     }
@@ -79,95 +76,136 @@ struct OnboardingFlow: View {
     private var page: some View {
         switch step {
         case .welcome:
-            VStack(spacing: 28) {
+            VStack(spacing: 26) {
                 Spacer()
                 ZStack {
-                    Circle().fill(Theme.accent.opacity(0.08)).frame(width: 260, height: 260).blur(radius: 30)
-                    PrimeMark().fill(Theme.accentGradient).frame(width: 110, height: 110)
+                    Circle().fill(Theme.accent.opacity(0.10)).frame(width: 260, height: 260).blur(radius: 40)
+                    PrimeMark().fill(Theme.accentGradient).frame(width: 104, height: 104)
+                        .shadow(color: Theme.accent.opacity(0.5), radius: 24)
                 }
                 VStack(spacing: 12) {
-                    Text("PRIME").font(.system(size: 54, weight: .black).width(.condensed)).tracking(4).foregroundStyle(.white)
-                    Text("Plan your week. Log every set.\nWatch every lift climb the ranks.")
+                    Text("PRIME").font(.system(size: 52, weight: .black).width(.condensed)).tracking(6).foregroundStyle(Theme.textPrimary)
+                    Text("Plan your week. Log every set.\nLearn every lift. Earn every rank.")
                         .font(.title3)
                         .multilineTextAlignment(.center)
                         .foregroundStyle(Theme.textSecondary)
                 }
                 Spacer()
-                HStack(spacing: 18) {
-                    feature("calendar", "Timetable")
-                    feature("bolt.fill", "Tracking")
-                    feature("shield.lefthalf.filled", "Rankings")
-                    feature("chart.xyaxis.line", "Analytics")
+                VStack(spacing: 10) {
+                    feature("calendar", "Splits and a weekly timetable that fits your days")
+                    feature("book.pages", "Step-by-step guides for every exercise")
+                    feature("chart.xyaxis.line", "Records, analytics and progress insights")
                 }
                 Text("Works offline. No account needed.").font(.caption).foregroundStyle(Theme.textTertiary)
             }
             .padding(.horizontal, Theme.gutter)
 
-        case .name:
-            question("What should we call you?", detail: "Used for your greeting. Stays on this iPhone.") {
-                TextField("Name or username", text: $name)
-                    .font(.title2.weight(.bold))
-                    .padding(16)
-                    .background(RoundedRectangle(cornerRadius: 16).fill(Theme.field))
-                    .focused($focused)
-                    .submitLabel(.continue)
-                    .onSubmit(next)
-                    .onAppear { focused = true }
-            }
-
-        case .units:
-            question("Pick your units", detail: "You can switch any time. Everything converts automatically.") {
-                VStack(spacing: 10) {
-                    ForEach(WeightUnit.allCases) { option in
-                        choiceRow(title: option.displayName, symbol: "scalemass.fill", selected: unit == option) { unit = option }
+        case .ranking:
+            question("Every lift has a rank", detail: "Each exercise climbs its own ladder from Unranked to Master. There's no single overall rank, because averaging a squat and a curl would be meaningless.") {
+                VStack(alignment: .leading, spacing: 18) {
+                    LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 4), spacing: 14) {
+                        ForEach(Array(RankTier.allCases.enumerated()), id: \.element) { index, tier in
+                            VStack(spacing: 6) {
+                                RankEmblem(tier: tier, size: 54)
+                                Text(tier.name).font(.caption2.weight(.semibold)).foregroundStyle(tier == .unranked ? Theme.textTertiary : tier.color)
+                            }
+                            .scaleEffect(emblemsShown || !motion.allowsMovement ? 1 : 0.4)
+                            .opacity(emblemsShown ? 1 : 0)
+                            .animation(motion.animation(.spring(response: 0.45, dampingFraction: 0.65)).map { $0.delay(Double(index) * 0.06) }, value: emblemsShown)
+                        }
                     }
-                    DividerLine().padding(.vertical, 6)
-                    ForEach(MeasurementSystem.allCases) { option in
-                        choiceRow(title: option.displayName, symbol: "ruler.fill", selected: system == option) { system = option }
+                    .onAppear { emblemsShown = true }
+                    VStack(spacing: 10) {
+                        infoRow("function", "Loaded lifts use an estimated one-rep max from a normal working set, divided by your bodyweight. You never have to max out.")
+                        infoRow("figure.core.training", "Bodyweight moves rank on your best set of reps.")
+                        infoRow("checkmark.seal", "Estimates are always labelled. Tiers are PRIME's own progression ladder, not an official standard.")
                     }
                 }
             }
 
-        case .experience:
-            question("How long have you been lifting?", detail: "Helps PRIME suggest a sensible starting plan.") {
-                VStack(spacing: 10) {
-                    ForEach(ExperienceLevel.allCases) { option in
-                        choiceRow(title: option.displayName, symbol: "figure.strengthtraining.traditional", selected: experience == option) { experience = option }
+        case .profile:
+            question("A few preferences", detail: "All optional, and all changeable later in Profile.") {
+                VStack(alignment: .leading, spacing: 18) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Name").eyebrow()
+                        TextField("Name or username", text: $name)
+                            .font(.title3.weight(.semibold))
+                            .padding(14)
+                            .background(RoundedRectangle(cornerRadius: 14).fill(Theme.field))
+                            .focused($focused)
+                            .submitLabel(.done)
+                    }
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Units").eyebrow()
+                        Picker("Weight", selection: $unit) {
+                            ForEach(WeightUnit.allCases) { Text($0.displayName).tag($0) }
+                        }
+                        .pickerStyle(.segmented)
+                        Picker("Measurements", selection: $system) {
+                            ForEach(MeasurementSystem.allCases) { Text($0.displayName).tag($0) }
+                        }
+                        .pickerStyle(.segmented)
+                    }
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Experience").eyebrow()
+                        VStack(spacing: 8) {
+                            ForEach(ExperienceLevel.allCases) { option in
+                                choiceRow(title: option.displayName, symbol: "figure.strengthtraining.traditional", selected: experience == option) { experience = option }
+                            }
+                        }
                     }
                 }
             }
 
-        case .interests:
-            question("What are you training for?", detail: "Pick as many as you like.") {
-                LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)], spacing: 10) {
-                    ForEach(TrainingInterest.allCases) { interest in
-                        let selected = interests.contains(interest)
+        case .schedule:
+            question("Pick a training split", detail: "Optional. Choose a split and the day it starts; PRIME fills your week and you can edit everything afterwards.") {
+                VStack(alignment: .leading, spacing: 14) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Starts on").eyebrow()
+                        HStack(spacing: 6) {
+                            ForEach(Weekday.all, id: \.self) { day in
+                                Button {
+                                    Haptics.selection()
+                                    withAnimation(motion.animation(.snappy)) { startDay = day }
+                                } label: {
+                                    Text(Weekday.shortNames[day])
+                                        .font(.caption.weight(.bold))
+                                        .foregroundStyle(startDay == day ? Theme.onAccent : Theme.textSecondary)
+                                        .frame(maxWidth: .infinity, minHeight: 36)
+                                        .background(RoundedRectangle(cornerRadius: 10).fill(startDay == day ? AnyShapeStyle(Theme.accentGradient) : AnyShapeStyle(Theme.card)))
+                                }
+                                .buttonStyle(PressableStyle())
+                                .accessibilityAddTraits(startDay == day ? .isSelected : [])
+                            }
+                        }
+                    }
+                    let recommended = SplitPreset.recommended(forDays: 4, experience: experience)
+                    ForEach(SplitPreset.all) { preset in
+                        let selected = presetID == preset.id
                         Button {
-                            if selected { interests.remove(interest) } else { interests.insert(interest) }
                             Haptics.selection()
+                            withAnimation(motion.animation(.snappy)) { presetID = selected ? nil : preset.id }
                         } label: {
                             VStack(alignment: .leading, spacing: 10) {
-                                Image(systemName: interest.symbol).font(.title3).foregroundStyle(selected ? Theme.onAccent : Theme.accent)
-                                Text(interest.displayName).font(.subheadline.weight(.semibold)).foregroundStyle(selected ? Theme.onAccent : .white)
-                                    .multilineTextAlignment(.leading)
+                                HStack(spacing: 10) {
+                                    Image(systemName: preset.symbol).foregroundStyle(Theme.accentHighlight).frame(width: 22)
+                                    Text(preset.name).font(.headline).foregroundStyle(Theme.textPrimary)
+                                    if preset.id == recommended { Tag(text: "Suggested", color: Theme.accentHighlight) }
+                                    Spacer()
+                                    Text("\(preset.sessionsPerWeek)×/wk").font(.caption.monospacedDigit()).foregroundStyle(Theme.textSecondary)
+                                    Image(systemName: selected ? "checkmark.circle.fill" : "circle").foregroundStyle(selected ? Theme.accent : Theme.textTertiary)
+                                }
+                                if selected {
+                                    Text(preset.summary).font(.caption).foregroundStyle(Theme.textSecondary).fixedSize(horizontal: false, vertical: true)
+                                    PresetStrip(preset: preset, start: startDay)
+                                }
                             }
-                            .frame(maxWidth: .infinity, minHeight: 92, alignment: .topLeading)
                             .padding(14)
-                            .background(RoundedRectangle(cornerRadius: 18).fill(selected ? AnyShapeStyle(Theme.accentGradient) : AnyShapeStyle(Theme.card)))
+                            .background(RoundedRectangle(cornerRadius: 16).fill(Theme.card))
+                            .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder(selected ? Theme.accent : Theme.border, lineWidth: selected ? 1.5 : 1))
                         }
                         .buttonStyle(PressableStyle())
                         .accessibilityAddTraits(selected ? .isSelected : [])
-                    }
-                }
-            }
-
-        case .days:
-            question("Which days can you train?", detail: "We'll build your timetable around them. Rest days matter too.") {
-                VStack(spacing: 8) {
-                    ForEach(Weekday.all, id: \.self) { day in
-                        choiceRow(title: Weekday.longNames[day], symbol: days.contains(day) ? "checkmark.circle.fill" : "circle", selected: days.contains(day)) {
-                            if days.contains(day) { days.remove(day) } else { days.insert(day) }
-                        }
                     }
                 }
             }
@@ -189,44 +227,38 @@ struct OnboardingFlow: View {
                 }
             }
 
-        case .notifications:
-            question("Stay on schedule", detail: "PRIME can remind you on training days and tell you when rest is over. You choose exactly which alerts you get in Profile.") {
-                VStack(spacing: 10) {
-                    infoRow("calendar.badge.clock", "Workout reminders on your planned days")
-                    infoRow("timer", "Rest timer alerts when PRIME is in the background")
-                    infoRow("trophy.fill", "A summary when you set a new record")
-                    Button("Allow notifications") {
-                        Task {
-                            let granted = await NotificationService.shared.requestAuthorization()
-                            if let profile = profiles.first {
-                                profile.notifyScheduledWorkouts = granted
-                                profile.notifyRestTimer = granted
-                                profile.notifyPersonalRecords = granted
-                            }
-                            next()
-                        }
-                    }
-                    .buttonStyle(.primeSecondary)
-                    .padding(.top, 8)
-                }
-            }
-
         case .ready:
             VStack(spacing: 22) {
                 Spacer()
-                TierBadgeView(tier: .elite, size: 110)
-                Text(name.trimmingCharacters(in: .whitespaces).isEmpty ? "You're set" : "You're set, \(name.trimmingCharacters(in: .whitespaces))")
-                    .font(.primeLargeTitle).foregroundStyle(.white).multilineTextAlignment(.center)
-                Text("Next, pick a starter plan or build your own routine. Every lift you log earns a rank from Beginner to Elite.")
+                RankEmblem(tier: .gold, size: 110)
+                Text(trimmedName.isEmpty ? "You're set" : "You're set, \(trimmedName)")
+                    .font(.primeLargeTitle).foregroundStyle(Theme.textPrimary).multilineTextAlignment(.center)
+                Text(presetID == nil
+                     ? "Start an empty workout, browse the exercise library, or pick a split from Workouts whenever you're ready."
+                     : "Your week is planned. Today's workout is waiting on Home.")
                     .font(.body).foregroundStyle(Theme.textSecondary).multilineTextAlignment(.center)
+                if !notificationsAsked {
+                    Button {
+                        notificationsAsked = true
+                        Task {
+                            let granted = await NotificationService.shared.requestAuthorization()
+                            let profile = DataService.profile(in: context)
+                            profile.notifyScheduledWorkouts = granted
+                            profile.notifyRestTimer = granted
+                            profile.notifyPersonalRecords = granted
+                        }
+                    } label: { Label("Allow workout and rest reminders", systemImage: "bell.badge") }
+                        .buttonStyle(.primeSecondary)
+                } else {
+                    Label("You can change reminders in Profile", systemImage: "checkmark").font(.subheadline).foregroundStyle(Theme.textSecondary)
+                }
                 Spacer()
-                Button("I'll explore first") { complete(openGuide: false) }
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(Theme.textSecondary)
             }
             .padding(.horizontal, Theme.gutter)
         }
     }
+
+    private var trimmedName: String { name.trimmingCharacters(in: .whitespaces) }
 
     // MARK: Building blocks
 
@@ -234,15 +266,17 @@ struct OnboardingFlow: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 22) {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text(title).font(.primeLargeTitle).foregroundStyle(.white)
-                    Text(detail).font(.body).foregroundStyle(Theme.textSecondary)
+                    Text(title).font(.primeLargeTitle).foregroundStyle(Theme.textPrimary)
+                    Text(detail).font(.body).foregroundStyle(Theme.textSecondary).fixedSize(horizontal: false, vertical: true)
                 }
                 content()
             }
             .padding(.horizontal, Theme.gutter)
-            .padding(.top, 28)
+            .padding(.top, 24)
+            .padding(.bottom, 16)
         }
         .scrollDismissesKeyboard(.interactively)
+        .scrollIndicators(.hidden)
     }
 
     private func choiceRow(title: String, symbol: String, selected: Bool, action: @escaping () -> Void) -> some View {
@@ -252,32 +286,33 @@ struct OnboardingFlow: View {
         } label: {
             HStack(spacing: 12) {
                 Image(systemName: symbol).foregroundStyle(selected ? Theme.onAccent : Theme.accent).frame(width: 24)
-                Text(title).font(.headline).foregroundStyle(selected ? Theme.onAccent : .white)
+                Text(title).font(.headline).foregroundStyle(selected ? Theme.onAccent : Theme.textPrimary)
                 Spacer()
                 if selected { Image(systemName: "checkmark").font(.headline).foregroundStyle(Theme.onAccent) }
             }
-            .padding(16)
-            .background(RoundedRectangle(cornerRadius: 16).fill(selected ? AnyShapeStyle(Theme.accentGradient) : AnyShapeStyle(Theme.card)))
+            .padding(14)
+            .background(RoundedRectangle(cornerRadius: 14).fill(selected ? AnyShapeStyle(Theme.accentGradient) : AnyShapeStyle(Theme.card)))
         }
         .buttonStyle(PressableStyle())
         .accessibilityAddTraits(selected ? .isSelected : [])
     }
 
     private func feature(_ symbol: String, _ title: String) -> some View {
-        VStack(spacing: 6) {
-            IconBubble(symbol: symbol, size: 44)
-            Text(title).font(.caption2.weight(.semibold)).foregroundStyle(Theme.textSecondary)
+        HStack(spacing: 12) {
+            IconBubble(symbol: symbol, size: 36)
+            Text(title).font(.subheadline).foregroundStyle(Theme.textPrimary)
+            Spacer()
         }
     }
 
     private func infoRow(_ symbol: String, _ text: String) -> some View {
-        HStack(spacing: 12) {
-            IconBubble(symbol: symbol, size: 38)
-            Text(text).font(.subheadline).foregroundStyle(.white)
-            Spacer()
+        HStack(alignment: .top, spacing: 12) {
+            IconBubble(symbol: symbol, size: 34)
+            Text(text).font(.subheadline).foregroundStyle(Theme.textPrimary).fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: 0)
         }
         .padding(12)
-        .background(RoundedRectangle(cornerRadius: 16).fill(Theme.card))
+        .background(RoundedRectangle(cornerRadius: 14).fill(Theme.card))
     }
 
     // MARK: Navigation
@@ -292,7 +327,7 @@ struct OnboardingFlow: View {
             }
         }
         if step == .ready {
-            complete(openGuide: true)
+            complete()
             return
         }
         go(back: false)
@@ -300,10 +335,10 @@ struct OnboardingFlow: View {
 
     private func skip() {
         switch step {
-        case .name: name = ""
-        case .experience: experience = nil
-        case .interests: interests = []
-        case .days: days = []
+        case .welcome:
+            complete()
+            return
+        case .schedule: presetID = nil
         case .bodyweight: bodyweightText = ""; bodyweightError = nil
         default: break
         }
@@ -315,28 +350,28 @@ struct OnboardingFlow: View {
         let target = step.rawValue + (back ? -1 : 1)
         guard let nextStep = Step(rawValue: target) else { return }
         forward = !back
-        withAnimation(reduceMotion ? .easeInOut(duration: 0.2) : .spring(response: 0.45, dampingFraction: 0.88)) { step = nextStep }
+        withAnimation(motion.animation(.spring(response: 0.45, dampingFraction: 0.88)) ?? .easeInOut(duration: 0.2)) { step = nextStep }
     }
 
-    private func complete(openGuide: Bool) {
+    private func complete() {
         let profile = DataService.profile(in: context)
-        profile.name = name.trimmingCharacters(in: .whitespaces)
+        profile.name = trimmedName
         profile.weightUnit = unit
         profile.measurementSystem = system
-        if let experience { profile.experience = experience }
-        profile.interests = TrainingInterest.allCases.filter { interests.contains($0) }
-        profile.preferredWeekdays = days.sorted()
-        if !days.isEmpty { profile.weeklyGoal = days.count }
+        profile.experience = experience
         if case .success(let kilograms) = InputValidator.bodyweight(bodyweightText, unit: unit) {
             DataService.logBodyweight(kilograms, context: context)
+        }
+        if let presetID, let preset = SplitPreset.all.first(where: { $0.id == presetID }) {
+            _ = ScheduleService.apply(preset, start: startDay, mode: .replace, exercises: exercises,
+                                      restSeconds: profile.defaultRestSeconds, context: context)
+            profile.weeklyGoal = max(1, preset.sessionsPerWeek)
+            profile.preferredWeekdays = preset.layout(startingOn: startDay).compactMap { $0.value == nil ? nil : $0.key }.sorted()
         }
         profile.hasCompletedOnboarding = true
         try? context.save()
         store.refresh(context)
         appState.refreshNotifications(context: context, history: store.history)
-        if openGuide {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { appState.showFirstWorkoutGuide = true }
-        }
         Haptics.success()
     }
 }

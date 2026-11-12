@@ -1,31 +1,24 @@
 import Foundation
 import SwiftData
 
-/// Version 1 of the store. Future changes add a `PrimeSchemaV2` and a migration stage below,
-/// so existing workout history is carried forward instead of being wiped.
-enum PrimeSchemaV1: VersionedSchema {
-    static let versionIdentifier = Schema.Version(1, 0, 0)
+/// Version 2: the current models (the top-level classes). Adds readiness, paused rest,
+/// submitted rank entries, routine origins and app preferences. Every new field has a default,
+/// so 1.0 stores migrate in place without losing anything.
+enum PrimeSchemaV2: VersionedSchema {
+    static let versionIdentifier = Schema.Version(2, 0, 0)
 
     static var models: [any PersistentModel.Type] {
-        [
-            UserProfile.self,
-            BodyweightEntry.self,
-            Exercise.self,
-            WorkoutPlan.self,
-            PlannedExercise.self,
-            WorkoutDay.self,
-            WorkoutSession.self,
-            ExerciseSession.self,
-            ExerciseSet.self,
-            PersonalRecord.self,
-            PerformanceRanking.self,
-        ]
+        [UserProfile.self, BodyweightEntry.self, Exercise.self, WorkoutPlan.self, PlannedExercise.self, WorkoutDay.self,
+         WorkoutSession.self, ExerciseSession.self, ExerciseSet.self, PersonalRecord.self, PerformanceRanking.self]
     }
 }
 
 enum PrimeMigrationPlan: SchemaMigrationPlan {
-    static var schemas: [any VersionedSchema.Type] { [PrimeSchemaV1.self] }
-    static var stages: [MigrationStage] { [] }
+    static var schemas: [any VersionedSchema.Type] { [PrimeSchemaV1.self, PrimeSchemaV2.self] }
+
+    static var stages: [MigrationStage] {
+        [.lightweight(fromVersion: PrimeSchemaV1.self, toVersion: PrimeSchemaV2.self)]
+    }
 }
 
 enum PrimeStore {
@@ -34,7 +27,7 @@ enum PrimeStore {
         if !inMemory {
             try? FileManager.default.createDirectory(at: URL.applicationSupportDirectory, withIntermediateDirectories: true)
         }
-        let schema = Schema(versionedSchema: PrimeSchemaV1.self)
+        let schema = Schema(versionedSchema: PrimeSchemaV2.self)
         // CloudKit stays off for now; sync is a future layer (it would need the unique constraints relaxed).
         let configuration = ModelConfiguration(
             inMemory ? "PRIME-\(UUID().uuidString)" : "PRIME",
@@ -45,9 +38,9 @@ enum PrimeStore {
         return try ModelContainer(for: schema, migrationPlan: PrimeMigrationPlan.self, configurations: [configuration])
     }
 
-    /// A store at a specific file, used by tests to simulate the app being closed and reopened.
+    /// A store at a specific file, used by tests to simulate relaunches and upgrades.
     static func makeContainer(url: URL) throws -> ModelContainer {
-        let schema = Schema(versionedSchema: PrimeSchemaV1.self)
+        let schema = Schema(versionedSchema: PrimeSchemaV2.self)
         let configuration = ModelConfiguration(schema: schema, url: url, cloudKitDatabase: .none)
         return try ModelContainer(for: schema, migrationPlan: PrimeMigrationPlan.self, configurations: [configuration])
     }

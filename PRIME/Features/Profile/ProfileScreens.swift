@@ -157,7 +157,9 @@ struct PersonalRecordsView: View {
                                         if let e1rm = snapshot.bestOneRepMaxKg {
                                             Text("e1RM \(Format.estimate(e1rm, unit: unit))").font(.subheadline.weight(.bold).monospacedDigit()).foregroundStyle(.white)
                                         }
-                                        if let heaviest = snapshot.heaviestWeightKg {
+                                        if let hold = snapshot.longestHoldSeconds {
+                                            Text("Longest \(Format.hold(hold))").font(.subheadline.weight(.bold).monospacedDigit()).foregroundStyle(.white)
+                                        } else if let heaviest = snapshot.heaviestWeightKg {
                                             Text("Heaviest \(Format.weight(heaviest, unit: unit))").font(.caption).foregroundStyle(Theme.textSecondary)
                                         } else if let reps = snapshot.mostRepsByWeight.values.max() {
                                             Text("\(reps) reps").font(.subheadline.weight(.bold)).foregroundStyle(.white)
@@ -213,12 +215,13 @@ struct AchievementsView: View {
     var body: some View {
         let profile = profiles.first
         let best = Analytics.bestWeekStreak(sessionDates: store.history.sessions.map(\.startedAt), weeklyGoal: profile?.weeklyGoal ?? 3)
-        let badges = BadgeEngine.globalBadges(history: store.history, bestStreak: best, recordCount: records.count,
-                                              peakTier: rankings.map(\.tier).max(), unit: profile?.weightUnit ?? .kg)
+        let badges = BadgeEngine.globalBadges(workouts: store.history.sessions.count,
+                                              routineWorkouts: store.history.sessions.filter(\.fromRoutine).count,
+                                              bestStreak: best, recordCount: records.count, peakTier: rankings.map(\.tier).max())
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 BadgeGrid(title: "Milestones", badges: badges)
-                Text("Every badge is earned from workouts you've logged. Exercise badges live on each lift's rank page.")
+                Text("Every badge is earned from workouts you've logged. None reward piling on extra volume. Exercise badges live on each lift's rank page.")
                     .font(.caption).foregroundStyle(Theme.textTertiary)
             }
             .padding(.horizontal, Theme.gutter)
@@ -314,4 +317,175 @@ struct NotificationSettingsView: View {
         try? context.save()
         appState.refreshNotifications(context: context, history: store.history)
     }
+}
+
+// MARK: - Preferences
+
+struct PreferencesView: View {
+    @Environment(\.modelContext) private var context
+    @Query private var profiles: [UserProfile]
+
+    var body: some View {
+        Group {
+            if let profile = profiles.first { form(profile) }
+        }
+        .navigationTitle("Preferences")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+
+    private func form(_ profile: UserProfile) -> some View {
+        @Bindable var profile = profile
+        return Form {
+            Section {
+                Picker("Animations", selection: $profile.animationLevelRaw) {
+                    ForEach(AnimationLevel.allCases) { Text($0.displayName).tag($0.rawValue) }
+                }
+                Toggle("Haptic feedback", isOn: $profile.hapticsEnabled)
+            } header: { Text("Motion and feel") } footer: {
+                Text("Reduced keeps fades but drops movement and particles. iOS Reduce Motion always wins, whatever you pick here.")
+            }
+            Section {
+                ForEach(AccentChoice.allCases) { choice in
+                    Button {
+                        profile.accentRaw = choice.rawValue
+                        try? context.save()
+                    } label: {
+                        HStack(spacing: 12) {
+                            Circle().fill(LinearGradient(colors: [choice.highlight, choice.deep], startPoint: .topLeading, endPoint: .bottomTrailing))
+                                .frame(width: 26, height: 26)
+                            Text(choice.displayName).foregroundStyle(Theme.textPrimary)
+                            Spacer()
+                            if profile.accentRaw == choice.rawValue { Image(systemName: "checkmark").foregroundStyle(choice.base) }
+                        }
+                    }
+                }
+            } header: { Text("Accent colour") } footer: { Text("PRIME is always dark: black and navy with one accent.") }
+            Section {
+                Picker("Anatomy figure", selection: $profile.bodyModelRaw) {
+                    ForEach(BodyModel.allCases) { Text($0.displayName).tag($0.rawValue) }
+                }
+            } header: { Text("Anatomy") } footer: { Text("Used by the muscle map and exercise illustrations.") }
+            Section("Home") {
+                NavigationLink(value: Route.dashboardLayout) { Label("Dashboard layout", systemImage: "rectangle.3.group") }
+            }
+        }
+        .scrollContentBackground(.hidden)
+        .primeBackground()
+        .onChange(of: profile.hapticsEnabled) { _, on in
+            Haptics.enabled = on
+            try? context.save()
+        }
+        .onChange(of: profile.animationLevelRaw) { _, _ in try? context.save() }
+        .onChange(of: profile.bodyModelRaw) { _, _ in try? context.save() }
+    }
+}
+
+// MARK: - Dashboard layout
+
+struct DashboardLayoutView: View {
+    @Environment(\.modelContext) private var context
+    @Query private var profiles: [UserProfile]
+
+    var body: some View {
+        Group {
+            if let profile = profiles.first { list(profile) }
+        }
+        .navigationTitle("Dashboard layout")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+
+    private func list(_ profile: UserProfile) -> some View {
+        let order = DashboardSection.ordered(order: profile.dashboardOrder, hidden: [])
+        return List {
+            Section {
+                ForEach(order) { section in
+                    let hidden = profile.dashboardHidden.contains(section.rawValue)
+                    HStack(spacing: 12) {
+                        Image(systemName: section.symbol).foregroundStyle(hidden ? Theme.textTertiary : Theme.accentHighlight).frame(width: 24)
+                        Text(section.title).foregroundStyle(hidden ? Theme.textTertiary : Theme.textPrimary)
+                        Spacer()
+                        Button {
+                            toggle(section, in: profile)
+                        } label: {
+                            Image(systemName: hidden ? "eye.slash" : "eye").foregroundStyle(hidden ? Theme.textTertiary : Theme.accent)
+                        }
+                        .buttonStyle(.borderless)
+                        .accessibilityLabel(hidden ? "Show \(section.title)" : "Hide \(section.title)")
+                    }
+                }
+                .onMove { source, destination in
+                    var items = order.map(\.rawValue)
+                    items.move(fromOffsets: source, toOffset: destination)
+                    profile.dashboardOrder = items
+                    try? context.save()
+                }
+            } footer: {
+                Text("Drag to reorder. The greeting and today's workout always stay at the top.")
+            }
+            .listRowBackground(Theme.card)
+            Section {
+                Button("Reset to default") {
+                    profile.dashboardOrder = []
+                    profile.dashboardHidden = []
+                    try? context.save()
+                }
+            }
+            .listRowBackground(Theme.card)
+        }
+        .environment(\.editMode, .constant(.active))
+        .scrollContentBackground(.hidden)
+        .primeBackground()
+    }
+
+    private func toggle(_ section: DashboardSection, in profile: UserProfile) {
+        var hidden = profile.dashboardHidden
+        if let index = hidden.firstIndex(of: section.rawValue) { hidden.remove(at: index) } else { hidden.append(section.rawValue) }
+        profile.dashboardHidden = hidden
+        Haptics.selection()
+        try? context.save()
+    }
+}
+
+// MARK: - Licences
+
+struct LicencesView: View {
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 14) {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Anatomy artwork").font(.primeTitle3).foregroundStyle(Theme.textPrimary)
+                    Text(AnatomyFigure.credit).font(.subheadline).foregroundStyle(Theme.textSecondary)
+                    Text("Muscle regions were remapped to PRIME's muscle groups and redrawn natively.").font(.caption).foregroundStyle(Theme.textTertiary)
+                }
+                .primeCard(padding: 16)
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("MIT License").font(.headline).foregroundStyle(Theme.textPrimary)
+                    Text(Self.mit).font(.system(.caption, design: .monospaced)).foregroundStyle(Theme.textSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .primeCard(padding: 16)
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Exercise guides and rankings").font(.primeTitle3).foregroundStyle(Theme.textPrimary)
+                    Text("Written for PRIME. Tier thresholds are PRIME's own progression system, not an official strength standard.")
+                        .font(.subheadline).foregroundStyle(Theme.textSecondary)
+                }
+                .primeCard(padding: 16)
+            }
+            .padding(.horizontal, Theme.gutter)
+            .padding(.bottom, 32)
+        }
+        .primeBackground()
+        .navigationTitle("Licences")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+
+    static let mit = """
+    Copyright (c) 2022 ELABBASSI Hicham
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+    """
 }

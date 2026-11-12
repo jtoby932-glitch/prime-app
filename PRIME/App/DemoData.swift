@@ -4,7 +4,9 @@ import SwiftData
 
 /// Debug-only sample data for screenshots and simulator checks. Never compiled into release builds.
 /// Launch arguments: `-demo` seeds six weeks of training, `-tab <home|workouts|exercises|rankings|profile>`
-/// picks a tab, `-activeWorkout` opens a workout in progress, `-route <name>` opens a screen in a sheet.
+/// picks a tab, `-activeWorkout` opens a workout in progress, `-route <name>` opens a screen in a sheet,
+/// `-reveal <slug> -revealStage <analysis|reveal|breakdown>` shows a frozen rank reveal,
+/// `-sheet <search|presets>` opens a global sheet.
 @MainActor
 enum DemoData {
     private static var arguments: [String] { ProcessInfo.processInfo.arguments }
@@ -31,20 +33,42 @@ enum DemoData {
             case "analytics": appState.debugRoute = .analytics
             case "muscleMap": appState.debugRoute = .muscleMap
             case "records": appState.debugRoute = .records
-            case "calculator": appState.debugRoute = .rankCalculator
+            case "methodology": appState.debugRoute = .methodology
+            case "achievements": appState.debugRoute = .achievements
+            case "preferences": appState.debugRoute = .preferences
+            case "allExercises": appState.debugRoute = .allExercises
             default:
                 if route.hasPrefix("rank:") { appState.debugRoute = .exerciseRank(String(route.dropFirst(5))) }
                 if route.hasPrefix("exercise:") { appState.debugRoute = .exercise(String(route.dropFirst(9))) }
+                if route.hasPrefix("muscle:"), let muscle = MuscleGroup(rawValue: String(route.dropFirst(7))) { appState.debugRoute = .muscle(muscle) }
+                if route.hasPrefix("category:"), let muscle = MuscleGroup(rawValue: String(route.dropFirst(9))) { appState.debugRoute = .category(muscle) }
             }
         }
+        switch value(after: "-sheet") {
+        case "search": appState.showSearch = true
+        case "presets": appState.showSplitPresets = true
+        default: break
+        }
         if arguments.contains("-activeWorkout") { startWorkout(context: context, store: store, appState: appState) }
+        if let slug = value(after: "-reveal") { showReveal(slug: slug, context: context, store: store, appState: appState) }
+    }
+
+    private static func showReveal(slug: String, context: ModelContext, store: TrainingStore, appState: AppState) {
+        let exercises = (try? context.fetch(FetchDescriptor<Exercise>())) ?? []
+        guard let exercise = exercises.first(where: { $0.slug == slug }) else { return }
+        let rank = RankingService.rank(for: exercise, history: store.history, submissions: [], scale: 1)
+        guard let result = rank.currentResult ?? rank.peak else { return }
+        appState.revealStage = RankRevealView.Stage(rawValue: ["analysis", "reveal", "breakdown"].firstIndex(of: value(after: "-revealStage") ?? "") ?? 2) ?? .breakdown
+        appState.revealFrozen = true
+        appState.reveal = RankingService.reveal(for: result, exercise: exercise, history: store.history, rankings: [], unit: .kg, scale: 1)
     }
 
     private static let baseWeights: [String: Double] = [
         "barbell-bench-press": 70, "incline-dumbbell-press": 24, "overhead-press": 45, "dumbbell-lateral-raise": 10,
         "cable-triceps-pushdown": 30, "pull-up": 0, "barbell-bent-over-row": 65, "seated-cable-row": 60, "face-pull": 20,
         "barbell-curl": 30, "hammer-curl": 14, "barbell-back-squat": 100, "romanian-deadlift": 90, "leg-press": 160,
-        "leg-extension": 50, "lying-leg-curl": 40, "standing-calf-raise": 80,
+        "leg-extension": 50, "lying-leg-curl": 40, "seated-leg-curl": 40, "standing-calf-raise": 80,
+        "dumbbell-shoulder-press": 22, "overhead-cable-triceps-extension": 22,
     ]
 
     private static func seed(context: ModelContext, store: TrainingStore) {
@@ -68,8 +92,8 @@ enum DemoData {
         store.refresh(context)
 
         let exercises = (try? context.fetch(FetchDescriptor<Exercise>())) ?? []
-        guard let template = PlanTemplate.all.first(where: { $0.id == "ppl" }) else { return }
-        template.install(context: context, exercises: exercises, weekdays: [0, 2, 4], restSeconds: 90)
+        guard let preset = SplitPreset.all.first(where: { $0.id == "ppl3" }) else { return }
+        _ = ScheduleService.apply(preset, start: 0, mode: .replace, exercises: exercises, restSeconds: 90, context: context)
         let days = ScheduleService.ensureWeek(context: context)
         let thisWeek = calendar.startOfWeek(for: now)
 
@@ -82,6 +106,7 @@ enum DemoData {
                 if week == 2 && weekday == 4 { continue } // one missed session keeps the data honest
                 let session = WorkoutService.start(plan: plan, context: context, history: store.history, now: time)
                 session.bodyweightKg = 81.6 - Double(week) * 0.22
+                session.readiness = week % 3 == 0 ? nil : 3 + (week + weekday) % 3
                 var clock = time
                 for item in session.sortedExercises {
                     let base = baseWeights[item.exerciseSlug] ?? 20

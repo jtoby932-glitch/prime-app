@@ -52,9 +52,10 @@ struct PlanDetailView: View {
                 if !plan.muscles.isEmpty {
                     SectionHeader(title: "Muscles worked")
                     HStack(spacing: 16) {
-                        let levels = Dictionary(uniqueKeysWithValues: plan.muscles.map { ($0, 1.0) })
-                        AnatomyCanvas(side: .front, intensity: levels).frame(height: 220)
-                        AnatomyCanvas(side: .back, intensity: levels).frame(height: 220)
+                        BodyModelReader { model in
+                            AnatomyCanvas(side: .front, primary: plan.muscles, model: model).frame(height: 230)
+                            AnatomyCanvas(side: .back, primary: plan.muscles, model: model).frame(height: 230)
+                        }
                     }
                     .frame(maxWidth: .infinity)
                     .primeCard()
@@ -103,7 +104,7 @@ struct PlannedEntryCard: View {
                 Text(exercise.name).font(.subheadline.weight(.semibold)).foregroundStyle(.white).lineLimit(1)
                 Text(targetText).font(.caption).foregroundStyle(Theme.textSecondary)
                 if !last.isEmpty {
-                    Text("Last: " + last.prefix(3).map { Format.set(weightKg: $0.weightKg, reps: $0.reps, unit: unit) }.joined(separator: ", "))
+                    Text("Last: " + last.prefix(3).map { Format.set(weightKg: $0.weightKg, reps: $0.reps, unit: unit, timed: $0.isTimed) }.joined(separator: ", "))
                         .font(.caption)
                         .foregroundStyle(Theme.textTertiary)
                         .lineLimit(1)

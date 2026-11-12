@@ -45,7 +45,6 @@ struct WorkoutsView: View {
                 PlanEditorView(target: target)
             }
             .primeDestinations()
-            .workoutBarInset()
         }
     }
 }
@@ -75,6 +74,7 @@ struct WeekPlannerView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
+            PresetBanner()
             calendarStrip
             if let day = days.first(where: { $0.weekday == selectedWeekday }) {
                 SelectedDayCard(day: day, editorTarget: $editorTarget, onEdit: { dayToEdit = day })
@@ -345,7 +345,7 @@ struct RoutinesListView: View {
                 EmptyStateView(symbol: "list.bullet.rectangle.portrait", title: "No routines yet",
                                message: "A routine is a list of exercises with your target sets, reps and weights.",
                                actionTitle: "Create routine") { editorTarget = .new(weekday: nil) }
-                Button("Use a starter template") { appState.showFirstWorkoutGuide = true }
+                Button("Use a split preset") { appState.showSplitPresets = true }
                     .buttonStyle(.primeSecondary)
             }
             ForEach(plans) { plan in
@@ -405,5 +405,27 @@ struct RoutineCard: View {
             }
         }
         .primeCard()
+    }
+}
+
+
+/// Entry point to the split preset library from the timetable.
+struct PresetBanner: View {
+    @Environment(AppState.self) private var appState
+
+    var body: some View {
+        Button { appState.showSplitPresets = true } label: {
+            HStack(spacing: 12) {
+                IconBubble(symbol: "square.stack.3d.up.fill", size: 40)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Workout split presets").font(.subheadline.weight(.semibold)).foregroundStyle(Theme.textPrimary)
+                    Text("PPL, Arnold, Upper/Lower and more, from any start day").font(.caption).foregroundStyle(Theme.textSecondary)
+                }
+                Spacer()
+                Image(systemName: "chevron.right").font(.caption.weight(.bold)).foregroundStyle(Theme.textTertiary)
+            }
+            .primeCard(padding: 12)
+        }
+        .buttonStyle(PressableStyle())
     }
 }

@@ -1,0 +1,2 @@
+8ed39ac2ae9cb46fb79d77eedec7e5b029a75174 Sun Sep 13 22:40:56 2026 +0200
+https://github.com/HichamELBSI/react-native-body-highlighter (MIT). Only the SVG path data in assets/ is used.

@@ -8,30 +8,34 @@ struct ExerciseDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(AppState.self) private var appState
     @Environment(TrainingStore.self) private var store
+    @Environment(\.bodyModel) private var model
+    @Environment(\.motion) private var motion
     @Query private var profiles: [UserProfile]
     @Query(sort: \WorkoutPlan.createdAt) private var plans: [WorkoutPlan]
-    @Query(sort: \Exercise.name) private var allExercises: [Exercise]
+    @Query private var rankings: [PerformanceRanking]
     @State private var showEditor = false
     @State private var confirmDelete = false
+    @State private var side: AnatomySide = .front
 
-    private var unit: WeightUnit { profiles.first?.weightUnit ?? .kg }
+    private var profile: UserProfile? { profiles.first }
+    private var unit: WeightUnit { profile?.weightUnit ?? .kg }
     private var samples: [SetSample] { store.history.samples(for: exercise.slug) }
+    private var timed: Bool { exercise.guide.tracking == .time }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
-                hero
-                if !samples.isEmpty { statsCard }
-                lastSessionCard
-                guidance(title: "How to do it", items: exercise.instructions, numbered: true, symbol: nil)
-                guidance(title: "Technique", items: exercise.techniqueTips, numbered: false, symbol: "checkmark.circle.fill")
-                guidance(title: "Common mistakes", items: exercise.commonMistakes, numbered: false, symbol: "xmark.circle.fill")
-                alternatives
-                if !samples.isEmpty { repRecords }
-                actions
+        ScrollViewReader { proxy in
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    hero.appear(0)
+                    actions.appear(1)
+                    if !samples.isEmpty { performance.appear(2) }
+                    sectionJumper(proxy)
+                    ExerciseGuideSections(exercise: exercise)
+                    if exercise.isCustom { customActions }
+                }
+                .padding(.horizontal, Theme.gutter)
+                .padding(.bottom, 24)
             }
-            .padding(.horizontal, Theme.gutter)
-            .padding(.bottom, 32)
         }
         .primeBackground()
         .navigationTitle(exercise.name)
@@ -44,9 +48,14 @@ struct ExerciseDetailView: View {
                 } label: {
                     Image(systemName: exercise.isFavourite ? "star.fill" : "star")
                         .foregroundStyle(exercise.isFavourite ? Theme.warning : Theme.textPrimary)
+                        .contentTransition(.symbolEffect(.replace))
                 }
                 .accessibilityLabel(exercise.isFavourite ? "Remove from favourites" : "Add to favourites")
             }
+        }
+        .onAppear {
+            profile?.noteViewed(exercise.slug)
+            side = AnatomyFigure.figure(model).bestSide(for: exercise.primaryMuscles)
         }
         .sheet(isPresented: $showEditor) { CustomExerciseEditor(existing: exercise) }
         .confirmationDialog("Delete \(exercise.name)?", isPresented: $confirmDelete, titleVisibility: .visible) {
@@ -62,50 +71,42 @@ struct ExerciseDetailView: View {
         }
     }
 
-    // MARK: Sections
+    // MARK: Hero
 
     private var hero: some View {
         VStack(alignment: .leading, spacing: 14) {
-            HStack(spacing: 12) {
-                let levels = muscleLevels
-                VStack(spacing: 4) {
-                    AnatomyCanvas(side: .front, intensity: levels).frame(height: 210)
-                    Text("Front").font(.caption2.weight(.bold)).foregroundStyle(Theme.textTertiary)
+            ZStack(alignment: .topTrailing) {
+                AnatomyCanvas(side: side, primary: exercise.primaryMuscles, secondary: exercise.secondaryMuscles, model: model)
+                    .frame(height: 260)
+                    .frame(maxWidth: .infinity)
+                    .id(side)
+                    .transition(.opacity)
+                Picker("View", selection: $side.animation(motion.animation())) {
+                    ForEach(AnatomySide.allCases) { Text($0.displayName).tag($0) }
                 }
-                VStack(spacing: 4) {
-                    AnatomyCanvas(side: .back, intensity: levels).frame(height: 210)
-                    Text("Back").font(.caption2.weight(.bold)).foregroundStyle(Theme.textTertiary)
-                }
+                .pickerStyle(.segmented)
+                .frame(width: 130)
             }
-            .frame(maxWidth: .infinity)
-            .accessibilityElement()
-            .accessibilityLabel("Works \(exercise.primaryMuscleSummary)" + (exercise.secondaryMuscles.isEmpty ? "" : ", also \(exercise.secondaryMuscles.map(\.displayName).joined(separator: ", "))"))
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Works \(exercise.primaryMuscleSummary)" + (exercise.secondaryMuscles.isEmpty ? "" : ", assisted by \(exercise.secondaryMuscles.map(\.displayName).joined(separator: ", "))"))
 
-            VStack(alignment: .leading, spacing: 8) {
-                HStack(spacing: 8) {
-                    legend(color: Theme.accent, text: "Primary")
-                    legend(color: Theme.accent.opacity(0.45), text: "Secondary")
-                }
-                muscleLine(title: "Primary", muscles: exercise.primaryMuscles)
-                if !exercise.secondaryMuscles.isEmpty {
-                    muscleLine(title: "Secondary", muscles: exercise.secondaryMuscles)
-                }
+            HStack(spacing: 14) {
+                legend(color: Theme.accent, text: "Primary")
+                legend(color: Theme.accentHighlight.opacity(0.42), text: "Secondary")
             }
-            HStack(spacing: 6) {
-                Tag(text: exercise.equipment.displayName, color: Theme.accent)
-                Tag(text: exercise.mechanic.displayName)
-                Tag(text: exercise.difficulty.displayName)
-                if exercise.isCustom { Tag(text: "Custom", color: Theme.info) }
+            Text(exercise.name).font(.primeTitle).foregroundStyle(Theme.textPrimary)
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 6) {
+                    Tag(text: exercise.equipment.displayName, color: Theme.accentHighlight, symbol: exercise.equipment.symbol)
+                    Tag(text: exercise.mechanic.displayName)
+                    Tag(text: exercise.difficulty.displayName)
+                    if exercise.guide.unilateral { Tag(text: "Unilateral") }
+                    if !exercise.guide.pattern.isEmpty { Tag(text: exercise.guide.pattern) }
+                    if exercise.isCustom { Tag(text: "Custom", color: Theme.accentHighlight) }
+                }
             }
         }
-        .primeCard(padding: 18)
-    }
-
-    private var muscleLevels: [MuscleGroup: Double] {
-        var levels: [MuscleGroup: Double] = [:]
-        for muscle in exercise.secondaryMuscles { levels[muscle] = 0.3 }
-        for muscle in exercise.primaryMuscles { levels[muscle] = 1 }
-        return levels
+        .primeCard(padding: 16)
     }
 
     private func legend(color: Color, text: String) -> some View {
@@ -115,34 +116,86 @@ struct ExerciseDetailView: View {
         }
     }
 
-    private func muscleLine(title: String, muscles: [MuscleGroup]) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: 8) {
-            Text(title).font(.caption.weight(.bold)).foregroundStyle(Theme.textTertiary).frame(width: 74, alignment: .leading)
-            Text(muscles.map(\.displayName).joined(separator: ", ")).font(.subheadline).foregroundStyle(.white)
+    // MARK: Actions
+
+    private var actions: some View {
+        VStack(spacing: 10) {
+            if let session = appState.activeSession {
+                Button {
+                    WorkoutService.addExercise(exercise, to: session, restSeconds: profile?.defaultRestSeconds ?? 90, context: context, history: store.history)
+                    Haptics.success()
+                    appState.show(Toast(title: "Added to workout", message: exercise.name, style: .success))
+                } label: { Label("Add to current workout", systemImage: "plus.circle.fill") }
+                    .buttonStyle(.primePrimary)
+            } else {
+                Button {
+                    appState.startWorkout(with: exercise, restSeconds: profile?.defaultRestSeconds ?? 90, context: context, store: store)
+                } label: { Label("Start workout with this", systemImage: "play.fill") }
+                    .buttonStyle(.primePrimary)
+            }
+            HStack(spacing: 10) {
+                if !plans.isEmpty {
+                    Menu {
+                        ForEach(plans) { plan in Button(plan.name) { add(to: plan) } }
+                    } label: {
+                        Label("Add to routine", systemImage: "text.badge.plus")
+                            .font(.subheadline.weight(.semibold))
+                            .frame(maxWidth: .infinity, minHeight: 44)
+                            .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Theme.field))
+                            .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Theme.borderStrong, lineWidth: 1))
+                            .foregroundStyle(Theme.textPrimary)
+                    }
+                }
+                if exercise.isRanked {
+                    Button { appState.rankEntry = RankEntryRequest(exerciseSlug: exercise.slug) } label: {
+                        Label("Log ranked lift", systemImage: "shield.lefthalf.filled").frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.prime(.secondary, compact: true))
+                }
+            }
         }
     }
 
-    private var statsCard: some View {
+    private func add(to plan: WorkoutPlan) {
+        let position = (plan.entries.map(\.position).max() ?? -1) + 1
+        let rest = profile?.defaultRestSeconds ?? 90
+        let entry = PlannedExercise(position: position, exercise: exercise, targetSets: 3,
+                                    targetReps: timed ? 30 : (exercise.mechanic == .compound ? 8 : 12), restSeconds: rest)
+        context.insert(entry)
+        entry.plan = plan
+        try? context.save()
+        Haptics.success()
+        appState.show(Toast(title: "Added to \(plan.name)", message: "3 sets of \(entry.targetReps)\(timed ? " s" : "")", style: .success))
+    }
+
+    // MARK: Performance
+
+    private var performance: some View {
         let records = store.history.records(for: exercise.slug)
-        let progression = Analytics.oneRepMaxProgression(samples)
-        let rank = RankingService.rank(for: exercise, history: store.history, scale: profiles.first?.tierScale ?? 1)
+        let progression = timed ? Analytics.repProgression(samples) : Analytics.oneRepMaxProgression(samples)
+        let rank = RankingService.rank(for: exercise, history: store.history, submissions: rankings, scale: profile?.tierScale ?? 1)
+        let insights = InsightEngine.exerciseInsights(slug: exercise.slug, name: exercise.name, samples: samples, isTimed: timed, now: Date())
+        let last = store.history.lastPerformance(for: exercise.slug)
         return VStack(alignment: .leading, spacing: 14) {
             HStack {
                 SectionHeader(title: "Your performance")
                 NavigationLink(value: Route.exerciseHistory(exercise.slug)) {
-                    Text("History").font(.subheadline.weight(.semibold)).foregroundStyle(Theme.accent)
+                    Text("History").font(.subheadline.weight(.semibold)).foregroundStyle(Theme.accentHighlight)
                 }
             }
             if exercise.isRanked {
                 NavigationLink(value: Route.exerciseRank(exercise.slug)) {
                     HStack(spacing: 12) {
-                        TierBadgeView(tier: rank.currentResult?.placement.tier ?? rank.peak?.placement.tier ?? .beginner, size: 40,
-                                      dimmed: rank.currentResult == nil)
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(rank.currentResult.map { "\($0.placement.tier.name) rank" } ?? "Not ranked yet")
-                                .font(.subheadline.weight(.bold)).foregroundStyle(.white)
-                            Text(rank.failure?.message ?? rankLine(rank.currentResult))
-                                .font(.caption).foregroundStyle(Theme.textSecondary).lineLimit(2)
+                        RankEmblem(tier: rank.currentTier, size: 46, dimmed: rank.currentResult == nil)
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(rank.currentResult.map { "\($0.placement.tier.name)" } ?? "Not ranked yet")
+                                .font(.subheadline.weight(.bold)).foregroundStyle(rank.currentResult?.placement.tier.color ?? Theme.textPrimary)
+                            if let result = rank.currentResult, let next = result.placement.tier.next {
+                                ProgressBar(progress: result.placement.progress, tint: AnyShapeStyle(result.placement.tier.gradient), height: 4)
+                                Text("\(Format.percent(result.placement.progress)) to \(next.name)").font(.caption).foregroundStyle(Theme.textSecondary)
+                            } else {
+                                Text(rank.failure?.message ?? "Top of the ladder").font(.caption).foregroundStyle(Theme.textSecondary).lineLimit(2)
+                            }
                         }
                         Spacer()
                         Image(systemName: "chevron.right").font(.caption.weight(.bold)).foregroundStyle(Theme.textTertiary)
@@ -152,199 +205,140 @@ struct ExerciseDetailView: View {
                 }
                 .buttonStyle(PressableStyle())
             }
-            HStack(spacing: 10) {
-                if let best = records.bestOneRepMaxKg {
-                    miniStat(Format.estimate(best, unit: unit), "Best e1RM")
+            HStack(spacing: 8) {
+                if timed {
+                    miniStat(records.longestHoldSeconds.map { Format.hold($0) } ?? "–", "Longest hold")
+                } else if let best = records.bestOneRepMaxKg {
+                    miniStat(Format.estimate(best, unit: unit), "Best est. 1RM")
                 }
-                if let heaviest = records.heaviestWeightKg {
+                if let heaviest = records.heaviestWeightKg, !timed {
                     miniStat(Format.weight(heaviest, unit: unit), "Heaviest")
-                } else if let reps = samples.map(\.reps).max() {
+                } else if !timed, let reps = samples.map(\.reps).max() {
                     miniStat("\(reps)", "Most reps")
                 }
                 miniStat("\(store.history.sessionCount(for: exercise.slug))", "Sessions")
             }
-            if progression.count >= 2 {
-                let values = progression.map { unit.fromKilograms($0.value) }
-                let floor = (values.min() ?? 0) * 0.9
-                let ceiling = (values.max() ?? 1) * 1.05
-                Chart(progression) { point in
-                    LineMark(x: .value("Date", point.date), y: .value("e1RM", unit.fromKilograms(point.value)))
-                        .interpolationMethod(.monotone)
-                        .foregroundStyle(Theme.accent)
-                    AreaMark(x: .value("Date", point.date), yStart: .value("Floor", floor), yEnd: .value("e1RM", unit.fromKilograms(point.value)))
-                        .interpolationMethod(.monotone)
-                        .foregroundStyle(LinearGradient(colors: [Theme.accent.opacity(0.25), .clear], startPoint: .top, endPoint: .bottom))
-                    PointMark(x: .value("Date", point.date), y: .value("e1RM", unit.fromKilograms(point.value)))
-                        .foregroundStyle(Theme.accent)
-                        .symbolSize(18)
+            if !last.isEmpty, let date = last.first?.date {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Last session · \(date.relativeDayText)").eyebrow()
+                    Text(last.map { Format.set(weightKg: $0.weightKg, reps: $0.reps, unit: unit, timed: timed) }.joined(separator: "   "))
+                        .font(.subheadline.weight(.semibold).monospacedDigit()).foregroundStyle(Theme.textPrimary)
                 }
-                .chartYScale(domain: floor...ceiling)
-                .chartYAxis {
-                    AxisMarks(position: .trailing, values: .automatic(desiredCount: 3)) { _ in
-                        AxisGridLine().foregroundStyle(Theme.stroke)
-                        AxisValueLabel().foregroundStyle(Theme.textTertiary)
-                    }
-                }
-                .chartXAxis {
-                    AxisMarks(values: .automatic(desiredCount: 4)) { _ in
-                        AxisValueLabel(format: .dateTime.day().month(.abbreviated)).foregroundStyle(Theme.textTertiary)
-                    }
-                }
-                .frame(height: 140)
-                .accessibilityLabel("Estimated one-rep max over time")
-                Text("Estimated 1RM per session (\(unit.symbol))").font(.caption).foregroundStyle(Theme.textTertiary)
             }
+            if progression.count >= 2 { ProgressChart(points: progression, isWeight: !timed, unit: unit) }
+            ForEach(insights) { InsightRow(insight: $0) }
+            if !timed { repRecords }
         }
-        .primeCard(padding: 18)
+        .primeCard(padding: 16)
     }
 
-    private func rankLine(_ result: RankResult?) -> String {
-        guard let result else { return "" }
-        if let next = result.placement.tier.next {
-            return "\(Format.percent(result.placement.progress)) of the way to \(next.name)"
+    private var repRecords: some View {
+        let table = RepRecords.table(samples).prefix(6)
+        return VStack(alignment: .leading, spacing: 8) {
+            if !table.isEmpty { Text("Rep records").eyebrow() }
+            ForEach(Array(table.enumerated()), id: \.offset) { _, row in
+                HStack {
+                    Text(row.weightKg > 0 ? Format.weight(row.weightKg, unit: unit) : "Bodyweight")
+                        .font(.subheadline.weight(.semibold).monospacedDigit()).foregroundStyle(Theme.textPrimary)
+                    Spacer()
+                    Text("\(row.reps) reps").font(.subheadline.monospacedDigit()).foregroundStyle(Theme.textSecondary)
+                    Text(row.date.relativeDayText).font(.caption).foregroundStyle(Theme.textTertiary).frame(width: 86, alignment: .trailing)
+                }
+            }
         }
-        return "Top tier reached"
     }
 
     private func miniStat(_ value: String, _ label: String) -> some View {
         VStack(alignment: .leading, spacing: 2) {
-            Text(value).font(.primeNumber(20)).foregroundStyle(.white).lineLimit(1).minimumScaleFactor(0.6)
-            Text(label).font(.caption).foregroundStyle(Theme.textSecondary)
+            Text(value).font(.primeNumber(19)).foregroundStyle(Theme.textPrimary).lineLimit(1).minimumScaleFactor(0.6)
+            Text(label).font(.caption2).foregroundStyle(Theme.textSecondary).lineLimit(1)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(10)
         .background(RoundedRectangle(cornerRadius: 12).fill(Theme.surface))
     }
 
-    @ViewBuilder
-    private var lastSessionCard: some View {
-        let last = store.history.lastPerformance(for: exercise.slug)
-        if !last.isEmpty, let date = last.first?.date {
-            VStack(alignment: .leading, spacing: 10) {
-                HStack {
-                    Text("Previous workout").eyebrow()
-                    Spacer()
-                    Text(date.relativeDayText).font(.caption).foregroundStyle(Theme.textTertiary)
-                }
-                ForEach(Array(last.enumerated()), id: \.element.id) { index, set in
-                    HStack {
-                        Text("Set \(index + 1)").font(.subheadline).foregroundStyle(Theme.textSecondary)
-                        Spacer()
-                        Text(Format.set(weightKg: set.weightKg, reps: set.reps, unit: unit))
-                            .font(.subheadline.weight(.semibold).monospacedDigit()).foregroundStyle(.white)
-                    }
-                }
-            }
-            .primeCard()
-        }
-    }
+    // MARK: Guide navigation
 
-    @ViewBuilder
-    private func guidance(title: String, items: [String], numbered: Bool, symbol: String?) -> some View {
-        if !items.isEmpty {
-            VStack(alignment: .leading, spacing: 12) {
-                SectionHeader(title: title)
-                ForEach(Array(items.enumerated()), id: \.offset) { index, text in
-                    HStack(alignment: .top, spacing: 12) {
-                        if numbered {
-                            Text("\(index + 1)")
-                                .font(.caption.weight(.heavy))
-                                .foregroundStyle(Theme.onAccent)
-                                .frame(width: 22, height: 22)
-                                .background(Circle().fill(Theme.accent))
-                        } else if let symbol {
-                            Image(systemName: symbol)
-                                .foregroundStyle(symbol.hasPrefix("x") ? Theme.danger : Theme.accent)
-                                .frame(width: 22)
-                        }
-                        Text(text).font(.subheadline).foregroundStyle(Theme.textPrimary).fixedSize(horizontal: false, vertical: true)
-                    }
-                }
-            }
-            .primeCard(padding: 18)
-        }
-    }
-
-    @ViewBuilder
-    private var alternatives: some View {
-        let options = exercise.alternativeSlugs.compactMap { slug in allExercises.first { $0.slug == slug } }
-        if !options.isEmpty {
-            VStack(alignment: .leading, spacing: 10) {
-                SectionHeader(title: "Alternatives")
-                ForEach(options) { option in
-                    NavigationLink(value: Route.exercise(option.slug)) {
-                        HStack {
-                            ExerciseRow(exercise: option)
-                            Spacer()
-                            Image(systemName: "chevron.right").font(.caption.weight(.bold)).foregroundStyle(Theme.textTertiary)
+    private func sectionJumper(_ proxy: ScrollViewProxy) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Technique guide").font(.primeTitle3).foregroundStyle(Theme.textPrimary)
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    ForEach(GuideSection.allCases) { section in
+                        Chip(title: section.shortTitle, symbol: section.symbol) {
+                            withAnimation(motion.animation(.easeInOut(duration: 0.35))) { proxy.scrollTo(section, anchor: .top) }
                         }
                     }
-                    .buttonStyle(PressableStyle())
-                }
-            }
-            .primeCard(padding: 18)
-        }
-    }
-
-    private var repRecords: some View {
-        let table = RepRecords.table(samples).prefix(8)
-        return VStack(alignment: .leading, spacing: 10) {
-            SectionHeader(title: "Rep records")
-            ForEach(Array(table.enumerated()), id: \.offset) { _, row in
-                HStack {
-                    Text(row.weightKg > 0 ? Format.weight(row.weightKg, unit: unit) : "Bodyweight")
-                        .font(.subheadline.weight(.semibold).monospacedDigit()).foregroundStyle(.white)
-                    Spacer()
-                    Text("\(row.reps) reps").font(.subheadline.monospacedDigit()).foregroundStyle(Theme.textSecondary)
-                    Text(row.date.relativeDayText).font(.caption).foregroundStyle(Theme.textTertiary).frame(width: 84, alignment: .trailing)
                 }
             }
         }
-        .primeCard(padding: 18)
+        .padding(.top, 6)
     }
 
-    private var actions: some View {
-        VStack(spacing: 10) {
-            if let session = appState.activeSession {
-                Button {
-                    WorkoutService.addExercise(exercise, to: session, restSeconds: profiles.first?.defaultRestSeconds ?? 90, context: context, history: store.history)
-                    Haptics.success()
-                    appState.show(Toast(title: "Added to workout", message: exercise.name, style: .success))
-                } label: { Label("Add to current workout", systemImage: "plus.circle.fill") }
-                    .buttonStyle(.primePrimary)
-            }
-            if !plans.isEmpty {
-                Menu {
-                    ForEach(plans) { plan in
-                        Button(plan.name) { add(to: plan) }
-                    }
-                } label: {
-                    Label("Add to routine", systemImage: "text.badge.plus")
-                        .font(.headline.weight(.bold))
-                        .frame(maxWidth: .infinity, minHeight: 50)
-                        .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Theme.field))
-                        .foregroundStyle(.white)
-                }
-            }
-            if exercise.isCustom {
-                HStack(spacing: 10) {
-                    Button("Edit exercise") { showEditor = true }.buttonStyle(.primeSecondary)
-                    Button("Delete") { confirmDelete = true }.buttonStyle(.primeDestructive)
-                }
-            }
+    private var customActions: some View {
+        HStack(spacing: 10) {
+            Button("Edit exercise") { showEditor = true }.buttonStyle(.primeSecondary)
+            Button("Delete") { confirmDelete = true }.buttonStyle(.primeDestructive)
         }
     }
+}
 
-    private func add(to plan: WorkoutPlan) {
-        let position = (plan.entries.map(\.position).max() ?? -1) + 1
-        let rest = profiles.first?.defaultRestSeconds ?? 90
-        let entry = PlannedExercise(position: position, exercise: exercise, targetSets: 3,
-                                    targetReps: exercise.mechanic == .compound ? 8 : 12, restSeconds: rest)
-        context.insert(entry)
-        entry.plan = plan
-        try? context.save()
-        Haptics.success()
-        appState.show(Toast(title: "Added to \(plan.name)", message: "3 sets of \(entry.targetReps)", style: .success))
+/// Line chart of an exercise's best result per session, with touch inspection.
+struct ProgressChart: View {
+    let points: [ExercisePoint]
+    let isWeight: Bool
+    let unit: WeightUnit
+    @State private var selected: Date?
+
+    var body: some View {
+        let values = points.map { isWeight ? unit.fromKilograms($0.value) : $0.value }
+        let floor = (values.min() ?? 0) * 0.9
+        let ceiling = max(floor + 1, (values.max() ?? 1) * 1.05)
+        let point = selected.flatMap { date in points.min { abs($0.date.timeIntervalSince(date)) < abs($1.date.timeIntervalSince(date)) } }
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                Text(isWeight ? "Estimated 1RM per session" : "Best per session").eyebrow()
+                Spacer()
+                if let point {
+                    Text((isWeight ? Format.estimate(point.value, unit: unit) : "\(Int(point.value))") + " · " + point.date.relativeDayText)
+                        .font(.caption.weight(.semibold)).foregroundStyle(Theme.accentHighlight)
+                }
+            }
+            Chart {
+                ForEach(points) { item in
+                    let value = isWeight ? unit.fromKilograms(item.value) : item.value
+                    AreaMark(x: .value("Date", item.date), yStart: .value("Floor", floor), yEnd: .value("Value", value))
+                        .interpolationMethod(.monotone)
+                        .foregroundStyle(LinearGradient(colors: [Theme.accent.opacity(0.3), .clear], startPoint: .top, endPoint: .bottom))
+                    LineMark(x: .value("Date", item.date), y: .value("Value", value))
+                        .interpolationMethod(.monotone)
+                        .foregroundStyle(Theme.accentHighlight)
+                        .lineStyle(StrokeStyle(lineWidth: 2.5))
+                    PointMark(x: .value("Date", item.date), y: .value("Value", value))
+                        .foregroundStyle(Theme.accentHighlight)
+                        .symbolSize(point?.id == item.id ? 70 : 18)
+                }
+                if let point {
+                    RuleMark(x: .value("Selected", point.date)).foregroundStyle(Theme.borderStrong)
+                }
+            }
+            .chartYScale(domain: floor...ceiling)
+            .chartXSelection(value: $selected)
+            .chartYAxis {
+                AxisMarks(position: .trailing, values: .automatic(desiredCount: 3)) { _ in
+                    AxisGridLine().foregroundStyle(Theme.border)
+                    AxisValueLabel().foregroundStyle(Theme.textTertiary)
+                }
+            }
+            .chartXAxis {
+                AxisMarks(values: .automatic(desiredCount: 4)) { _ in
+                    AxisValueLabel(format: .dateTime.day().month(.abbreviated)).foregroundStyle(Theme.textTertiary)
+                }
+            }
+            .frame(height: 150)
+            .accessibilityLabel(isWeight ? "Estimated one-rep max over time" : "Best result over time")
+        }
     }
 }
 
@@ -362,11 +356,12 @@ struct ExerciseHistoryView: View {
 
     var body: some View {
         let samples = store.history.samples(for: exercise.slug)
+        let timed = samples.first?.isTimed ?? false
         let sessions = Dictionary(grouping: samples, by: \.sessionID)
             .map { SessionGroup(id: $0.key, sets: $0.value.sorted { $0.setIndex < $1.setIndex }) }
             .sorted { ($0.sets.first?.date ?? .distantPast) > ($1.sets.first?.date ?? .distantPast) }
-        return ScrollView {
-            VStack(alignment: .leading, spacing: 12) {
+        ScrollView {
+            LazyVStack(alignment: .leading, spacing: 10) {
                 if sessions.isEmpty {
                     EmptyStateView(symbol: "clock", title: "No history yet", message: "Sets you log for \(exercise.name) will appear here.")
                 }
@@ -374,12 +369,13 @@ struct ExerciseHistoryView: View {
                     NavigationLink(value: Route.session(entry.id)) {
                         VStack(alignment: .leading, spacing: 8) {
                             HStack {
-                                Text(entry.sets.first?.date.relativeDayText ?? "").font(.subheadline.weight(.bold)).foregroundStyle(.white)
+                                Text(entry.sets.first?.date.relativeDayText ?? "").font(.subheadline.weight(.bold)).foregroundStyle(Theme.textPrimary)
                                 Spacer()
-                                let best = entry.sets.compactMap(\.estimatedOneRepMax).max()
-                                if let best { Text("e1RM " + Format.estimate(best, unit: unit)).font(.caption.weight(.semibold)).foregroundStyle(Theme.accent) }
+                                if let best = entry.sets.compactMap(\.estimatedOneRepMax).max() {
+                                    Text("est. 1RM " + Format.estimate(best, unit: unit)).font(.caption.weight(.semibold)).foregroundStyle(Theme.accentHighlight)
+                                }
                             }
-                            Text(entry.sets.map { Format.set(weightKg: $0.weightKg, reps: $0.reps, unit: unit) }.joined(separator: "  ·  "))
+                            Text(entry.sets.map { Format.set(weightKg: $0.weightKg, reps: $0.reps, unit: unit, timed: timed) }.joined(separator: "  ·  "))
                                 .font(.subheadline.monospacedDigit())
                                 .foregroundStyle(Theme.textSecondary)
                                 .multilineTextAlignment(.leading)
@@ -390,7 +386,7 @@ struct ExerciseHistoryView: View {
                 }
             }
             .padding(.horizontal, Theme.gutter)
-            .padding(.bottom, 32)
+            .padding(.bottom, 24)
         }
         .primeBackground()
         .navigationTitle(exercise.name)

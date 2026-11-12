@@ -29,7 +29,6 @@ struct ProfileView: View {
             .primeBackground()
             .navigationTitle("Profile")
             .primeDestinations()
-            .workoutBarInset()
             .sheet(isPresented: $showBodyweight) { BodyweightEntrySheet().presentationDetents([.medium]) }
         }
     }
@@ -74,10 +73,10 @@ struct ProfileView: View {
 
             Section {
                 LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)], spacing: 10) {
-                    StatTile(value: "\(history.sessions.count)", label: "Workouts", symbol: "checkmark.seal.fill")
+                    StatTile(count: history.sessions.count, label: "Workouts", symbol: "checkmark.seal.fill")
                     StatTile(value: Format.volume(Analytics.totalVolume(history.samples), unit: unit, includeUnit: false), label: "Total \(unit.symbol)", symbol: "scalemass.fill", tint: Theme.info)
-                    StatTile(value: "\(history.samples.count)", label: "Working sets", symbol: "square.stack.3d.up.fill", tint: Theme.warning)
-                    StatTile(value: "\(bestStreak)", label: "Best week streak", symbol: "flame.fill", tint: Theme.warning)
+                    StatTile(count: history.samples.count, label: "Working sets", symbol: "square.stack.3d.up.fill", tint: Theme.warning)
+                    StatTile(count: bestStreak, label: "Best week streak", symbol: "flame.fill", tint: Theme.warning)
                 }
                 .listRowInsets(EdgeInsets())
                 .listRowBackground(Color.clear)
@@ -89,7 +88,8 @@ struct ProfileView: View {
                     LabeledContent { Text("\(records.count)") } label: { Label("Personal records", systemImage: "trophy.fill") }
                 }
                 NavigationLink(value: Route.achievements) {
-                    let earned = BadgeEngine.globalBadges(history: history, bestStreak: bestStreak, recordCount: records.count, peakTier: peak, unit: unit).filter(\.isEarned).count
+                    let earned = BadgeEngine.globalBadges(workouts: history.sessions.count, routineWorkouts: history.sessions.filter(\.fromRoutine).count,
+                                                          bestStreak: bestStreak, recordCount: records.count, peakTier: peak).filter(\.isEarned).count
                     LabeledContent { Text("\(earned)") } label: { Label("Achievements", systemImage: "rosette") }
                 }
                 NavigationLink(value: Route.muscleMap) { Label("Muscle map", systemImage: "figure.arms.open") }
@@ -157,23 +157,34 @@ struct ProfileView: View {
             }
             .listRowBackground(Theme.card)
 
-            Section("Notifications") {
-                NavigationLink(value: Route.notifications) { Label("Notification settings", systemImage: "bell.badge") }
+            Section("App") {
+                NavigationLink(value: Route.preferences) {
+                    LabeledContent { Text(AnimationLevel(rawValue: profile.animationLevelRaw)?.displayName ?? "Full") } label: {
+                        Label("Appearance and motion", systemImage: "paintbrush")
+                    }
+                }
+                NavigationLink(value: Route.dashboardLayout) { Label("Dashboard layout", systemImage: "rectangle.3.group") }
+                NavigationLink(value: Route.notifications) { Label("Notifications", systemImage: "bell.badge") }
+                NavigationLink(value: Route.methodology) { Label("How ranking works", systemImage: "questionmark.circle") }
+                NavigationLink(value: Route.licences) { Label("Licences", systemImage: "doc.plaintext") }
             }
             .listRowBackground(Theme.card)
 
             Section {
                 Button {
                     do { exportURL = try DataService.exportCSV(history: history, unit: unit) } catch { exportError = error.localizedDescription }
-                } label: { Label("Prepare history export (CSV)", systemImage: "square.and.arrow.up") }
+                } label: { Label("Export workout history (CSV)", systemImage: "tablecells") }
                     .disabled(history.isEmpty)
+                Button {
+                    do { exportURL = try DataService.exportJSON(context: context) } catch { exportError = error.localizedDescription }
+                } label: { Label("Export everything (JSON)", systemImage: "curlybraces") }
                 if let exportURL {
                     ShareLink(item: exportURL) { Label("Share \(exportURL.lastPathComponent)", systemImage: "doc.text") }
                 }
                 if let exportError { InlineError(message: exportError) }
                 Button(role: .destructive) { confirmErase = true } label: { Label("Erase all data", systemImage: "trash") }
             } header: { Text("Data") } footer: {
-                Text("Everything is stored on this iPhone and works offline. No account needed.\nPRIME \(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0")")
+                Text("CSV is one row per set for spreadsheets. JSON includes routines, records, ranks and settings. Everything is stored on this iPhone and works offline. No account needed.\nPRIME \(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0")")
             }
             .listRowBackground(Theme.card)
         }
@@ -219,6 +230,7 @@ struct ProfileView: View {
     private func erase() {
         appState.activeSession = nil
         appState.coverSession = nil
+        appState.isWorkoutPresented = false
         do {
             try DataService.eraseEverything(context: context)
         } catch {

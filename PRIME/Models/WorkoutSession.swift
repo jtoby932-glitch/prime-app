@@ -15,6 +15,10 @@ final class WorkoutSession {
     var restEndsAt: Date? = nil
     var restTotalSeconds: Int = 0
     var restExerciseName: String = ""
+    /// Seconds left when the rest timer was paused (schema v2).
+    var restPausedRemaining: Int? = nil
+    /// Optional 1–5 self-reported readiness (schema v2). Personal tracking only.
+    var readiness: Int? = nil
 
     @Relationship(deleteRule: .cascade, inverse: \ExerciseSession.session)
     var exercises: [ExerciseSession] = []

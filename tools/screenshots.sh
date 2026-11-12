@@ -28,11 +28,20 @@ shot 04-exercises 6 -demo -tab exercises
 shot 05-rankings 7 -demo -tab rankings
 shot 06-profile 6 -demo -tab profile
 shot 07-analytics 7 -demo -route analytics
-shot 08-muscle-map 7 -demo -route muscleMap
+shot 08-muscle-map 7 -demo -route muscle:chest
 shot 09-rank-bench 7 -demo -route rank:barbell-bench-press
 shot 10-exercise-squat 7 -demo -route exercise:barbell-back-squat
 shot 11-records 6 -demo -route records
 shot 12-active-workout 8 -demo -activeWorkout
+shot 13-reveal-analysis 6 -demo -reveal barbell-bench-press -revealStage analysis
+shot 14-reveal-tier 7 -demo -reveal barbell-bench-press -revealStage reveal
+shot 15-reveal-breakdown 7 -demo -reveal barbell-bench-press -revealStage breakdown
+shot 16-presets 6 -demo -sheet presets
+shot 17-search 6 -demo -sheet search
+shot 18-category-back 6 -demo -route category:back
+shot 19-methodology 6 -demo -route methodology
+shot 20-preferences 6 -demo -route preferences
+shot 21-exercise-plank 7 -demo -route exercise:plank
 
 # Crash reports, if any, help diagnose a blank screenshot.
 find ~/Library/Logs/DiagnosticReports -name "PRIME*" -newer "$APP" -exec cp {} "$OUT/" \; 2>/dev/null || true

@@ -9,7 +9,10 @@ struct ExerciseCard: View {
     var focus: FocusState<SetField?>.Binding
     let onReplace: () -> Void
     let onNotes: () -> Void
+    let onGuide: () -> Void
     let onRecord: ([RecordKind], ExerciseSession) -> Void
+
+    private var timed: Bool { ExerciseLibrary.shared.isTimed(item.exerciseSlug) }
 
     @Environment(\.modelContext) private var context
     @Environment(TrainingStore.self) private var store
@@ -30,11 +33,20 @@ struct ExerciseCard: View {
                         .font(.subheadline.weight(.bold))
                 }
             } else {
-                if !last.isEmpty {
-                    Text("Last time: " + last.map { Format.set(weightKg: $0.weightKg, reps: $0.reps, unit: unit) }.joined(separator: ", "))
-                        .font(.caption)
-                        .foregroundStyle(Theme.textSecondary)
-                        .lineLimit(2)
+                if !last.isEmpty, let date = last.first?.date {
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("Last session · \(date.relativeDayText)").eyebrow(Theme.textTertiary)
+                        Text(last.map { Format.set(weightKg: $0.weightKg, reps: $0.reps, unit: unit, timed: timed) }.joined(separator: "   "))
+                            .font(.caption.weight(.semibold).monospacedDigit())
+                            .foregroundStyle(Theme.textSecondary)
+                            .lineLimit(2)
+                    }
+                }
+                if let target = item.targetReps {
+                    Label("Target \(item.sets.count) × \(timed ? Format.hold(target) : "\(target)")" + (item.targetWeightKg.map { " @ \(Format.weight($0, unit: unit))" } ?? ""),
+                          systemImage: "scope")
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(Theme.accentHighlight)
                 }
                 if !item.notes.isEmpty {
                     Button(action: onNotes) {
@@ -51,7 +63,7 @@ struct ExerciseCard: View {
                     SetRowView(
                         set: set, item: item, session: session, index: index,
                         previous: index < last.count ? last[index] : nil,
-                        unit: unit, focus: focus, onRecord: { onRecord($0, item) }
+                        unit: unit, timed: timed, focus: focus, onRecord: { onRecord($0, item) }
                     )
                 }
                 HStack {
@@ -107,7 +119,19 @@ struct ExerciseCard: View {
             }
             .buttonStyle(.plain)
             Spacer()
+            if item.exercise != nil {
+                Button(action: onGuide) {
+                    Image(systemName: "book.pages")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(Theme.accentHighlight)
+                        .frame(width: 36, height: 36)
+                        .background(Circle().fill(Theme.accentSoft))
+                }
+                .accessibilityLabel("Technique guide for \(item.exerciseName)")
+            }
             Menu {
+                Button(action: onGuide) { Label("Technique guide", systemImage: "book.pages") }
+                    .disabled(item.exercise == nil)
                 Button(action: onReplace) { Label("Replace exercise", systemImage: "arrow.triangle.2.circlepath") }
                 Button(action: onNotes) { Label(item.notes.isEmpty ? "Add note" : "Edit note", systemImage: "note.text") }
                 Button {
@@ -142,8 +166,8 @@ struct ExerciseCard: View {
         HStack(spacing: 8) {
             Text("SET").frame(width: 30)
             Text("PREVIOUS").frame(maxWidth: .infinity, alignment: .leading)
-            Text(item.equipment.requiresLoad ? unit.symbol.uppercased() : "+\(unit.symbol.uppercased())").frame(width: 74)
-            Text("REPS").frame(width: 58)
+            Text(item.equipment.requiresLoad && !timed ? unit.symbol.uppercased() : "+\(unit.symbol.uppercased())").frame(width: 74)
+            Text(timed ? "SEC" : "REPS").frame(width: 58)
             Color.clear.frame(width: 40, height: 1)
         }
         .font(.caption2.weight(.bold))
@@ -175,6 +199,7 @@ struct SetRowView: View {
     let index: Int
     let previous: SetSample?
     let unit: WeightUnit
+    var timed = false
     var focus: FocusState<SetField?>.Binding
     let onRecord: ([RecordKind]) -> Void
 
@@ -187,7 +212,7 @@ struct SetRowView: View {
     @State private var shakes = 0
     @State private var message: String?
 
-    private var requiresLoad: Bool { item.equipment.requiresLoad }
+    private var requiresLoad: Bool { item.equipment.requiresLoad && !timed }
     private var suggestion: SetSuggestion { WorkoutService.suggestion(for: set, in: item, history: store.history) }
 
     private var weightError: ValidationError? {
@@ -198,7 +223,7 @@ struct SetRowView: View {
 
     private var repsError: ValidationError? {
         guard !repsText.trimmingCharacters(in: .whitespaces).isEmpty else { return nil }
-        if case .failure(let error) = InputValidator.reps(repsText) { return error }
+        if case .failure(let error) = InputValidator.count(repsText, timed: timed) { return error }
         return nil
     }
 
@@ -211,12 +236,18 @@ struct SetRowView: View {
                     .frame(width: 30, height: 36)
                     .background(RoundedRectangle(cornerRadius: 9).fill(Theme.field.opacity(set.isCompleted ? 0 : 1)))
 
-                Text(previous.map { Format.set(weightKg: $0.weightKg, reps: $0.reps, unit: unit) } ?? "–")
-                    .font(.caption.monospacedDigit())
-                    .foregroundStyle(Theme.textTertiary)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.7)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                Button(action: copyPrevious) {
+                    Text(previous.map { Format.set(weightKg: $0.weightKg, reps: $0.reps, unit: unit, timed: timed) } ?? "–")
+                        .font(.caption.monospacedDigit())
+                        .foregroundStyle(previous == nil || set.isCompleted ? Theme.textTertiary : Theme.textSecondary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                        .frame(maxWidth: .infinity, minHeight: 36, alignment: .leading)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .disabled(previous == nil || set.isCompleted)
+                .accessibilityLabel(previous.map { "Copy last time: \(Format.set(weightKg: $0.weightKg, reps: $0.reps, unit: unit, timed: timed))" } ?? "No previous set")
 
                 field(text: $weightText, placeholder: weightPlaceholder, keyboard: .decimalPad,
                       field: .weight(set.persistentModelID), hasError: weightError != nil, width: 74)
@@ -247,6 +278,9 @@ struct SetRowView: View {
         .background(RoundedRectangle(cornerRadius: 12).fill(set.isCompleted ? Theme.accent.opacity(0.08) : .clear))
         .animation(.easeOut(duration: 0.2), value: set.isCompleted)
         .contextMenu {
+            if index > 0 {
+                Button(action: copyAbove) { Label("Copy set above", systemImage: "doc.on.doc") }
+            }
             Button {
                 set.isWarmup.toggle()
                 try? context.save()
@@ -302,9 +336,27 @@ struct SetRowView: View {
         message = nil
         if text.trimmingCharacters(in: .whitespaces).isEmpty {
             set.reps = nil
-        } else if case .success(let reps) = InputValidator.reps(text) {
+        } else if case .success(let reps) = InputValidator.count(text, timed: timed) {
             set.reps = reps
         }
+    }
+
+    /// Fills this set with the values of the set above it.
+    private func copyAbove() {
+        let ordered = item.sortedSets
+        guard index > 0, index - 1 < ordered.count else { return }
+        let above = ordered[index - 1]
+        if let weight = above.weightKg { weightText = Format.number(unit.fromKilograms(weight)) }
+        if let reps = above.reps { repsText = String(reps) }
+        Haptics.selection()
+    }
+
+    /// Tapping last session's numbers copies them into this set.
+    private func copyPrevious() {
+        guard let previous else { return }
+        if previous.weightKg > 0 || requiresLoad { weightText = Format.number(unit.fromKilograms(previous.weightKg)) }
+        repsText = String(previous.reps)
+        Haptics.selection()
     }
 
     private func toggle() {

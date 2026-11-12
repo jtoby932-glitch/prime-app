@@ -31,6 +31,28 @@ enum Analytics {
         samples.reduce(0) { $0 + $1.volume }
     }
 
+    /// Repetitions across sets. Timed holds aren't reps, so they're left out.
+    static func totalReps(_ samples: [SetSample]) -> Int {
+        samples.reduce(0) { $0 + $1.repCount }
+    }
+
+    /// Working sets per bucket for one muscle (primary involvement only).
+    static func sets(for muscle: MuscleGroup, in samples: [SetSample], by bucket: BucketSize, interval: DateInterval, calendar: Calendar = .prime) -> [TimeBucket] {
+        let starts = bucketStarts(bucket, in: interval, calendar: calendar)
+        var counts: [Date: Double] = [:]
+        for sample in samples where interval.contains(sample.date) && sample.primaryMuscles.contains(muscle) {
+            counts[bucketStart(for: sample.date, bucket: bucket, calendar: calendar), default: 0] += 1
+        }
+        return starts.map { TimeBucket(start: $0, value: counts[$0] ?? 0) }
+    }
+
+    /// Exercises that trained a muscle directly, with their set counts, most first.
+    static func exercises(for muscle: MuscleGroup, in samples: [SetSample]) -> [(slug: String, name: String, sets: Int)] {
+        Dictionary(grouping: samples.filter { $0.primaryMuscles.contains(muscle) }, by: \.exerciseSlug)
+            .map { (slug: $0.key, name: $0.value.last?.exerciseName ?? $0.key, sets: $0.value.count) }
+            .sorted { $0.sets == $1.sets ? $0.name < $1.name : $0.sets > $1.sets }
+    }
+
     /// Volume grouped into weeks or months, including empty buckets so charts show gaps honestly.
     static func volume(_ samples: [SetSample], by bucket: BucketSize, in interval: DateInterval, calendar: Calendar = .prime) -> [TimeBucket] {
         let starts = bucketStarts(bucket, in: interval, calendar: calendar)
@@ -184,17 +206,29 @@ enum Analytics {
 
 /// Date ranges used by every analytics screen.
 enum AnalyticsRange: String, CaseIterable, Identifiable {
-    case month, quarter, half, year, all
+    case week, month, quarter, half, year, all
 
     var id: String { rawValue }
 
     var label: String {
         switch self {
-        case .month: return "1M"
-        case .quarter: return "3M"
+        case .week: return "7D"
+        case .month: return "30D"
+        case .quarter: return "90D"
         case .half: return "6M"
         case .year: return "1Y"
         case .all: return "All"
+        }
+    }
+
+    var longLabel: String {
+        switch self {
+        case .week: return "the last 7 days"
+        case .month: return "the last 30 days"
+        case .quarter: return "the last 90 days"
+        case .half: return "the last 6 months"
+        case .year: return "the last year"
+        case .all: return "all time"
         }
     }
 
@@ -202,8 +236,9 @@ enum AnalyticsRange: String, CaseIterable, Identifiable {
         let end = now
         let start: Date
         switch self {
-        case .month: start = calendar.date(byAdding: .month, value: -1, to: end) ?? end
-        case .quarter: start = calendar.date(byAdding: .month, value: -3, to: end) ?? end
+        case .week: start = calendar.date(byAdding: .day, value: -6, to: end) ?? end
+        case .month: start = calendar.date(byAdding: .day, value: -29, to: end) ?? end
+        case .quarter: start = calendar.date(byAdding: .day, value: -89, to: end) ?? end
         case .half: start = calendar.date(byAdding: .month, value: -6, to: end) ?? end
         case .year: start = calendar.date(byAdding: .year, value: -1, to: end) ?? end
         case .all: start = min(earliest ?? end, calendar.date(byAdding: .month, value: -1, to: end) ?? end)
@@ -213,8 +248,15 @@ enum AnalyticsRange: String, CaseIterable, Identifiable {
 
     var preferredBucket: BucketSize {
         switch self {
-        case .month, .quarter, .half: return .week
+        case .week, .month, .quarter, .half: return .week
         case .year, .all: return .month
         }
     }
+}
+
+/// A muscle with a number attached (sets, volume or rank score), for charts and lists.
+struct MuscleScore: Identifiable, Equatable {
+    let muscle: MuscleGroup
+    let score: Double
+    var id: MuscleGroup { muscle }
 }

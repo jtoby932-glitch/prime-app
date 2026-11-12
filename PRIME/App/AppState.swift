@@ -2,10 +2,38 @@ import Foundation
 import Observation
 import SwiftData
 import SwiftUI
-import UIKit
 
-enum AppTab: Hashable {
+enum AppTab: String, CaseIterable, Hashable, Identifiable {
     case home, workouts, exercises, rankings, profile
+
+    var id: String { rawValue }
+    var title: String {
+        switch self {
+        case .home: return "Home"
+        case .workouts: return "Workouts"
+        case .exercises: return "Exercises"
+        case .rankings: return "Rankings"
+        case .profile: return "Profile"
+        }
+    }
+    var symbol: String {
+        switch self {
+        case .home: return "house"
+        case .workouts: return "calendar"
+        case .exercises: return "dumbbell"
+        case .rankings: return "shield.lefthalf.filled"
+        case .profile: return "person.crop.circle"
+        }
+    }
+    var selectedSymbol: String {
+        switch self {
+        case .home: return "house.fill"
+        case .workouts: return "calendar"
+        case .exercises: return "dumbbell.fill"
+        case .rankings: return "shield.lefthalf.filled"
+        case .profile: return "person.crop.circle.fill"
+        }
+    }
 }
 
 struct Toast: Identifiable, Equatable {
@@ -16,7 +44,13 @@ struct Toast: Identifiable, Equatable {
     let style: Style
 }
 
-/// App-wide UI state: the selected tab, the workout in progress and transient banners.
+/// A request to log a ranked performance, optionally for a specific exercise.
+struct RankEntryRequest: Identifiable {
+    let id = UUID()
+    let exerciseSlug: String?
+}
+
+/// App-wide UI state: tabs, the workout in progress, sheets and transient banners.
 @MainActor
 @Observable
 final class AppState {
@@ -29,9 +63,17 @@ final class AppState {
     var isWorkoutPresented = false
     var finishedSummary: WorkoutSummary?
     var toast: Toast?
-    var showFirstWorkoutGuide = false
+    var showSplitPresets = false
+    var showSearch = false
+    var rankEntry: RankEntryRequest?
+    var reveal: RankReveal?
+    /// Debug screenshots open the reveal at a fixed stage.
+    var revealStage: RankRevealView.Stage = .analysis
+    var revealFrozen = false
     /// Opens a screen in a sheet on launch (used by debug screenshot runs).
     var debugRoute: Route?
+    /// A screen to push on the Rankings tab (e.g. after a reveal).
+    var pendingRoute: Route?
 
     private var toastTask: Task<Void, Never>?
 
@@ -85,6 +127,28 @@ final class AppState {
         }
     }
 
+    /// Starts a workout, or reopens the one already in progress.
+    func startWorkout(plan: WorkoutPlan?, context: ModelContext, store: TrainingStore) {
+        guard ensureNoActiveWorkout() else { return }
+        let session = WorkoutService.start(plan: plan, context: context, history: store.history)
+        Haptics.thud()
+        begin(session)
+    }
+
+    func startWorkout(with exercise: Exercise, restSeconds: Int, context: ModelContext, store: TrainingStore) {
+        guard ensureNoActiveWorkout() else { return }
+        let session = WorkoutService.start(exercise: exercise, restSeconds: restSeconds, context: context, history: store.history)
+        Haptics.thud()
+        begin(session)
+    }
+
+    private func ensureNoActiveWorkout() -> Bool {
+        guard activeSession != nil else { return true }
+        isWorkoutPresented = true
+        show(Toast(title: "Workout already running", message: "Finish or discard it before starting another.", style: .warning))
+        return false
+    }
+
     /// Re-syncs scheduled reminders with the timetable and preferences.
     func refreshNotifications(context: ModelContext, history: TrainingHistory, now: Date = Date()) {
         guard let profile = (try? context.fetch(FetchDescriptor<UserProfile>()))?.first else { return }
@@ -99,13 +163,4 @@ final class AppState {
             now: now
         )
     }
-}
-
-enum Haptics {
-    static func tap() { UIImpactFeedbackGenerator(style: .light).impactOccurred() }
-    static func thud() { UIImpactFeedbackGenerator(style: .medium).impactOccurred() }
-    static func success() { UINotificationFeedbackGenerator().notificationOccurred(.success) }
-    static func warning() { UINotificationFeedbackGenerator().notificationOccurred(.warning) }
-    static func error() { UINotificationFeedbackGenerator().notificationOccurred(.error) }
-    static func selection() { UISelectionFeedbackGenerator().selectionChanged() }
 }

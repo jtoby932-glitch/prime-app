@@ -49,31 +49,41 @@ final class StrengthMathTests: XCTestCase {
 }
 
 final class RankingEngineTests: XCTestCase {
-    let squat = RankingStandard(method: .relativeLoad, thresholds: [0.75, 1.25, 1.75, 2.25], isCustom: false, note: "")
-    let pullUp = RankingStandard(method: .repetitions, thresholds: [3, 8, 14, 20], isCustom: false, note: "")
+    let squat = RankingStandard(method: .relativeLoad, thresholds: [0.75, 1.0, 1.25, 1.5, 1.75, 2.0, 2.5], isCustom: false, note: "")
+    let pullUp = RankingStandard(method: .repetitions, thresholds: [3, 6, 9, 12, 15, 18, 22], isCustom: false, note: "")
+
+    func testEightTiersInOrder() {
+        XCTAssertEqual(RankTier.allCases.map(\.name), ["Unranked", "Bronze", "Silver", "Gold", "Platinum", "Diamond", "Elite", "Master"])
+        XCTAssertEqual(RankTier.ranked.count, RankTier.thresholdCount)
+        XCTAssertNil(RankTier.master.next)
+        XCTAssertEqual(RankTier.unranked.next, .bronze)
+    }
 
     func testPlacementMidTier() {
-        let placement = RankingEngine.placement(metric: 1.46, thresholds: squat.thresholds)
+        let placement = RankingEngine.placement(metric: 1.1, thresholds: squat.thresholds)
         XCTAssertEqual(placement.tier, .silver)
-        XCTAssertEqual(placement.progress, 0.42, accuracy: 0.0001)
-        XCTAssertEqual(placement.score, 2.42, accuracy: 0.0001)
-        XCTAssertEqual(placement.nextThreshold, 1.75)
+        XCTAssertEqual(placement.progress, 0.4, accuracy: 0.0001)
+        XCTAssertEqual(placement.score, 2.4, accuracy: 0.0001)
+        XCTAssertEqual(placement.nextThreshold, 1.25)
     }
 
     func testThresholdIsInclusive() {
-        XCTAssertEqual(RankingEngine.placement(metric: 1.25, thresholds: squat.thresholds).tier, .silver)
-        XCTAssertEqual(RankingEngine.placement(metric: 1.2499, thresholds: squat.thresholds).tier, .bronze)
+        XCTAssertEqual(RankingEngine.placement(metric: 1.0, thresholds: squat.thresholds).tier, .silver)
+        XCTAssertEqual(RankingEngine.placement(metric: 0.9999, thresholds: squat.thresholds).tier, .bronze)
+        XCTAssertEqual(RankingEngine.placement(metric: 2.0, thresholds: squat.thresholds).tier, .elite)
+        XCTAssertEqual(RankingEngine.placement(metric: 2.5, thresholds: squat.thresholds).tier, .master)
     }
 
-    func testBeginnerAndEliteEdges() {
-        let beginner = RankingEngine.placement(metric: 0.5, thresholds: squat.thresholds)
-        XCTAssertEqual(beginner.tier, .beginner)
-        XCTAssertEqual(beginner.progress, 0.6667, accuracy: 0.001)
-        let elite = RankingEngine.placement(metric: 2.5, thresholds: squat.thresholds)
-        XCTAssertEqual(elite.tier, .elite)
-        XCTAssertEqual(elite.score, 4.5, accuracy: 0.0001)
-        XCTAssertNil(elite.nextThreshold)
-        XCTAssertEqual(RankingEngine.placement(metric: 9, thresholds: squat.thresholds).score, 5)
+    func testUnrankedAndMasterEdges() {
+        let below = RankingEngine.placement(metric: 0.5, thresholds: squat.thresholds)
+        XCTAssertEqual(below.tier, .unranked)
+        XCTAssertEqual(below.progress, 0.6667, accuracy: 0.001)
+        XCTAssertEqual(below.nextThreshold, 0.75)
+        let master = RankingEngine.placement(metric: 2.75, thresholds: squat.thresholds)
+        XCTAssertEqual(master.tier, .master)
+        XCTAssertEqual(master.score, 7.5, accuracy: 0.0001)
+        XCTAssertNil(master.nextThreshold)
+        XCTAssertEqual(RankingEngine.placement(metric: 9, thresholds: squat.thresholds).score, 8)
     }
 
     func testLoadRankUsesEpleyAndBodyweight() throws {
@@ -81,7 +91,9 @@ final class RankingEngineTests: XCTestCase {
         let result = try RankingEngine.evaluate(set, standard: squat).get()
         XCTAssertEqual(try XCTUnwrap(result.estimatedOneRepMaxKg), 116.667, accuracy: 0.001)
         XCTAssertEqual(result.metric, 1.4583, accuracy: 0.001)
-        XCTAssertEqual(result.placement.tier, .silver)
+        XCTAssertEqual(result.placement.tier, .gold)
+        XCTAssertFalse(set.isTestedMax)
+        XCTAssertTrue(RankableSet(weightKg: 120, reps: 1, date: Date(), bodyweightKg: 80).isTestedMax)
     }
 
     func testMissingBodyweightIsReportedNotGuessed() {
@@ -101,35 +113,66 @@ final class RankingEngineTests: XCTestCase {
 
     func testRepRankingWithAndWithoutLoad() throws {
         let plain = try RankingEngine.evaluate(RankableSet(weightKg: 0, reps: 10, date: Date(), bodyweightKg: nil), standard: pullUp).get()
-        XCTAssertEqual(plain.placement.tier, .silver)
+        XCTAssertEqual(plain.placement.tier, .gold)
         let weighted = try RankingEngine.evaluate(RankableSet(weightKg: 10, reps: 8, date: Date(), bodyweightKg: 80), standard: pullUp).get()
         XCTAssertEqual(weighted.metric, 12.75, accuracy: 0.001)
+        XCTAssertEqual(weighted.placement.tier, .platinum)
         XCTAssertEqual(RankingEngine.evaluate(RankableSet(weightKg: 10, reps: 8, date: Date(), bodyweightKg: nil), standard: pullUp), .failure(.missingBodyweight))
     }
 
     func testEachExerciseUsesItsOwnThresholds() throws {
-        let bench = RankingStandard(method: .relativeLoad, thresholds: [0.6, 1.0, 1.35, 1.75], isCustom: false, note: "")
+        let bench = RankingStandard(method: .relativeLoad, thresholds: [0.6, 0.85, 1.1, 1.35, 1.6, 1.85, 2.1], isCustom: false, note: "")
         let set = RankableSet(weightKg: 100, reps: 5, date: Date(), bodyweightKg: 80)
-        XCTAssertEqual(try RankingEngine.evaluate(set, standard: bench).get().placement.tier, .gold)
-        XCTAssertEqual(try RankingEngine.evaluate(set, standard: squat).get().placement.tier, .silver)
+        XCTAssertEqual(try RankingEngine.evaluate(set, standard: bench).get().placement.tier, .platinum)
+        XCTAssertEqual(try RankingEngine.evaluate(set, standard: squat).get().placement.tier, .gold)
     }
 
     func testScaleAppliesOnlyToDefaults() throws {
         let set = RankableSet(weightKg: 100, reps: 1, date: Date(), bodyweightKg: 100)
-        XCTAssertEqual(try RankingEngine.evaluate(set, standard: squat, scale: 1).get().placement.tier, .bronze)
-        XCTAssertEqual(try RankingEngine.evaluate(set, standard: squat, scale: 0.7).get().placement.tier, .silver)
-        let custom = RankingStandard(method: .relativeLoad, thresholds: [0.75, 1.25, 1.75, 2.25], isCustom: true, note: "")
-        XCTAssertEqual(try RankingEngine.evaluate(set, standard: custom, scale: 0.7).get().placement.tier, .bronze)
+        XCTAssertEqual(try RankingEngine.evaluate(set, standard: squat, scale: 1).get().placement.tier, .silver)
+        XCTAssertEqual(try RankingEngine.evaluate(set, standard: squat, scale: 0.7).get().placement.tier, .gold)
+        var custom = squat
+        custom.isCustom = true
+        XCTAssertEqual(try RankingEngine.evaluate(set, standard: custom, scale: 0.7).get().placement.tier, .silver)
     }
 
     func testInvalidThresholdsAreRejected() {
-        XCTAssertFalse(RankingStandard.isValid([1, 1, 2, 3]))
-        XCTAssertFalse(RankingStandard.isValid([2, 1, 3, 4]))
-        XCTAssertFalse(RankingStandard.isValid([0, 1, 2, 3]))
-        XCTAssertFalse(RankingStandard.isValid([1, 2, 3]))
-        XCTAssertTrue(RankingStandard.isValid([0.5, 1, 1.5, 2]))
-        let broken = RankingStandard(method: .relativeLoad, thresholds: [2, 1, 3, 4], isCustom: true, note: "")
+        XCTAssertFalse(RankingStandard.isValid([1, 1, 2, 3, 4, 5, 6]))
+        XCTAssertFalse(RankingStandard.isValid([2, 1, 3, 4, 5, 6, 7]))
+        XCTAssertFalse(RankingStandard.isValid([0, 1, 2, 3, 4, 5, 6]))
+        XCTAssertFalse(RankingStandard.isValid([0.5, 1, 1.5, 2]))
+        XCTAssertTrue(RankingStandard.isValid([0.5, 1, 1.5, 2, 2.5, 3, 3.5]))
+        let broken = RankingStandard(method: .relativeLoad, thresholds: [2, 1, 3, 4, 5, 6, 7], isCustom: true, note: "")
         XCTAssertEqual(RankingEngine.evaluate(RankableSet(weightKg: 100, reps: 3, date: Date(), bodyweightKg: 80), standard: broken), .failure(.invalidStandard))
+    }
+
+    func testLegacyThresholdsUpgradeKeepsTheirMeaning() throws {
+        let upgraded = try XCTUnwrap(RankingStandard.upgradeLegacy([0.75, 1.25, 1.75, 2.25]))
+        XCTAssertTrue(RankingStandard.isValid(upgraded))
+        XCTAssertEqual(Array(upgraded.prefix(3)), [0.75, 1.25, 1.75])
+        XCTAssertEqual(upgraded[5], 2.25, accuracy: 0.0001, "Old Elite stays Elite")
+        XCTAssertGreaterThan(upgraded[6], upgraded[5])
+        XCTAssertNil(RankingStandard.upgradeLegacy([2, 1, 3, 4]))
+        XCTAssertNil(RankingStandard.upgradeLegacy([1, 2, 3]))
+    }
+
+    func testLadderIsStrictlyIncreasing() {
+        let reps = RankingStandard.ladder(low: 3, high: 6, wholeNumbers: true)
+        XCTAssertEqual(reps.count, 7)
+        XCTAssertTrue(RankingStandard.isValid(reps))
+        XCTAssertTrue(RankingStandard.isValid(RankingStandard.ladder(low: 0.5, high: 2)))
+    }
+
+    func testNextTierTargetGivesALoadableWeight() throws {
+        let result = try RankingEngine.evaluate(RankableSet(weightKg: 100, reps: 5, date: Date(), bodyweightKg: 80), standard: squat).get()
+        let target = try XCTUnwrap(NextTierTarget.make(for: result, increment: 2.5))
+        XCTAssertEqual(target.tier, .platinum)
+        XCTAssertEqual(try XCTUnwrap(target.oneRepMaxKg), 120, accuracy: 0.0001)
+        // 120 / (1 + 5/30) = 102.86, rounded up to the next 2.5 kg.
+        XCTAssertEqual(target.weightKg, 105)
+        XCTAssertEqual(target.reps, 5)
+        let top = try RankingEngine.evaluate(RankableSet(weightKg: 230, reps: 1, date: Date(), bodyweightKg: 80), standard: squat).get()
+        XCTAssertNil(NextTierTarget.make(for: top, increment: 2.5))
     }
 
     func testBestPicksHighestMetricAndExplainsFailures() throws {
@@ -148,14 +191,12 @@ final class RankingEngineTests: XCTestCase {
         XCTAssertEqual(RankingEngine.best(of: sets, standard: unranked), .failure(.unranked))
     }
 
-    func testProfileKeepsMachinesAndFreeWeightsApart() {
-        let summary = TrainingProfileSummary(entries: [(score: 3.5, isFreeWeight: true), (score: 1.5, isFreeWeight: false), (score: 2.5, isFreeWeight: true)])
-        XCTAssertEqual(summary.overall?.score ?? 0, 2.5, accuracy: 0.0001)
-        XCTAssertEqual(summary.freeWeights?.score ?? 0, 3.0, accuracy: 0.0001)
-        XCTAssertEqual(summary.machines?.score ?? 0, 1.5, accuracy: 0.0001)
-        XCTAssertEqual(summary.freeWeights?.tier, .gold)
-        XCTAssertEqual(summary.machines?.tier, .bronze)
-        XCTAssertNil(TrainingProfileSummary(entries: []).overall)
+    func testDistributionCountsTiersWithoutAnOverallRank() {
+        let distribution = RankDistribution(tiers: [.gold, .silver, .gold, .unranked])
+        XCTAssertEqual(distribution.tierCounts[.gold], 2)
+        XCTAssertEqual(distribution.highest, .gold)
+        XCTAssertEqual(distribution.rankedCount, 3)
+        XCTAssertNil(RankDistribution(tiers: []).highest)
     }
 }
 
@@ -236,5 +277,15 @@ final class InputValidatorTests: XCTestCase {
         XCTAssertEqual(InputValidator.completedSetError(weightKg: 100, reps: nil, requiresLoad: true), .empty)
         XCTAssertEqual(InputValidator.completedSetError(weightKg: 100, reps: 0, requiresLoad: true), .zero)
         XCTAssertEqual(InputValidator.completedSetError(weightKg: -5, reps: 5, requiresLoad: false), .negative)
+    }
+
+    func testTimedSetsAllowLongHolds() {
+        XCTAssertNil(InputValidator.completedSetError(weightKg: nil, reps: 90, requiresLoad: false, timed: true))
+        XCTAssertNil(InputValidator.completedSetError(weightKg: nil, reps: 900, requiresLoad: false, timed: true))
+        XCTAssertNotNil(InputValidator.completedSetError(weightKg: nil, reps: 900, requiresLoad: false))
+        XCTAssertNotNil(InputValidator.completedSetError(weightKg: nil, reps: 4000, requiresLoad: false, timed: true))
+        XCTAssertEqual(InputValidator.count("45", timed: true), .success(45))
+        XCTAssertEqual(Format.hold(45), "45 s")
+        XCTAssertEqual(Format.hold(95), "1:35")
     }
 }

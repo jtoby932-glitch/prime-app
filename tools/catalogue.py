@@ -5,16 +5,25 @@ Run:  python3 tools/catalogue.py PRIME/Resources/exercises.json
 It validates every entry (muscles, equipment, alternatives, thresholds) before writing.
 Bump VERSION whenever entries change so existing installs pick up the new text.
 
-Ranking thresholds are PRIME's own *provisional* starting points (minimum metric for
-Bronze, Silver, Gold, Elite). "load" = estimated 1RM / bodyweight, "reps" = reps in a set.
-They are deliberately labelled provisional in the app and can be customised per exercise.
+Ranking thresholds are PRIME's own *provisional* starting points. Each entry gives four anchors
+(Bronze, Silver, Gold, Elite); they're expanded to the seven thresholds of the v2 ladder
+(Bronze, Silver, Gold, Platinum, Diamond, Elite, Master) with the same rule the app uses to
+upgrade custom thresholds, so the original anchors keep their meaning.
+"load" = estimated 1RM / bodyweight, "reps" = reps in a set.
+
+Structured guides (overview, setup, mistakes with why/fix, safety, variations) live in
+tools/guides.py together with the exercises added in v2.
 """
 import json
+import os
 import sys
 
-VERSION = 1
-MUSCLES = {"chest", "back", "shoulders", "biceps", "triceps", "forearms", "quadriceps",
-           "hamstrings", "glutes", "calves", "abdominals", "lowerBack"}
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import guides  # noqa: E402
+
+VERSION = 2
+MUSCLES = {"chest", "back", "traps", "shoulders", "biceps", "triceps", "forearms", "quadriceps",
+           "hamstrings", "glutes", "adductors", "abductors", "calves", "abdominals", "lowerBack"}
 EQUIPMENT = {"barbell", "dumbbell", "cable", "machine", "bodyweight", "band"}
 
 BAR = "Total weight including the bar."
@@ -23,6 +32,11 @@ ONE_DB = "Weight of the single dumbbell."
 MACHINE = "Machine and cable loads differ between manufacturers, so compare these tiers only on similar equipment."
 BW = "Reps in one set. Weighted sets are converted to bodyweight-equivalent reps."
 BAND = "Band tension varies too much to rank fairly."
+TIMED = "Holds and carries are tracked by time and aren't ranked."
+LIGHT = "Light accessory work; tracked but not ranked."
+ROTATION = "Rotational and anti-rotation work can't be measured consistently enough to rank."
+NOTES = {"BAR": BAR, "PER_DB": PER_DB, "ONE_DB": ONE_DB, "MACHINE": MACHINE, "BW": BW,
+         "TIMED": TIMED, "LIGHT": LIGHT, "ROTATION": ROTATION, "BAND": BAND}
 
 E = []
 
@@ -729,7 +743,58 @@ ex("russian-twist", "Russian Twist", ["abdominals"], [], "bodyweight", "isolatio
    ["Rounding the back.", "Only moving the arms."],
    ["cable-woodchop", "crunch"], reps([20, 40, 60, 80]))
 
-VERSION_NOTE = "PRIME provisional tiers"
+
+
+def expand(t, whole):
+    """Four anchors -> seven thresholds, mirroring RankingStandard.upgradeLegacy in the app."""
+    b, si, go, el = t
+    gap = el - go
+    out = [b, si, go, go + gap / 3, go + 2 * gap / 3, el, el + gap / 2]
+    if whole:
+        out = [float(round(v)) for v in out]
+        for i in range(1, len(out)):
+            if out[i] <= out[i - 1]:
+                out[i] = out[i - 1] + 1
+    else:
+        out = [round(v, 3) for v in out]
+    return out
+
+
+def add_new():
+    for n in guides.NEW:
+        method, t, note = n["ranking"]
+        E.append({
+            "slug": n["slug"], "name": n["name"], "primary": n["primary"], "secondary": n["secondary"],
+            "equipment": n["equipment"], "mechanic": n["mechanic"], "difficulty": n["difficulty"],
+            "instructions": n["steps"], "tips": n["form"], "mistakes": [], "alternatives": n["alternatives"],
+            "ranking": {"method": method, "thresholds": t, "note": NOTES[note]},
+        })
+
+
+def finish():
+    for e in E:
+        gd = guides.G.get(e["slug"])
+        if gd is None:
+            continue
+        if gd["pm"] is not None:
+            e["primary"] = gd["pm"]
+        if gd["sm"] is not None:
+            e["secondary"] = gd["sm"]
+        breathing, base_safety = guides.PATTERNS[gd["p"]]
+        tracking = gd["t"] or ("reps" if e["equipment"] == "bodyweight" else "weightReps")
+        e["mistakes"] = [m[0] for m in gd["m"]]
+        e["guide"] = {
+            "overview": gd["o"], "setup": gd["s"], "steps": e["instructions"], "form": e["tips"],
+            "breathing": breathing,
+            "mistakes": [{"what": w, "why": y, "fix": f} for (w, y, f) in gd["m"]],
+            "safety": gd["sf"] + base_safety + [guides.UNIVERSAL_SAFETY],
+            "easier": gd["e"], "harder": gd["h"], "pattern": gd["p"], "unilateral": gd["u"], "tracking": tracking,
+        }
+        r = e["ranking"]
+        if tracking == "time":
+            e["ranking"] = {"method": "none", "thresholds": [], "note": TIMED}
+        elif r["method"] in ("load", "reps") and len(r["thresholds"]) == 4:
+            r["thresholds"] = expand(r["thresholds"], r["method"] == "reps")
 
 
 def validate():
@@ -742,6 +807,8 @@ def validate():
         for m in e["primary"] + e["secondary"]:
             if m not in MUSCLES:
                 errors.append(f"{e['slug']}: bad muscle {m}")
+        if not e["primary"]:
+            errors.append(f"{e['slug']}: no primary muscle")
         if set(e["primary"]) & set(e["secondary"]):
             errors.append(f"{e['slug']}: muscle listed as primary and secondary")
         if e["equipment"] not in EQUIPMENT:
@@ -754,14 +821,26 @@ def validate():
         r = e["ranking"]
         if r["method"] in ("load", "reps"):
             t = r["thresholds"]
-            if len(t) != 4 or any(b <= a for a, b in zip(t, t[1:])) or t[0] <= 0:
+            if len(t) != 7 or any(b <= a for a, b in zip(t, t[1:])) or t[0] <= 0:
                 errors.append(f"{e['slug']}: bad thresholds {t}")
+        elif r["method"] != "none":
+            errors.append(f"{e['slug']}: bad method")
         if e["equipment"] == "band" and r["method"] != "none":
             errors.append(f"{e['slug']}: bands are unranked")
         if e["equipment"] == "bodyweight" and r["method"] == "load":
             errors.append(f"{e['slug']}: bodyweight exercises rank on reps")
-        if len(e["instructions"]) < 2 or not e["tips"] or not e["mistakes"]:
-            errors.append(f"{e['slug']}: missing guidance")
+        gd = e.get("guide")
+        if not gd:
+            errors.append(f"{e['slug']}: missing guide")
+            continue
+        if not gd["overview"] or len(gd["steps"]) < 2 or not gd["form"] or not gd["setup"] or not gd["breathing"]:
+            errors.append(f"{e['slug']}: incomplete guide")
+        if len(gd["mistakes"]) < 2 or any(not (m["what"] and m["why"] and m["fix"]) for m in gd["mistakes"]):
+            errors.append(f"{e['slug']}: mistakes need what, why and fix")
+        if not gd["safety"] or not gd["easier"] or not gd["harder"]:
+            errors.append(f"{e['slug']}: missing safety or variations")
+        if gd["tracking"] == "time" and r["method"] != "none":
+            errors.append(f"{e['slug']}: timed exercises are unranked")
     covered = {m for e in E for m in e["primary"]}
     missing = MUSCLES - covered
     if missing:
@@ -769,12 +848,29 @@ def validate():
     covered_eq = {e["equipment"] for e in E}
     if EQUIPMENT - covered_eq:
         errors.append(f"equipment unused: {EQUIPMENT - covered_eq}")
+    unknown = set(guides.G) - set(slugs)
+    if unknown:
+        errors.append(f"guides for unknown slugs: {unknown}")
     if errors:
         raise SystemExit("\n".join(errors))
 
 
+def template_slugs():
+    """Every slug used by a workout template in SplitPresets.swift must exist."""
+    import re
+    here = os.path.dirname(os.path.abspath(__file__))
+    with open(os.path.join(here, "..", "PRIME", "Domain", "SplitPresets.swift")) as f:
+        text = f.read()
+    return set(re.findall(r'\("([a-z0-9-]+)", \d+, \d+\)', text))
+
+
 if __name__ == "__main__":
+    add_new()
+    finish()
     validate()
+    missing = template_slugs() - {e["slug"] for e in E}
+    if missing:
+        raise SystemExit(f"templates use unknown exercises: {sorted(missing)}")
     out = {"version": VERSION, "exercises": E}
     with open(sys.argv[1], "w") as f:
         json.dump(out, f, indent=1, ensure_ascii=False)
@@ -783,3 +879,4 @@ if __name__ == "__main__":
     print("by equipment:", dict(Counter(e["equipment"] for e in E)))
     print("by primary muscle:", dict(Counter(m for e in E for m in e["primary"])))
     print("ranking:", dict(Counter(e["ranking"]["method"] for e in E)))
+    print("timed:", [e["slug"] for e in E if e["guide"]["tracking"] == "time"])

@@ -97,6 +97,12 @@ struct SessionDetailView: View {
                     StatTile(value: Format.volume(session.totalVolume, unit: unit, includeUnit: false), label: "Volume (\(unit.symbol))", symbol: "scalemass.fill")
                     StatTile(value: "\(session.completedSets.count)", label: "Sets", symbol: "checkmark.circle.fill")
                 }
+                if let readiness = session.readiness {
+                    HStack(spacing: 8) {
+                        Image(systemName: "gauge.with.dots.needle.50percent").foregroundStyle(Theme.accentHighlight)
+                        Text("Readiness you recorded: \(readiness) of 5").font(.subheadline).foregroundStyle(Theme.textSecondary)
+                    }
+                }
                 if !records.isEmpty {
                     VStack(alignment: .leading, spacing: 10) {
                         SectionHeader(title: "Records set")
@@ -119,7 +125,7 @@ struct SessionDetailView: View {
                         ForEach(Array(item.completedSets.enumerated()), id: \.element.persistentModelID) { index, set in
                             HStack {
                                 Text("\(index + 1)").font(.caption.weight(.bold)).foregroundStyle(Theme.textTertiary).frame(width: 20)
-                                Text(Format.set(weightKg: set.weightKg, reps: set.reps, unit: unit))
+                                Text(Format.set(weightKg: set.weightKg, reps: set.reps, unit: unit, timed: ExerciseLibrary.shared.isTimed(item.exerciseSlug)))
                                     .font(.subheadline.weight(.semibold).monospacedDigit()).foregroundStyle(.white)
                                 if set.isWarmup { Tag(text: "Warm-up", color: Theme.info) }
                                 Spacer()

@@ -17,6 +17,7 @@ struct ActiveWorkoutView: View {
     @State private var showAddExercise = false
     @State private var replaceTarget: ExerciseSession?
     @State private var notesTarget: ExerciseSession?
+    @State private var guideTarget: Exercise?
     @State private var confirmFinish = false
     @State private var confirmDiscard = false
     @State private var errorMessage: String?
@@ -31,6 +32,7 @@ struct ActiveWorkoutView: View {
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 14) {
                     WorkoutHeader(session: session, unit: unit)
+                    ReadinessPicker(session: session)
                     if session.exercises.isEmpty {
                         EmptyStateView(symbol: "plus.circle", title: "Add your first exercise",
                                        message: "Pick from the library. PRIME will fill in what you did last time.",
@@ -42,6 +44,7 @@ struct ActiveWorkoutView: View {
                             item: item, session: session, unit: unit, focus: $focus,
                             onReplace: { replaceTarget = item },
                             onNotes: { notesTarget = item },
+                            onGuide: { guideTarget = item.exercise },
                             onRecord: celebrate
                         )
                     }
@@ -61,14 +64,14 @@ struct ActiveWorkoutView: View {
             .scrollDismissesKeyboard(.interactively)
             .primeBackground()
             .safeAreaInset(edge: .bottom, spacing: 0) {
-                if session.restEndsAt != nil {
+                if session.restEndsAt != nil || session.restPausedRemaining != nil {
                     RestTimerBar(session: session, notify: profile?.notifyRestTimer ?? true)
                         .padding(.horizontal, 12)
                         .padding(.bottom, 6)
                         .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
             }
-            .animation(.spring(response: 0.4, dampingFraction: 0.85), value: session.restEndsAt)
+            .animation(.spring(response: 0.4, dampingFraction: 0.85), value: session.restEndsAt != nil || session.restPausedRemaining != nil)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
@@ -128,6 +131,9 @@ struct ActiveWorkoutView: View {
                     Haptics.success()
                 }
             }
+        }
+        .sheet(item: $guideTarget) { exercise in
+            ExerciseGuideSheet(exercise: exercise).presentationDetents([.medium, .large])
         }
         .sheet(item: $notesTarget) { item in
             ExerciseNotesSheet(item: item).presentationDetents([.medium])
@@ -295,40 +301,70 @@ struct ExerciseNotesSheet: View {
 struct RestTimerBar: View {
     @Bindable var session: WorkoutSession
     let notify: Bool
+    @Environment(\.motion) private var motion
+
+    private static let presets = [30, 60, 90, 120, 150, 180, 240]
 
     var body: some View {
-        TimelineView(.periodic(from: .now, by: 0.5)) { timeline in
-            let remaining = max(0, (session.restEndsAt ?? timeline.date).timeIntervalSince(timeline.date))
+        TimelineView(.periodic(from: .now, by: 0.25)) { timeline in
+            let paused = session.restPausedRemaining != nil
+            let remaining = paused ? Double(session.restPausedRemaining ?? 0) : max(0, (session.restEndsAt ?? timeline.date).timeIntervalSince(timeline.date))
             let total = max(1, Double(session.restTotalSeconds))
-            HStack(spacing: 14) {
+            HStack(spacing: 12) {
                 ZStack {
-                    ProgressRing(progress: remaining / total, lineWidth: 4)
-                    Image(systemName: "timer").font(.caption.weight(.bold)).foregroundStyle(Theme.accent)
+                    Circle().stroke(Theme.field, lineWidth: 4)
+                    Circle()
+                        .trim(from: 0, to: max(0.001, min(1, remaining / total)))
+                        .stroke(paused ? AnyShapeStyle(Theme.textSecondary) : AnyShapeStyle(Theme.accentGradient), style: StrokeStyle(lineWidth: 4, lineCap: .round))
+                        .rotationEffect(.degrees(-90))
+                        .animation(motion.allowsAnimation ? .linear(duration: 0.25) : nil, value: remaining)
+                    Button {
+                        if paused { WorkoutService.resumeRest(session, notify: notify) } else { WorkoutService.pauseRest(session) }
+                        Haptics.tap()
+                    } label: {
+                        Image(systemName: paused ? "play.fill" : "pause.fill").font(.caption.weight(.bold)).foregroundStyle(Theme.textPrimary)
+                    }
+                    .accessibilityLabel(paused ? "Resume rest timer" : "Pause rest timer")
                 }
-                .frame(width: 38, height: 38)
+                .frame(width: 42, height: 42)
                 VStack(alignment: .leading, spacing: 0) {
                     Text(Format.clock(remaining.rounded(.up)))
                         .font(.primeNumber(26))
-                        .monospacedDigit()
-                        .foregroundStyle(.white)
-                    Text(session.restExerciseName.isEmpty ? "Rest" : "Rest · \(session.restExerciseName)")
-                        .font(.caption).foregroundStyle(Theme.textSecondary).lineLimit(1)
+                        .foregroundStyle(paused ? Theme.textSecondary : Theme.textPrimary)
+                        .contentTransition(.numericText(countsDown: true))
+                    Menu {
+                        ForEach(Self.presets, id: \.self) { seconds in
+                            Button("Restart at \(Format.clock(TimeInterval(seconds)))") { WorkoutService.setRest(session, seconds: seconds, notify: notify) }
+                        }
+                    } label: {
+                        HStack(spacing: 3) {
+                            Text(paused ? "Paused" : (session.restExerciseName.isEmpty ? "Rest" : "Rest · \(session.restExerciseName)"))
+                                .lineLimit(1)
+                            Image(systemName: "chevron.down").font(.system(size: 8, weight: .bold))
+                        }
+                        .font(.caption).foregroundStyle(Theme.textSecondary)
+                    }
+                    .accessibilityLabel("Rest presets")
                 }
-                Spacer()
+                Spacer(minLength: 4)
                 timerButton("−15") { WorkoutService.adjustRest(session, by: -15, notify: notify) }
+                    .disabled(paused)
                 timerButton("+15") { WorkoutService.adjustRest(session, by: 15, notify: notify) }
+                    .disabled(paused)
                 Button("Skip") { WorkoutService.endRest(session) }
-                    .font(.subheadline.weight(.bold))
+                    .font(.subheadline.weight(.semibold))
                     .foregroundStyle(Theme.onAccent)
                     .padding(.horizontal, 12)
-                    .frame(height: 34)
-                    .background(Capsule().fill(Theme.accent))
+                    .frame(height: 36)
+                    .background(RoundedRectangle(cornerRadius: 10).fill(Theme.accentGradient))
             }
             .padding(12)
-            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).strokeBorder(Theme.accent.opacity(0.35), lineWidth: 1))
+            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .background(Theme.surface.opacity(0.7), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(Theme.accent.opacity(0.4), lineWidth: 1))
+            .shadow(color: .black.opacity(0.5), radius: 16, y: 6)
             .accessibilityElement(children: .contain)
-            .accessibilityLabel("Rest timer, \(Int(remaining)) seconds left")
+            .accessibilityLabel(paused ? "Rest timer paused, \(Int(remaining)) seconds left" : "Rest timer, \(Int(remaining)) seconds left")
         }
     }
 
@@ -338,11 +374,50 @@ struct RestTimerBar: View {
             Haptics.tap()
         } label: {
             Text(title)
-                .font(.subheadline.weight(.bold).monospacedDigit())
-                .foregroundStyle(.white)
-                .frame(width: 46, height: 34)
-                .background(Capsule().fill(Theme.field))
+                .font(.subheadline.weight(.semibold).monospacedDigit())
+                .foregroundStyle(Theme.textPrimary)
+                .frame(width: 44, height: 36)
+                .background(RoundedRectangle(cornerRadius: 10).fill(Theme.field))
         }
+    }
+}
+
+/// Optional, subjective readiness for this session. Personal tracking only; it never changes the plan.
+struct ReadinessPicker: View {
+    @Bindable var session: WorkoutSession
+    @Environment(\.modelContext) private var context
+
+    private static let labels = ["Drained", "Low", "OK", "Good", "Great"]
+
+    var body: some View {
+        HStack(spacing: 10) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("How ready do you feel?").font(.caption.weight(.semibold)).foregroundStyle(Theme.textSecondary)
+                Text(session.readiness.map { Self.labels[$0 - 1] } ?? "Optional").font(.caption2).foregroundStyle(Theme.textTertiary)
+            }
+            Spacer()
+            ForEach(1...5, id: \.self) { value in
+                let selected = session.readiness == value
+                Button {
+                    session.readiness = selected ? nil : value
+                    try? context.save()
+                    Haptics.selection()
+                } label: {
+                    Text("\(value)")
+                        .font(.caption.weight(.bold).monospacedDigit())
+                        .frame(width: 30, height: 30)
+                        .foregroundStyle(selected ? Theme.onAccent : Theme.textSecondary)
+                        .background(Circle().fill(selected ? AnyShapeStyle(Theme.accentGradient) : AnyShapeStyle(Theme.field)))
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Readiness \(value) of 5, \(Self.labels[value - 1])")
+                .accessibilityAddTraits(selected ? .isSelected : [])
+            }
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .background(RoundedRectangle(cornerRadius: 14).fill(Theme.card))
+        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Theme.border, lineWidth: 1))
     }
 }
 

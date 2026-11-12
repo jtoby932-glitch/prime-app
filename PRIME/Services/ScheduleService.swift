@@ -106,82 +106,115 @@ enum ScheduleService {
     }
 }
 
-// MARK: - Starter templates
+// MARK: - Split presets
 
-struct PlanTemplate: Identifiable {
-    struct Day {
-        let name: String
-        let items: [(slug: String, sets: Int, reps: Int)]
+enum PresetApplyMode: String, CaseIterable, Identifiable {
+    /// Every day of the week follows the preset. Routines that drop off the timetable are kept.
+    case replace
+    /// Only days with nothing planned are filled.
+    case fillEmpty
+
+    var id: String { rawValue }
+}
+
+struct PresetPreviewDay: Identifiable {
+    let weekday: Int
+    let templateID: String?
+    let name: String
+    let muscles: [MuscleGroup]
+    /// What's on this day now, if the preset would change it.
+    let replacing: String?
+    let keptAsIs: Bool
+    var id: Int { weekday }
+    var isRest: Bool { templateID == nil }
+}
+
+@MainActor
+extension ScheduleService {
+    static func muscles(for template: WorkoutTemplate, exercises: [String: Exercise]) -> [MuscleGroup] {
+        var seen: [MuscleGroup] = []
+        for item in template.items {
+            for muscle in exercises[item.slug]?.primaryMuscles ?? [] where !seen.contains(muscle) { seen.append(muscle) }
+        }
+        return seen
     }
 
-    let id: String
-    let name: String
-    let summary: String
-    let days: [Day]
-    let symbol: String
-
-    static let all: [PlanTemplate] = [
-        PlanTemplate(id: "fullbody", name: "Full Body", summary: "Two alternating whole-body sessions. Great for 2–3 days a week.", days: [
-            Day(name: "Full Body A", items: [("barbell-back-squat", 3, 5), ("barbell-bench-press", 3, 5), ("barbell-bent-over-row", 3, 8), ("dumbbell-shoulder-press", 3, 10), ("hanging-leg-raise", 3, 10)]),
-            Day(name: "Full Body B", items: [("conventional-deadlift", 3, 5), ("overhead-press", 3, 5), ("lat-pulldown", 3, 10), ("dumbbell-walking-lunge", 3, 10), ("cable-crunch", 3, 12)]),
-        ], symbol: "figure.strengthtraining.traditional"),
-        PlanTemplate(id: "upperlower", name: "Upper / Lower", summary: "Upper and lower body on separate days. Built for 4 days a week.", days: [
-            Day(name: "Upper", items: [("barbell-bench-press", 4, 6), ("barbell-bent-over-row", 4, 8), ("overhead-press", 3, 8), ("lat-pulldown", 3, 10), ("dumbbell-bicep-curl", 3, 12), ("cable-triceps-pushdown", 3, 12)]),
-            Day(name: "Lower", items: [("barbell-back-squat", 4, 6), ("romanian-deadlift", 3, 8), ("leg-press", 3, 10), ("lying-leg-curl", 3, 12), ("standing-calf-raise", 4, 12), ("hanging-leg-raise", 3, 10)]),
-        ], symbol: "arrow.up.arrow.down"),
-        PlanTemplate(id: "ppl", name: "Push / Pull / Legs", summary: "Pressing, pulling and legs each get their own day. Run it 3 or 6 days a week.", days: [
-            Day(name: "Push", items: [("barbell-bench-press", 4, 6), ("incline-dumbbell-press", 3, 10), ("overhead-press", 3, 8), ("dumbbell-lateral-raise", 3, 15), ("cable-triceps-pushdown", 3, 12)]),
-            Day(name: "Pull", items: [("pull-up", 4, 8), ("barbell-bent-over-row", 3, 8), ("seated-cable-row", 3, 10), ("face-pull", 3, 15), ("barbell-curl", 3, 10), ("hammer-curl", 3, 12)]),
-            Day(name: "Legs", items: [("barbell-back-squat", 4, 6), ("romanian-deadlift", 3, 8), ("leg-press", 3, 10), ("leg-extension", 3, 12), ("lying-leg-curl", 3, 12), ("standing-calf-raise", 4, 12)]),
-        ], symbol: "triangle"),
-        PlanTemplate(id: "machines", name: "Machine Starter", summary: "Guided machines for learning the movements safely. 2–3 days a week.", days: [
-            Day(name: "Machine Circuit", items: [("machine-chest-press", 3, 10), ("lat-pulldown", 3, 10), ("leg-press", 3, 10), ("machine-seated-row", 3, 10), ("machine-shoulder-press", 3, 10), ("seated-leg-curl", 3, 12)]),
-        ], symbol: "gearshape.2.fill"),
-    ]
-
-    static func recommended(forDays count: Int, experience: ExperienceLevel) -> String {
-        if experience == .new { return "machines" }
-        switch count {
-        case ...2: return "fullbody"
-        case 3: return "ppl"
-        case 4: return "upperlower"
-        default: return "ppl"
+    /// The week as it would look after applying, Monday first.
+    static func preview(_ preset: SplitPreset, start: Int, mode: PresetApplyMode, days: [WorkoutDay], exercises: [String: Exercise]) -> [PresetPreviewDay] {
+        let layout = preset.layout(startingOn: start)
+        return Weekday.all.map { weekday in
+            let existing = days.first { $0.weekday == weekday }
+            let keep = mode == .fillEmpty && existing?.state != .unplanned && existing != nil
+            if keep, let existing {
+                return PresetPreviewDay(weekday: weekday, templateID: existing.plan?.sourceTemplateID ?? (existing.isRest ? nil : "existing"),
+                                        name: existing.plan?.name ?? "Rest", muscles: existing.plan?.muscles ?? [], replacing: nil, keptAsIs: true)
+            }
+            let slot = layout[weekday] ?? nil
+            let current: String? = {
+                guard let existing else { return nil }
+                switch existing.state {
+                case .training: return existing.plan?.name
+                case .rest: return slot == nil ? nil : "Rest"
+                case .unplanned: return nil
+                }
+            }()
+            if let slot, let template = WorkoutTemplate.library[slot] {
+                return PresetPreviewDay(weekday: weekday, templateID: slot, name: template.name,
+                                        muscles: muscles(for: template, exercises: exercises),
+                                        replacing: current == template.name ? nil : current, keptAsIs: false)
+            }
+            return PresetPreviewDay(weekday: weekday, templateID: nil, name: "Rest", muscles: [], replacing: current, keptAsIs: false)
         }
     }
 
-    /// Creates the routines and lays them over the chosen weekdays in order.
-    @MainActor
+    /// Copies the preset's workouts into routines (reusing ones already made from the same template)
+    /// and lays them onto the week. Never deletes routines or history.
     @discardableResult
-    func install(context: ModelContext, exercises: [Exercise], weekdays: [Int], restSeconds: Int) -> [WorkoutPlan] {
+    static func apply(_ preset: SplitPreset, start: Int, mode: PresetApplyMode, exercises: [Exercise], restSeconds: Int, context: ModelContext) -> [WorkoutPlan] {
         let bySlug = Dictionary(exercises.map { ($0.slug, $0) }, uniquingKeysWith: { first, _ in first })
-        var plans: [WorkoutPlan] = []
-        for (dayIndex, day) in days.enumerated() {
-            let plan = WorkoutPlan(name: ScheduleService.uniqueName(base: day.name, context: context), colorIndex: dayIndex)
+        let existingPlans = (try? context.fetch(FetchDescriptor<WorkoutPlan>())) ?? []
+        let week = ensureWeek(context: context)
+        let layout = preset.layout(startingOn: start)
+        var plansByTemplate: [String: WorkoutPlan] = [:]
+        var created: [WorkoutPlan] = []
+
+        func plan(for templateID: String) -> WorkoutPlan? {
+            if let plan = plansByTemplate[templateID] { return plan }
+            if let reuse = existingPlans.first(where: { $0.sourceTemplateID == templateID }) {
+                plansByTemplate[templateID] = reuse
+                return reuse
+            }
+            guard let template = WorkoutTemplate.library[templateID] else { return nil }
+            let colour = (WorkoutTemplate.all.firstIndex(of: template) ?? 0) % Theme.palette.count
+            let plan = WorkoutPlan(name: uniqueName(base: template.name, context: context), colorIndex: colour)
+            plan.sourceTemplateID = templateID
             context.insert(plan)
             var position = 0
-            for item in day.items {
+            for item in template.items {
                 guard let exercise = bySlug[item.slug] else { continue }
+                let compound = exercise.mechanic == .compound
                 let entry = PlannedExercise(position: position, exercise: exercise, targetSets: item.sets, targetReps: item.reps,
-                                            restSeconds: exercise.mechanic == .compound ? max(restSeconds, 120) : restSeconds)
+                                            restSeconds: compound ? max(restSeconds, 120) : restSeconds)
                 context.insert(entry)
                 entry.plan = plan
                 position += 1
             }
-            plans.append(plan)
+            plansByTemplate[templateID] = plan
+            created.append(plan)
+            return plan
         }
-        let week = ScheduleService.ensureWeek(context: context)
-        let orderedDays = weekdays.sorted()
-        if !plans.isEmpty {
-            for (offset, weekday) in orderedDays.enumerated() {
-                guard let day = week.first(where: { $0.weekday == weekday }) else { continue }
-                day.plan = plans[offset % plans.count]
+
+        for day in week {
+            if mode == .fillEmpty && day.state != .unplanned { continue }
+            if let slot = layout[day.weekday] ?? nil, let plan = plan(for: slot) {
+                day.plan = plan
                 day.isRest = false
-            }
-            for day in week where !orderedDays.contains(day.weekday) && day.plan == nil {
-                day.isRest = !orderedDays.isEmpty
+            } else {
+                day.plan = nil
+                day.isRest = true
             }
         }
         try? context.save()
-        return plans
+        return created
     }
 }

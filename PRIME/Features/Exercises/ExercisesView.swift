@@ -2,67 +2,31 @@ import SwiftData
 import SwiftUI
 
 struct ExercisesView: View {
+    @Environment(\.bodyModel) private var model
     @Query(sort: \Exercise.name) private var exercises: [Exercise]
-    @State private var filter = ExerciseFilter()
-    @State private var showFilters = false
+    @Query private var profiles: [UserProfile]
+    @State private var query = ""
     @State private var showCreator = false
 
-    private var results: [Exercise] { filter.apply(to: exercises) }
+    private var profile: UserProfile? { profiles.first }
 
     var body: some View {
         NavigationStack {
-            List {
-                Section {
-                    NavigationLink(value: Route.muscleMap) {
-                        HStack(spacing: 14) {
-                            AnatomyCanvas(side: .front, intensity: [.chest: 1, .quadriceps: 0.6, .abdominals: 0.3], showDetail: false)
-                                .frame(width: 44, height: 64)
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("Muscle map").font(.headline).foregroundStyle(.white)
-                                Text("Tap a muscle to find exercises for it").font(.caption).foregroundStyle(Theme.textSecondary)
-                            }
-                        }
+            ScrollView {
+                VStack(alignment: .leading, spacing: 22) {
+                    if query.trimmingCharacters(in: .whitespaces).isEmpty {
+                        browse
+                    } else {
+                        SearchResultsList(query: query)
                     }
-                    .listRowBackground(Theme.card)
                 }
-
-                Section {
-                    filterBar
-                        .listRowInsets(EdgeInsets())
-                        .listRowBackground(Color.clear)
-                }
-
-                Section {
-                    ForEach(results) { exercise in
-                        NavigationLink(value: Route.exercise(exercise.slug)) {
-                            ExerciseRow(exercise: exercise)
-                        }
-                        .listRowBackground(Theme.card)
-                        .swipeActions(edge: .trailing) {
-                            Button {
-                                exercise.isFavourite.toggle()
-                                Haptics.selection()
-                            } label: {
-                                Label(exercise.isFavourite ? "Unfavourite" : "Favourite", systemImage: exercise.isFavourite ? "star.slash" : "star.fill")
-                            }
-                            .tint(Theme.warning)
-                        }
-                    }
-                } header: {
-                    Text("\(results.count) exercise\(results.count == 1 ? "" : "s")")
-                }
+                .padding(.horizontal, Theme.gutter)
+                .padding(.bottom, 24)
             }
-            .listStyle(.insetGrouped)
-            .scrollContentBackground(.hidden)
+            .scrollDismissesKeyboard(.interactively)
             .primeBackground()
-            .overlay {
-                if results.isEmpty && !exercises.isEmpty {
-                    EmptyStateView(symbol: "magnifyingglass", title: "No exercises match",
-                                   message: "Try another search, or create your own exercise.",
-                                   actionTitle: "Clear filters") { filter = ExerciseFilter() }
-                }
-            }
-            .searchable(text: $filter.query, prompt: "Search name, muscle or equipment")
+            .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .always), prompt: "Exercises, muscles, routines, workouts")
+            .onSubmit(of: .search) { profile?.noteSearch(query) }
             .navigationTitle("Exercises")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -70,110 +34,190 @@ struct ExercisesView: View {
                         .accessibilityLabel("Create exercise")
                 }
             }
-            .sheet(isPresented: $showFilters) {
-                ExerciseFilterSheet(filter: $filter).presentationDetents([.medium, .large])
-            }
             .sheet(isPresented: $showCreator) { CustomExerciseEditor() }
             .primeDestinations()
-            .workoutBarInset()
         }
     }
 
-    private var filterBar: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 8) {
-                Chip(title: filter.activeFilterCount > 0 ? "Filters · \(filter.activeFilterCount)" : "Filters",
-                     symbol: "line.3.horizontal.decrease", isSelected: filter.activeFilterCount > 0) { showFilters = true }
-                Chip(title: "Favourites", symbol: "star.fill", isSelected: filter.favouritesOnly) { filter.favouritesOnly.toggle() }
-                ForEach(MuscleGroup.allCases) { muscle in
-                    Chip(title: muscle.shortName, isSelected: filter.muscles.contains(muscle)) {
-                        if filter.muscles.contains(muscle) { filter.muscles.remove(muscle) } else { filter.muscles.insert(muscle) }
-                        Haptics.selection()
+    @ViewBuilder
+    private var browse: some View {
+        NavigationLink(value: Route.muscleMap) { explorerBanner }.buttonStyle(PressableStyle()).appear(0)
+
+        VStack(alignment: .leading, spacing: 12) {
+            SectionHeader(title: "Browse by muscle", subtitle: "\(exercises.count) exercises")
+            LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)], spacing: 10) {
+                ForEach(Array(MuscleGroup.allCases.enumerated()), id: \.element) { index, muscle in
+                    NavigationLink(value: Route.category(muscle)) {
+                        CategoryCard(muscle: muscle, count: exercises.filter { $0.primaryMuscles.contains(muscle) }.count, model: model)
+                    }
+                    .buttonStyle(PressableStyle())
+                    .appear(min(index, 8) + 1)
+                }
+            }
+        }
+
+        let recent = (profile?.recentExerciseSlugs ?? []).compactMap { slug in exercises.first { $0.slug == slug } }
+        if !recent.isEmpty {
+            ExerciseShelf(title: "Recently viewed", exercises: recent)
+        }
+
+        let favourites = exercises.filter(\.isFavourite)
+        if favourites.isEmpty {
+            HStack(spacing: 12) {
+                IconBubble(symbol: "star", tint: Theme.warning, size: 38)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("No favourites yet").font(.subheadline.weight(.semibold)).foregroundStyle(Theme.textPrimary)
+                    Text("Tap the star on any exercise to keep it here.").font(.caption).foregroundStyle(Theme.textSecondary)
+                }
+            }
+            .primeCard(padding: 12)
+        } else {
+            ExerciseShelf(title: "Favourites", exercises: favourites, seeAll: .favourites)
+        }
+
+        VStack(alignment: .leading, spacing: 12) {
+            SectionHeader(title: "By equipment")
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    ForEach(Equipment.allCases) { item in
+                        NavigationLink(value: Route.equipment(item)) {
+                            EquipmentPill(equipment: item, count: exercises.filter { $0.equipment == item }.count)
+                        }
+                        .buttonStyle(PressableStyle())
                     }
                 }
             }
-            .padding(.horizontal, 4)
-            .padding(.vertical, 4)
+            NavigationLink(value: Route.allExercises) {
+                HStack {
+                    Label("All exercises", systemImage: "list.bullet").font(.subheadline.weight(.semibold)).foregroundStyle(Theme.textPrimary)
+                    Spacer()
+                    Text("\(exercises.count)").font(.subheadline.monospacedDigit()).foregroundStyle(Theme.textSecondary)
+                    Image(systemName: "chevron.right").font(.caption.weight(.bold)).foregroundStyle(Theme.textTertiary)
+                }
+                .primeCard(padding: 14)
+            }
+            .buttonStyle(PressableStyle())
+        }
+    }
+
+    private var explorerBanner: some View {
+        HStack(spacing: 14) {
+            HStack(spacing: 0) {
+                AnatomyCanvas(side: .front, primary: [.chest, .abdominals, .quadriceps], secondary: [.shoulders], model: model).frame(width: 46, height: 92)
+                AnatomyCanvas(side: .back, primary: [.back, .glutes, .hamstrings], secondary: [.traps], model: model).frame(width: 46, height: 92)
+            }
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Muscle explorer").font(.primeHeadline).foregroundStyle(Theme.textPrimary)
+                Text("Tap any muscle to see what it does and the exercises that train it.")
+                    .font(.caption).foregroundStyle(Theme.textSecondary)
+            }
+            Spacer(minLength: 0)
+            Image(systemName: "chevron.right").font(.caption.weight(.bold)).foregroundStyle(Theme.textTertiary)
+        }
+        .primeCard(padding: 14, highlight: Theme.accent)
+    }
+}
+
+struct CategoryCard: View {
+    let muscle: MuscleGroup
+    let count: Int
+    let model: BodyModel
+
+    var body: some View {
+        let figure = AnatomyFigure.figure(model)
+        HStack(spacing: 10) {
+            AnatomyCanvas(side: figure.bestSide(for: [muscle]), primary: [muscle], model: model, focus: true)
+                .frame(width: 46, height: 46)
+                .background(RoundedRectangle(cornerRadius: 10).fill(Theme.surface))
+                .clipShape(RoundedRectangle(cornerRadius: 10))
+            VStack(alignment: .leading, spacing: 2) {
+                Text(muscle.displayName).font(.subheadline.weight(.semibold)).foregroundStyle(Theme.textPrimary).lineLimit(1)
+                Text("\(count) exercise\(count == 1 ? "" : "s")").font(.caption).foregroundStyle(Theme.textSecondary)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(10)
+        .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(Theme.card))
+        .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(Theme.border, lineWidth: 1))
+        .accessibilityElement(children: .combine)
+    }
+}
+
+struct EquipmentPill: View {
+    let equipment: Equipment
+    let count: Int
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(systemName: equipment.symbol).font(.subheadline).foregroundStyle(Theme.accentHighlight)
+            Text(equipment.displayName).font(.subheadline.weight(.medium)).foregroundStyle(Theme.textPrimary)
+            Text("\(count)").font(.caption.monospacedDigit()).foregroundStyle(Theme.textTertiary)
+        }
+        .padding(.horizontal, 12)
+        .frame(minHeight: 38)
+        .background(RoundedRectangle(cornerRadius: 10).fill(Theme.card))
+        .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(Theme.border, lineWidth: 1))
+    }
+}
+
+/// A horizontal row of exercise tiles.
+struct ExerciseShelf: View {
+    let title: String
+    let exercises: [Exercise]
+    var seeAll: Route? = nil
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                SectionHeader(title: title)
+                if let seeAll {
+                    NavigationLink(value: seeAll) { Text("See all").font(.subheadline.weight(.semibold)).foregroundStyle(Theme.accentHighlight) }
+                }
+            }
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 10) {
+                    ForEach(exercises.prefix(10)) { exercise in
+                        NavigationLink(value: Route.exercise(exercise.slug)) {
+                            VStack(alignment: .leading, spacing: 8) {
+                                ExerciseIllustration(exercise: exercise, size: 64)
+                                Text(exercise.name).font(.caption.weight(.semibold)).foregroundStyle(Theme.textPrimary)
+                                    .lineLimit(2).multilineTextAlignment(.leading)
+                                    .frame(width: 104, alignment: .leading)
+                            }
+                            .padding(10)
+                            .frame(width: 124, height: 140, alignment: .topLeading)
+                            .background(RoundedRectangle(cornerRadius: 14).fill(Theme.card))
+                            .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Theme.border, lineWidth: 1))
+                        }
+                        .buttonStyle(PressableStyle())
+                    }
+                }
+            }
         }
     }
 }
 
 struct ExerciseRow: View {
     let exercise: Exercise
+    var showsMuscles = true
 
     var body: some View {
         HStack(spacing: 12) {
             ExerciseIllustration(exercise: exercise, size: 48)
             VStack(alignment: .leading, spacing: 3) {
                 HStack(spacing: 6) {
-                    Text(exercise.name).font(.subheadline.weight(.semibold)).foregroundStyle(.white).lineLimit(1)
+                    Text(exercise.name).font(.subheadline.weight(.semibold)).foregroundStyle(Theme.textPrimary).lineLimit(1)
                     if exercise.isFavourite {
                         Image(systemName: "star.fill").font(.caption2).foregroundStyle(Theme.warning).accessibilityLabel("Favourite")
                     }
-                    if exercise.isCustom { Tag(text: "Custom", color: Theme.info) }
+                    if exercise.isCustom { Tag(text: "Custom", color: Theme.accentHighlight) }
                 }
-                Text("\(exercise.primaryMuscleSummary) · \(exercise.equipment.displayName)")
+                Text(showsMuscles ? "\(exercise.primaryMuscleSummary) · \(exercise.equipment.displayName)" : "\(exercise.equipment.displayName) · \(exercise.mechanic.displayName) · \(exercise.difficulty.displayName)")
                     .font(.caption).foregroundStyle(Theme.textSecondary).lineLimit(1)
             }
+            Spacer(minLength: 0)
         }
-        .padding(.vertical, 2)
+        .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
-    }
-}
-
-struct ExerciseFilterSheet: View {
-    @Binding var filter: ExerciseFilter
-    @Environment(\.dismiss) private var dismiss
-
-    var body: some View {
-        NavigationStack {
-            List {
-                Section("Muscle group") {
-                    flow(MuscleGroup.allCases, title: \.displayName, isOn: { filter.muscles.contains($0) }) { muscle in
-                        if filter.muscles.contains(muscle) { filter.muscles.remove(muscle) } else { filter.muscles.insert(muscle) }
-                    }
-                    Toggle("Include secondary muscles", isOn: $filter.includeSecondary)
-                }
-                Section("Equipment") {
-                    flow(Equipment.allCases, title: \.displayName, isOn: { filter.equipment.contains($0) }) { item in
-                        if filter.equipment.contains(item) { filter.equipment.remove(item) } else { filter.equipment.insert(item) }
-                    }
-                }
-                Section("Type") {
-                    Picker("Type", selection: $filter.mechanic) {
-                        Text("Any").tag(Mechanic?.none)
-                        ForEach(Mechanic.allCases) { Text($0.displayName).tag(Mechanic?.some($0)) }
-                    }
-                    .pickerStyle(.segmented)
-                    Toggle("Favourites only", isOn: $filter.favouritesOnly)
-                }
-            }
-            .scrollContentBackground(.hidden)
-            .background(Theme.surface.ignoresSafeArea())
-            .navigationTitle("Filters")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Reset") {
-                        let query = filter.query
-                        filter = ExerciseFilter()
-                        filter.query = query
-                    }
-                }
-                ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() }.fontWeight(.bold) }
-            }
-        }
-    }
-
-    private func flow<T: Identifiable>(_ items: [T], title: KeyPath<T, String>, isOn: @escaping (T) -> Bool, toggle: @escaping (T) -> Void) -> some View {
-        LazyVGrid(columns: [GridItem(.adaptive(minimum: 104), spacing: 8)], alignment: .leading, spacing: 8) {
-            ForEach(items) { item in
-                Chip(title: item[keyPath: title], isSelected: isOn(item)) {
-                    toggle(item)
-                    Haptics.selection()
-                }
-            }
-        }
-        .padding(.vertical, 6)
     }
 }

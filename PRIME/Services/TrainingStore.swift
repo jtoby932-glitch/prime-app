@@ -25,13 +25,16 @@ final class TrainingStore {
     static func makeHistory(sessions: [WorkoutSession], bodyweights: [BodyweightEntry]) -> TrainingHistory {
         var samples: [SetSample] = []
         var summaries: [SessionSummary] = []
+        let library = ExerciseLibrary.shared
         for session in sessions where session.status == .completed {
+            var repCount = 0
             var setCount = 0
             var exerciseCount = 0
             var volume = 0.0
             for entry in session.sortedExercises where !entry.isSkipped {
                 let sets = entry.sortedSets.filter { $0.isCompleted && !$0.isWarmup && ($0.reps ?? 0) > 0 }
                 if !sets.isEmpty { exerciseCount += 1 }
+                let timed = library.isTimed(entry.exerciseSlug)
                 for (index, set) in sets.enumerated() {
                     let sample = SetSample(
                         sessionID: session.uuid,
@@ -43,16 +46,19 @@ final class TrainingStore {
                         weightKg: max(0, set.weightKg ?? 0),
                         reps: set.reps ?? 0,
                         bodyweightKg: session.bodyweightKg,
-                        setIndex: index
+                        setIndex: index,
+                        isTimed: timed
                     )
                     samples.append(sample)
                     volume += sample.volume
+                    repCount += sample.repCount
                     setCount += 1
                 }
             }
             summaries.append(SessionSummary(
                 id: session.uuid, name: session.name, startedAt: session.startedAt,
-                duration: session.duration, volume: volume, setCount: setCount, exerciseCount: exerciseCount
+                duration: session.duration, volume: volume, setCount: setCount, exerciseCount: exerciseCount,
+                repCount: repCount, fromRoutine: session.planID != nil, readiness: session.readiness
             ))
         }
         let points = bodyweights.map { BodyweightPoint(date: $0.date, weightKg: $0.weightKg) }

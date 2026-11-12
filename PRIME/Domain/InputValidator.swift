@@ -27,6 +27,7 @@ enum ValidationError: Error, Equatable, LocalizedError {
 enum InputValidator {
     static let maxWeightKg = 1000.0
     static let maxReps = 500
+    static let maxHoldSeconds = 3600
     static let bodyweightRangeKg = 20.0...400.0
     static let restRangeSeconds = 0...900
     static let setRange = 1...20
@@ -81,6 +82,24 @@ enum InputValidator {
         return .success(reps)
     }
 
+    /// Seconds for a timed hold: whole numbers from 1 to an hour.
+    static func seconds(_ raw: String) -> Result<Int, ValidationError> {
+        let trimmed = raw.trimmingCharacters(in: .whitespaces)
+        if trimmed.isEmpty { return .failure(.empty) }
+        if trimmed.hasPrefix("-") { return .failure(.negative) }
+        guard let value = parseNumber(trimmed) else { return .failure(.notANumber) }
+        guard value == value.rounded(), !trimmed.contains("."), !trimmed.contains(",") else { return .failure(.notWholeNumber) }
+        let seconds = Int(value)
+        if seconds == 0 { return .failure(.zero) }
+        if seconds > maxHoldSeconds { return .failure(.tooLarge(limit: "60 min")) }
+        return .success(seconds)
+    }
+
+    /// Reps or seconds, depending on how the exercise is measured.
+    static func count(_ raw: String, timed: Bool) -> Result<Int, ValidationError> {
+        timed ? seconds(raw) : reps(raw)
+    }
+
     static func bodyweight(_ raw: String, unit: WeightUnit) -> Result<Double, ValidationError> {
         switch weight(raw, unit: unit, allowZero: false) {
         case .failure(let error): return .failure(error)
@@ -96,10 +115,11 @@ enum InputValidator {
     }
 
     /// A set can only be completed with valid reps, and a load when the equipment needs one.
-    static func completedSetError(weightKg: Double?, reps: Int?, requiresLoad: Bool) -> ValidationError? {
+    static func completedSetError(weightKg: Double?, reps: Int?, requiresLoad: Bool, timed: Bool = false) -> ValidationError? {
         guard let reps else { return .empty }
         if reps <= 0 { return .zero }
-        if reps > maxReps { return .tooLarge(limit: "\(maxReps)") }
+        let limit = timed ? maxHoldSeconds : maxReps
+        if reps > limit { return .tooLarge(limit: timed ? "60 min" : "\(maxReps)") }
         if let weightKg {
             if !weightKg.isFinite { return .notANumber }
             if weightKg < 0 { return .negative }

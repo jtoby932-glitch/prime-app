@@ -5,11 +5,20 @@ import SwiftUI
 enum Route: Hashable {
     case analytics
     case muscleMap
+    case muscle(MuscleGroup)
+    case category(MuscleGroup)
+    case allExercises
+    case equipment(Equipment)
+    case favourites
     case records
     case achievements
     case bodyweight
     case notifications
-    case rankCalculator
+    case preferences
+    case dashboardLayout
+    case methodology
+    case licences
+    case rankHistory
     case exercise(String)
     case exerciseRank(String)
     case exerciseHistory(String)
@@ -27,11 +36,6 @@ extension View {
             RouteDestination(route: route)
         }
     }
-
-    /// Shows the in-progress workout bar above the tab bar.
-    func workoutBarInset() -> some View {
-        modifier(WorkoutBarInset())
-    }
 }
 
 struct RouteDestination: View {
@@ -41,11 +45,20 @@ struct RouteDestination: View {
         switch route {
         case .analytics: AnalyticsView()
         case .muscleMap: MuscleMapView()
+        case .muscle(let muscle): MuscleMapView(initial: muscle)
+        case .category(let muscle): ExerciseCategoryView(scope: .muscle(muscle))
+        case .allExercises: ExerciseCategoryView(scope: .all)
+        case .equipment(let item): ExerciseCategoryView(scope: .equipment(item))
+        case .favourites: ExerciseCategoryView(scope: .favourites)
         case .records: PersonalRecordsView()
         case .achievements: AchievementsView()
         case .bodyweight: BodyweightView()
         case .notifications: NotificationSettingsView()
-        case .rankCalculator: RankCalculatorView()
+        case .preferences: PreferencesView()
+        case .dashboardLayout: DashboardLayoutView()
+        case .methodology: RankingMethodologyView()
+        case .licences: LicencesView()
+        case .rankHistory: RankHistoryView()
         case .exercise(let slug): ExerciseLoader(slug: slug) { ExerciseDetailView(exercise: $0) }
         case .exerciseRank(let slug): ExerciseLoader(slug: slug) { ExerciseRankDetailView(exercise: $0) }
         case .exerciseHistory(let slug): ExerciseLoader(slug: slug) { ExerciseHistoryView(exercise: $0) }
@@ -117,20 +130,5 @@ struct MissingItemView: View {
         EmptyStateView(symbol: "questionmark.folder", title: title, message: message)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .primeBackground()
-    }
-}
-
-struct WorkoutBarInset: ViewModifier {
-    @Environment(AppState.self) private var appState
-
-    func body(content: Content) -> some View {
-        content.safeAreaInset(edge: .bottom, spacing: 0) {
-            if let session = appState.activeSession, !appState.isWorkoutPresented, session.modelContext != nil {
-                ActiveWorkoutBar(session: session)
-                    .padding(.horizontal, 12)
-                    .padding(.bottom, 8)
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
-            }
-        }
     }
 }
