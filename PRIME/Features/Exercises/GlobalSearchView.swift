@@ -61,7 +61,7 @@ struct SearchSuggestions: View {
             }
             VStack(alignment: .leading, spacing: 10) {
                 Text("Try").eyebrow()
-                LazyVGrid(columns: [GridItem(.adaptive(minimum: 110), spacing: 8)], alignment: .leading, spacing: 8) {
+                FlowLayout(spacing: 8) {
                     ForEach(Self.suggestions, id: \.self) { text in
                         Chip(title: text, symbol: "magnifyingglass") { query = text }
                     }

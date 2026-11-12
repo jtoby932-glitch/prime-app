@@ -95,15 +95,13 @@ struct ExerciseDetailView: View {
                 legend(color: Theme.accentHighlight.opacity(0.42), text: "Secondary")
             }
             Text(exercise.name).font(.primeTitle).foregroundStyle(Theme.textPrimary)
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 6) {
-                    Tag(text: exercise.equipment.displayName, color: Theme.accentHighlight, symbol: exercise.equipment.symbol)
-                    Tag(text: exercise.mechanic.displayName)
-                    Tag(text: exercise.difficulty.displayName)
-                    if exercise.guide.unilateral { Tag(text: "Unilateral") }
-                    if !exercise.guide.pattern.isEmpty { Tag(text: exercise.guide.pattern) }
-                    if exercise.isCustom { Tag(text: "Custom", color: Theme.accentHighlight) }
-                }
+            FlowLayout(spacing: 6) {
+                Tag(text: exercise.equipment.displayName, color: Theme.accentHighlight, symbol: exercise.equipment.symbol)
+                Tag(text: exercise.mechanic.displayName)
+                Tag(text: exercise.difficulty.displayName)
+                if exercise.guide.unilateral { Tag(text: "Unilateral") }
+                if !exercise.guide.pattern.isEmpty { Tag(text: exercise.guide.pattern) }
+                if exercise.isCustom { Tag(text: "Custom", color: Theme.accentHighlight) }
             }
         }
         .primeCard(padding: 16)

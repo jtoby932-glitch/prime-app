@@ -242,6 +242,7 @@ struct MistakeCard: View {
 /// Quick technique check from inside a workout. A sheet, so the workout underneath is untouched.
 struct ExerciseGuideSheet: View {
     let exercise: Exercise
+    @Environment(AppState.self) private var appState
     @Environment(\.dismiss) private var dismiss
     @Environment(\.bodyModel) private var model
 
@@ -253,7 +254,8 @@ struct ExerciseGuideSheet: View {
                         ExerciseIllustration(exercise: exercise, size: 64)
                         VStack(alignment: .leading, spacing: 4) {
                             Text(exercise.name).font(.primeTitle3).foregroundStyle(Theme.textPrimary)
-                            Text("Your workout keeps running while you read.").font(.caption).foregroundStyle(Theme.textSecondary)
+                            Text(appState.activeSession == nil ? "Quick technique reference." : "Your workout keeps running while you read.")
+                                .font(.caption).foregroundStyle(Theme.textSecondary)
                         }
                     }
                     ExerciseGuideSections(exercise: exercise, sections: [.setup, .perform, .form, .mistakes, .safety], compact: true)
