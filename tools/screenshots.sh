@@ -46,6 +46,28 @@ shot 23-detail-bench 7 -demo -route exercise:barbell-bench-press
 # Last: the workout it starts persists and would cover later screens.
 shot 24-active-workout 8 -demo -activeWorkout
 
+# Short recordings of the motion, converted to GIFs for review.
+record() {
+  local name="$1" seconds="$2"; shift 2
+  xcrun simctl terminate "$UDID" "$BUNDLE" 2>/dev/null || true
+  xcrun simctl io "$UDID" recordVideo --codec h264 --force "$OUT/$name.mp4" >/dev/null 2>&1 &
+  local pid=$!
+  sleep 1.5
+  xcrun simctl launch "$UDID" "$BUNDLE" "$@" >/dev/null
+  sleep "$seconds"
+  kill -INT "$pid" 2>/dev/null; wait "$pid" 2>/dev/null
+  if command -v ffmpeg >/dev/null && [ -s "$OUT/$name.mp4" ]; then
+    ffmpeg -loglevel error -y -i "$OUT/$name.mp4" -vf "fps=12,scale=300:-1:flags=lanczos,split[a][b];[a]palettegen=max_colors=128[p];[b][p]paletteuse=dither=bayer" "$OUT/$name.gif" \
+      && rm -f "$OUT/$name.mp4" && echo "recorded $name"
+  else
+    echo "kept $name.mp4 (no ffmpeg)"
+  fi
+}
+
+record m1-tour 14 -demo -tour
+record m2-reveal 11 -demo -reveal barbell-bench-press -revealStage play
+record m3-onboarding 6
+
 # Crash reports, if any, help diagnose a blank screenshot.
 find ~/Library/Logs/DiagnosticReports -name "PRIME*" -newer "$APP" -exec cp {} "$OUT/" \; 2>/dev/null || true
 ls -1 "$OUT"

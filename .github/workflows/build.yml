@@ -114,6 +114,9 @@ jobs:
             2>&1 | tee build.log | grep -E "error:|BUILD" || true
           grep -q "BUILD SUCCEEDED" build.log
 
+      - name: Install ffmpeg for GIF recordings
+        run: which ffmpeg || HOMEBREW_NO_AUTO_UPDATE=1 brew install -q ffmpeg || true
+
       - name: Capture screens
         run: bash tools/screenshots.sh "${{ steps.sim.outputs.udid }}" build/Build/Products/Debug-iphonesimulator/PRIME.app shots
 

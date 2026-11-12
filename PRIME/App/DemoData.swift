@@ -52,6 +52,19 @@ enum DemoData {
         if let slug = value(after: "-guide") { appState.guideRequest = GuideRequest(id: slug) }
         if arguments.contains("-activeWorkout") { startWorkout(context: context, store: store, appState: appState) }
         if let slug = value(after: "-reveal") { showReveal(slug: slug, context: context, store: store, appState: appState) }
+        if arguments.contains("-tour") { tour(appState: appState) }
+    }
+
+    /// Walks through the tabs on a timer so a screen recording shows the transitions.
+    private static func tour(appState: AppState) {
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 2_200_000_000)
+            for tab in AppTab.allCases.dropFirst() {
+                withAnimation(.spring(response: 0.42, dampingFraction: 0.78)) { appState.selectedTab = tab }
+                try? await Task.sleep(nanoseconds: 2_000_000_000)
+            }
+            withAnimation(.spring(response: 0.42, dampingFraction: 0.78)) { appState.selectedTab = .home }
+        }
     }
 
     private static func showReveal(slug: String, context: ModelContext, store: TrainingStore, appState: AppState) {
@@ -59,8 +72,9 @@ enum DemoData {
         guard let exercise = exercises.first(where: { $0.slug == slug }) else { return }
         let rank = RankingService.rank(for: exercise, history: store.history, submissions: [], scale: 1)
         guard let result = rank.currentResult ?? rank.peak else { return }
-        appState.revealStage = RankRevealView.Stage(rawValue: ["analysis", "reveal", "breakdown"].firstIndex(of: value(after: "-revealStage") ?? "") ?? 2) ?? .breakdown
-        appState.revealFrozen = true
+        let stage = value(after: "-revealStage") ?? "breakdown"
+        appState.revealStage = RankRevealView.Stage(rawValue: ["analysis", "reveal", "breakdown"].firstIndex(of: stage) ?? 0) ?? .analysis
+        appState.revealFrozen = stage != "play"
         appState.reveal = RankingService.reveal(for: result, exercise: exercise, history: store.history, rankings: [], unit: .kg, scale: 1)
     }
 
