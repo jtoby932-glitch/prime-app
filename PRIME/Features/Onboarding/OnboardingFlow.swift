@@ -26,6 +26,7 @@ struct OnboardingFlow: View {
     @State private var bodyweightError: String?
     @State private var notificationsAsked = false
     @State private var emblemsShown = false
+    @State private var logoIn = false
     @FocusState private var focused: Bool
 
     var body: some View {
@@ -60,7 +61,13 @@ struct OnboardingFlow: View {
                 .padding(.horizontal, Theme.gutter)
                 .padding(.bottom, 16)
         }
-        .background(Theme.backdrop.ignoresSafeArea())
+        .background {
+            ZStack {
+                Theme.backdrop
+                AuroraBackdrop(intensity: step == .welcome || step == .ready ? 1 : 0.45)
+            }
+            .ignoresSafeArea()
+        }
     }
 
     private var primaryTitle: String {
@@ -79,10 +86,16 @@ struct OnboardingFlow: View {
             VStack(spacing: 26) {
                 Spacer()
                 ZStack {
-                    Circle().fill(Theme.accent.opacity(0.10)).frame(width: 260, height: 260).blur(radius: 40)
+                    Circle().strokeBorder(Theme.accent.opacity(0.25), lineWidth: 1).frame(width: 180, height: 180)
+                        .scaleEffect(logoIn ? 1 : 0.6).opacity(logoIn ? 1 : 0)
+                    Circle().strokeBorder(Theme.accent.opacity(0.12), lineWidth: 1).frame(width: 240, height: 240)
+                        .scaleEffect(logoIn ? 1 : 0.5).opacity(logoIn ? 1 : 0)
                     PrimeMark().fill(Theme.accentGradient).frame(width: 104, height: 104)
-                        .shadow(color: Theme.accent.opacity(0.5), radius: 24)
+                        .breathingGlow(Theme.accent, radius: 34)
+                        .scaleEffect(logoIn ? 1 : 0.7)
+                        .opacity(logoIn ? 1 : 0)
                 }
+                .onAppear { withAnimation(motion.animation(.spring(response: 0.8, dampingFraction: 0.7))) { logoIn = true } }
                 VStack(spacing: 12) {
                     Text("PRIME").font(.system(size: 52, weight: .black).width(.condensed)).tracking(6).foregroundStyle(Theme.textPrimary)
                     Text("Plan your week. Log every set.\nLearn every lift. Earn every rank.")
@@ -373,5 +386,37 @@ struct OnboardingFlow: View {
         store.refresh(context)
         appState.refreshNotifications(context: context, history: store.history)
         Haptics.success()
+    }
+}
+
+
+/// Slow-moving soft blobs of navy and accent light. Cheap: three blurred circles on a timeline.
+struct AuroraBackdrop: View {
+    var intensity: Double = 1
+    @Environment(\.motion) private var motion
+
+    var body: some View {
+        TimelineView(.animation(minimumInterval: 1 / 30, paused: !motion.allowsMovement)) { timeline in
+            let t = motion.allowsMovement ? timeline.date.timeIntervalSinceReferenceDate : 0
+            GeometryReader { proxy in
+                let w = proxy.size.width, h = proxy.size.height
+                ZStack {
+                    blob(Theme.accent.opacity(0.32 * intensity), size: w * 0.9)
+                        .position(x: w * (0.3 + 0.12 * sin(t * 0.21)), y: h * (0.22 + 0.06 * cos(t * 0.17)))
+                    blob(Theme.accentDeep.opacity(0.35 * intensity), size: w * 1.1)
+                        .position(x: w * (0.75 + 0.1 * cos(t * 0.13)), y: h * (0.55 + 0.08 * sin(t * 0.19)))
+                    blob(Theme.accentHighlight.opacity(0.14 * intensity), size: w * 0.7)
+                        .position(x: w * (0.5 + 0.18 * sin(t * 0.11 + 1)), y: h * (0.85 + 0.05 * cos(t * 0.23)))
+                }
+            }
+        }
+        .blur(radius: 70)
+        .animation(.easeInOut(duration: 0.6), value: intensity)
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
+    }
+
+    private func blob(_ color: Color, size: CGFloat) -> some View {
+        Circle().fill(color).frame(width: size, height: size)
     }
 }

@@ -39,14 +39,14 @@ struct AnalyticsView: View {
                                    message: "Finish a workout and your volume, strength and consistency charts will build from real data.")
                         .primeCard()
                 } else {
-                    summaryTiles(samples: samples, sessions: sessions)
-                    VolumeOverTimeCard(samples: samples, interval: interval, bucket: bucket, unit: unit)
-                    MuscleVolumeCard(samples: samples, interval: interval, bucket: bucket, unit: unit)
-                    ExerciseVolumeCard(samples: samples, unit: unit)
-                    StrengthProgressCard(interval: interval, unit: unit)
+                    summaryTiles(samples: samples, sessions: sessions).appear(0)
+                    VolumeOverTimeCard(samples: samples, interval: interval, bucket: bucket, unit: unit).appear(1)
+                    MuscleVolumeCard(samples: samples, interval: interval, bucket: bucket, unit: unit).appear(2)
+                    ExerciseVolumeCard(samples: samples, unit: unit).appear(3)
+                    StrengthProgressCard(interval: interval, unit: unit).appear(4)
                     ConsistencyCard(sessions: sessions, interval: interval, bucket: bucket, plannedPerWeek: days.filter { $0.state == .training }.count,
-                                    weeklyGoal: profiles.first?.weeklyGoal ?? 3)
-                    CalendarHistoryCard(planned: Set(days.filter { $0.state == .training }.map(\.weekday)))
+                                    weeklyGoal: profiles.first?.weeklyGoal ?? 3).appear(5)
+                    CalendarHistoryCard(planned: Set(days.filter { $0.state == .training }.map(\.weekday))).appear(6)
                     NavigationLink(value: Route.records) {
                         HStack {
                             Label("All personal records", systemImage: "trophy.fill").font(.headline).foregroundStyle(.white)

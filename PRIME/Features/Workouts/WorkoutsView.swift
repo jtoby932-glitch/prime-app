@@ -74,12 +74,13 @@ struct WeekPlannerView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            PresetBanner()
-            calendarStrip
+            PresetBanner().appear(0)
+            calendarStrip.appear(1)
             if let day = days.first(where: { $0.weekday == selectedWeekday }) {
                 SelectedDayCard(day: day, editorTarget: $editorTarget, onEdit: { dayToEdit = day })
+                    .appear(2)
             }
-            SectionHeader(title: "Your week")
+            SectionHeader(title: "Your week").appear(3)
             VStack(spacing: 8) {
                 ForEach(days) { day in
                     Button {
@@ -194,7 +195,7 @@ struct SelectedDayCard: View {
                 }
             }
         }
-        .primeCard(padding: 18)
+        .primeHero(tint: day.plan.map { Theme.planColor($0.colorIndex) } ?? (day.state == .rest ? Theme.textSecondary : Theme.accent))
     }
 }
 

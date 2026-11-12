@@ -23,6 +23,7 @@ struct ActiveWorkoutView: View {
     @State private var errorMessage: String?
     @State private var renameText = ""
     @State private var isRenaming = false
+    @State private var burst = 0
 
     private var profile: UserProfile? { profiles.first }
     private var unit: WeightUnit { profile?.weightUnit ?? .kg }
@@ -63,6 +64,7 @@ struct ActiveWorkoutView: View {
             }
             .scrollDismissesKeyboard(.interactively)
             .primeBackground()
+            .overlay { RecordBurst(trigger: burst) }
             .safeAreaInset(edge: .bottom, spacing: 0) {
                 if session.restEndsAt != nil || session.restPausedRemaining != nil {
                     RestTimerBar(session: session, notify: profile?.notifyRestTimer ?? true)
@@ -199,7 +201,8 @@ struct ActiveWorkoutView: View {
 
     private func celebrate(_ kinds: [RecordKind], _ item: ExerciseSession) {
         guard let first = kinds.first else { return }
-        Haptics.success()
+        Haptics.record()
+        burst += 1
         let names = kinds.map(\.displayName).joined(separator: " · ")
         appState.show(Toast(title: "New record · \(item.exerciseName)", message: kinds.count > 1 ? names : first.displayName, style: .record))
     }
@@ -229,26 +232,41 @@ struct WorkoutHeader: View {
     let unit: WeightUnit
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 0) {
-                metric(title: "Duration") {
-                    TimelineView(.periodic(from: session.startedAt, by: 1)) { timeline in
-                        Text(Format.clock(timeline.date.timeIntervalSince(session.startedAt)))
+        HStack(spacing: 16) {
+            ZStack {
+                ProgressRing(progress: session.completion, lineWidth: 7)
+                VStack(spacing: 0) {
+                    Text(Format.percent(session.completion))
+                        .font(.primeNumber(17)).foregroundStyle(Theme.textPrimary)
+                        .contentTransition(.numericText())
+                        .animation(.spring(response: 0.4), value: session.completion)
+                    Text("done").font(.caption2.weight(.semibold)).foregroundStyle(Theme.textSecondary)
+                }
+            }
+            .frame(width: 72, height: 72)
+            VStack(alignment: .leading, spacing: 10) {
+                HStack(spacing: 0) {
+                    metric(title: "Duration") {
+                        TimelineView(.periodic(from: session.startedAt, by: 1)) { timeline in
+                            Text(Format.clock(timeline.date.timeIntervalSince(session.startedAt)))
+                        }
+                    }
+                    metric(title: "Volume") {
+                        Text(Format.volume(session.totalVolume, unit: unit, includeUnit: false))
+                            .contentTransition(.numericText())
+                            .animation(.spring(response: 0.4), value: session.totalVolume)
+                    }
+                    metric(title: "Sets") {
+                        Text("\(session.completedSets.count)")
+                            .contentTransition(.numericText())
+                            .animation(.spring(response: 0.4), value: session.completedSets.count)
                     }
                 }
-                metric(title: "Volume") { Text(Format.volume(session.totalVolume, unit: unit)) }
-                metric(title: "Sets") { Text("\(session.completedSets.count)") }
-            }
-            VStack(alignment: .leading, spacing: 6) {
-                HStack {
-                    Text("Progress").font(.caption.weight(.semibold)).foregroundStyle(Theme.textSecondary)
-                    Spacer()
-                    Text(Format.percent(session.completion)).font(.caption.weight(.bold).monospacedDigit()).foregroundStyle(Theme.accent)
-                }
-                ProgressBar(progress: session.completion, tint: AnyShapeStyle(Theme.accentGradient), height: 6)
+                Text("Volume in \(unit.symbol) · \(session.exercises.count) exercise\(session.exercises.count == 1 ? "" : "s")")
+                    .font(.caption).foregroundStyle(Theme.textTertiary)
             }
         }
-        .primeCard()
+        .primeHero(tint: Theme.accent, padding: 16)
         .accessibilityElement(children: .combine)
     }
 
@@ -482,5 +500,47 @@ struct ActiveWorkoutBar: View {
         .buttonStyle(PressableStyle())
         .restTimerCompletion(session: session)
         .accessibilityLabel("Workout in progress: \(session.name). Open.")
+    }
+}
+
+
+/// A short gold burst from the centre of the screen when a record is set. Never blocks touches.
+struct RecordBurst: View {
+    let trigger: Int
+    @Environment(\.motion) private var motion
+    @State private var fired = 0
+    @State private var progress: CGFloat = 0
+
+    private let count = 18
+
+    var body: some View {
+        GeometryReader { proxy in
+            let centre = CGPoint(x: proxy.size.width / 2, y: proxy.size.height * 0.4)
+            ZStack {
+                if fired > 0 && progress < 1 {
+                    Circle()
+                        .stroke(Theme.warning.opacity(0.6 * (1 - progress)), lineWidth: 2)
+                        .frame(width: 40 + 260 * progress, height: 40 + 260 * progress)
+                        .position(centre)
+                    ForEach(0..<count, id: \.self) { index in
+                        let angle = Double(index) / Double(count) * 2 * .pi
+                        let distance = (60 + 120 * progress) * (index.isMultiple(of: 2) ? 1 : 0.75)
+                        Circle()
+                            .fill(index.isMultiple(of: 3) ? Theme.warning : Color(hex: 0xFFE08A))
+                            .frame(width: 6 - 3 * progress, height: 6 - 3 * progress)
+                            .position(x: centre.x + cos(angle) * distance, y: centre.y + sin(angle) * distance - 40 * progress * progress)
+                            .opacity(1 - progress)
+                    }
+                }
+            }
+        }
+        .allowsHitTesting(false)
+        .ignoresSafeArea()
+        .onChange(of: trigger) { _, value in
+            guard motion.allowsMovement else { return }
+            fired = value
+            progress = 0
+            withAnimation(.easeOut(duration: 0.9)) { progress = 1 }
+        }
     }
 }

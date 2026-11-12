@@ -58,9 +58,9 @@ struct RankRevealView: View {
                                center: UnitPoint(x: 0.5, y: 0.32), startRadius: 10, endRadius: burst ? 420 : 40)
                     .ignoresSafeArea()
                     .opacity(burst ? 1 : 0)
-                if tier >= .gold && motion.allowsMovement {
+                if tier >= .silver && motion.allowsMovement {
                     GeometryReader { proxy in
-                        RevealRays(color: tier.glow, count: tier >= .diamond ? 16 : 10)
+                        RevealRays(color: tier.glow, count: tier >= .diamond ? 18 : 12)
                             .frame(width: 520, height: 520)
                             .position(x: proxy.size.width / 2, y: proxy.size.height * 0.32)
                     }
@@ -68,10 +68,21 @@ struct RankRevealView: View {
                     .opacity(burst ? 0.35 + 0.25 * tier.prestige : 0)
                     .allowsHitTesting(false)
                 }
-                if tier >= .platinum && motion.allowsMovement {
-                    RevealParticles(color: tier.glow, start: revealStart, density: tier >= .elite ? 70 : 40)
+                if tier >= .gold && motion.allowsMovement {
+                    RevealParticles(color: tier.glow, start: revealStart, density: tier >= .elite ? 80 : (tier >= .platinum ? 50 : 30))
                         .ignoresSafeArea()
                         .allowsHitTesting(false)
+                }
+                if motion.allowsMovement {
+                    // Shockwave: a ring that leaves the emblem as it lands.
+                    GeometryReader { proxy in
+                        Circle()
+                            .stroke(tier.glow.opacity(burst ? 0 : 0.8), lineWidth: burst ? 1 : 6)
+                            .frame(width: burst ? 620 : 120, height: burst ? 620 : 120)
+                            .position(x: proxy.size.width / 2, y: proxy.size.height * 0.32)
+                    }
+                    .ignoresSafeArea()
+                    .allowsHitTesting(false)
                 }
             }
         }
@@ -141,16 +152,19 @@ struct RankRevealView: View {
                     .font(.caption.weight(.bold)).tracking(2.5)
                     .foregroundStyle(Theme.textSecondary)
                     .opacity(emblemIn ? 1 : 0)
-                RankEmblem(tier: tier, size: 190, animated: true)
-                    .scaleEffect(emblemIn ? 1 : (motion.allowsMovement ? 0.25 : 0.9))
+                RankEmblem(tier: tier, size: 190, animated: true, aura: true)
+                    .scaleEffect(emblemIn ? 1 : (motion.allowsMovement ? 0.2 : 0.9))
                     .blur(radius: emblemIn || !motion.allowsMovement ? 0 : 14)
                     .opacity(emblemIn ? 1 : 0)
                     .rotation3DEffect(.degrees(emblemIn || !motion.allowsMovement ? 0 : 70), axis: (x: 0, y: 1, z: 0))
+                    .modifier(FloatModifier(active: emblemIn && stage == .reveal))
                 VStack(spacing: 6) {
                     Text(tier.name.uppercased())
                         .font(.system(size: 40, weight: .heavy).width(.expanded))
                         .tracking(emblemIn ? 4 : 18)
                         .foregroundStyle(tier == .unranked ? AnyShapeStyle(Theme.textSecondary) : AnyShapeStyle(tier.gradient))
+                        .shimmer(repeats: tier >= .elite, color: .white)
+                        .shadow(color: tier.glow.opacity(0.5), radius: 16)
                         .opacity(emblemIn ? 1 : 0)
                     Text(headline)
                         .font(.subheadline.weight(.semibold))
@@ -277,8 +291,8 @@ struct RankRevealView: View {
     private func showEmblem(animated: Bool) {
         revealStart = Date()
         if animated {
-            withAnimation(motion.animation(.spring(response: 0.75, dampingFraction: 0.62))) { emblemIn = true }
-            withAnimation(motion.animation(.easeOut(duration: 1.1))) { burst = true }
+            withAnimation(motion.animation(.spring(response: 0.7, dampingFraction: 0.55))) { emblemIn = true }
+            withAnimation(motion.animation(.easeOut(duration: 1.3).delay(0.12))) { burst = true }
         } else {
             emblemIn = true
             burst = true
@@ -304,6 +318,21 @@ struct RankRevealView: View {
         case .breakdown:
             break
         }
+    }
+}
+
+/// A slow hover, so the emblem feels held in the air rather than pinned.
+struct FloatModifier: ViewModifier {
+    let active: Bool
+    @State private var up = false
+
+    func body(content: Content) -> some View {
+        content
+            .offset(y: active && up ? -7 : 0)
+            .onChange(of: active) { _, value in
+                guard value else { return }
+                withAnimation(.easeInOut(duration: 2.4).repeatForever(autoreverses: true).delay(0.8)) { up = true }
+            }
     }
 }
 

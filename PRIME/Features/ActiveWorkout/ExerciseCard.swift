@@ -211,6 +211,7 @@ struct SetRowView: View {
     @State private var loaded = false
     @State private var shakes = 0
     @State private var message: String?
+    @Environment(\.motion) private var motion
 
     private var requiresLoad: Bool { item.equipment.requiresLoad && !timed }
     private var suggestion: SetSuggestion { WorkoutService.suggestion(for: set, in: item, history: store.history) }
@@ -260,10 +261,12 @@ struct SetRowView: View {
                     Image(systemName: "checkmark")
                         .font(.subheadline.weight(.heavy))
                         .foregroundStyle(set.isCompleted ? Theme.onAccent : Theme.textSecondary)
+                        .symbolEffect(.bounce.up.byLayer, value: set.isCompleted)
                         .frame(width: 40, height: 36)
                         .background(RoundedRectangle(cornerRadius: 10).fill(set.isCompleted ? AnyShapeStyle(Theme.accentGradient) : AnyShapeStyle(Theme.field)))
+                        .shadow(color: Theme.accent.opacity(set.isCompleted ? 0.5 : 0), radius: 8, y: 2)
                 }
-                .buttonStyle(PressableStyle())
+                .buttonStyle(PressableStyle(scale: 0.9))
                 .accessibilityLabel(set.isCompleted ? "Set \(index + 1) done. Tap to undo." : "Complete set \(index + 1)")
             }
             .modifier(Shake(animatableData: CGFloat(shakes)))
@@ -275,8 +278,13 @@ struct SetRowView: View {
         }
         .padding(.vertical, 2)
         .padding(.horizontal, 4)
-        .background(RoundedRectangle(cornerRadius: 12).fill(set.isCompleted ? Theme.accent.opacity(0.08) : .clear))
-        .animation(.easeOut(duration: 0.2), value: set.isCompleted)
+        .background(
+            // Sweeps in from the left when the set is ticked.
+            RoundedRectangle(cornerRadius: 12).fill(Theme.accent.opacity(0.1))
+                .scaleEffect(x: set.isCompleted ? 1 : 0.001, anchor: .leading)
+                .opacity(set.isCompleted ? 1 : 0)
+        )
+        .animation(motion.animation(.spring(response: 0.45, dampingFraction: 0.85)), value: set.isCompleted)
         .contextMenu {
             if index > 0 {
                 Button(action: copyAbove) { Label("Copy set above", systemImage: "doc.on.doc") }
@@ -381,7 +389,7 @@ struct SetRowView: View {
         do {
             let records = try WorkoutService.complete(set, in: item, session: session, history: store.history, context: context)
             focus.wrappedValue = nil
-            Haptics.thud()
+            Haptics.setComplete()
             let profile = profiles.first
             if item.restSeconds > 0 {
                 WorkoutService.startRest(session, seconds: item.restSeconds, label: item.exerciseName, notify: profile?.notifyRestTimer ?? true)
