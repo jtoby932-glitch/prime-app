@@ -97,8 +97,16 @@ struct SplitPresetPicker: View {
                             .accessibilityLabel("\(item.sessionsPerWeek) sessions a week")
                     }
                     .padding(14)
-                    .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Theme.card))
-                    .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(selected ? Theme.accent : Theme.border, lineWidth: selected ? 1.5 : 1))
+                    .background {
+                        if selected {
+                            HeroSurface(tint: Theme.accent, radius: 16)
+                        } else {
+                            RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Theme.card)
+                        }
+                    }
+                    .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(selected ? Theme.accent.opacity(0.8) : Theme.border, lineWidth: selected ? 1.5 : 1))
+                    .shadow(color: selected ? Theme.accent.opacity(0.25) : .clear, radius: 18, y: 8)
+                    .animation(motion.animation(.spring(response: 0.35, dampingFraction: 0.8)), value: selected)
                 }
                 .buttonStyle(PressableStyle())
                 .accessibilityAddTraits(selected ? .isSelected : [])

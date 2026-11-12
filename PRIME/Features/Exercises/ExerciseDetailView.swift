@@ -77,10 +77,10 @@ struct ExerciseDetailView: View {
         VStack(alignment: .leading, spacing: 14) {
             ZStack(alignment: .topTrailing) {
                 AnatomyCanvas(side: side, primary: exercise.primaryMuscles, secondary: exercise.secondaryMuscles, model: model)
-                    .frame(height: 260)
+                    .frame(height: 280)
                     .frame(maxWidth: .infinity)
                     .id(side)
-                    .transition(.opacity)
+                    .transition(motion.allowsMovement ? .scale(scale: 0.92).combined(with: .opacity) : .opacity)
                 Picker("View", selection: $side.animation(motion.animation())) {
                     ForEach(AnatomySide.allCases) { Text($0.displayName).tag($0) }
                 }
@@ -104,7 +104,7 @@ struct ExerciseDetailView: View {
                 if exercise.isCustom { Tag(text: "Custom", color: Theme.accentHighlight) }
             }
         }
-        .primeCard(padding: 16)
+        .primeHero(tint: Theme.accent, padding: 16)
     }
 
     private func legend(color: Color, text: String) -> some View {

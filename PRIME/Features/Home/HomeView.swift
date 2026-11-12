@@ -217,7 +217,14 @@ struct TodayCard: View {
             }
             content
         }
-        .primeCard(padding: 18, highlight: appState.activeSession != nil ? Theme.accent : nil)
+        .primeHero(tint: heroTint)
+    }
+
+    private var heroTint: Color {
+        if appState.activeSession != nil { return Theme.accentHighlight }
+        if doneToday != nil { return Theme.success }
+        if let day = today, day.state == .training, let plan = day.plan { return Theme.planColor(plan.colorIndex) }
+        return Theme.accent
     }
 
     @ViewBuilder
@@ -234,9 +241,9 @@ struct TodayCard: View {
             .buttonStyle(.primeSecondary)
         } else if let day = today, day.state == .training, let plan = day.plan {
             VStack(alignment: .leading, spacing: 10) {
-                HStack(spacing: 8) {
-                    RoundedRectangle(cornerRadius: 2).fill(Theme.planColor(plan.colorIndex)).frame(width: 4, height: 22)
-                    Text(plan.name).font(.primeTitle).foregroundStyle(Theme.textPrimary)
+                HStack(spacing: 10) {
+                    RoundedRectangle(cornerRadius: 2).fill(Theme.planColor(plan.colorIndex)).frame(width: 4, height: 30)
+                    Text(plan.name).font(.primeLargeTitle).foregroundStyle(Theme.textPrimary)
                 }
                 Text("\(plan.entries.count) exercises · \(plan.totalSets) sets · about \(plan.estimatedMinutes) min")
                     .font(.subheadline)
@@ -322,7 +329,7 @@ struct WeekActivityCard: View {
                                 Text(Weekday.initials[index])
                                     .font(.caption2.weight(.bold))
                                     .foregroundStyle(index == todayIndex ? Theme.accentHighlight : Theme.textTertiary)
-                                DayDot(done: done, state: state, isToday: index == todayIndex, isPast: index < todayIndex)
+                                DayDot(done: done, state: state, isToday: index == todayIndex, isPast: index < todayIndex, index: index)
                             }
                             .frame(maxWidth: .infinity)
                             .accessibilityElement(children: .ignore)
@@ -342,11 +349,12 @@ struct WeekActivityCard: View {
                     Text("Coming up").eyebrow()
                     ForEach(Array(upcoming.enumerated()), id: \.offset) { _, pair in
                         let (date, day) = pair
-                        HStack {
-                            Circle().fill(Theme.planColor(day.plan?.colorIndex ?? 0)).frame(width: 8, height: 8)
+                        let color = Theme.planColor(day.plan?.colorIndex ?? 0)
+                        HStack(spacing: 10) {
+                            Tag(text: Weekday.shortNames[day.weekday], color: color, filled: true)
                             Text(day.plan?.name ?? "").font(.subheadline.weight(.semibold)).foregroundStyle(Theme.textPrimary)
                             Spacer()
-                            Text(date.relativeDayText == "Today" ? "Today" : date.formatted(.dateTime.weekday(.wide)))
+                            Text(date.relativeDayText == "Today" ? "Today" : date.relativeDayText == "Tomorrow" ? "Tomorrow" : date.formatted(.dateTime.weekday(.wide)))
                                 .font(.caption).foregroundStyle(Theme.textSecondary)
                         }
                     }
@@ -369,17 +377,27 @@ struct DayDot: View {
     let state: WorkoutDay.State
     let isToday: Bool
     let isPast: Bool
+    var index: Int = 0
+    @Environment(\.motion) private var motion
+    @State private var shown = false
 
     var body: some View {
         ZStack {
             if done {
                 Circle().fill(Theme.accentGradient)
+                    .shadow(color: Theme.accent.opacity(0.5), radius: 6)
+                    .scaleEffect(shown || !motion.allowsMovement ? 1 : 0.2)
                 Image(systemName: "checkmark").font(.system(size: 10, weight: .heavy)).foregroundStyle(Theme.onAccent)
+                    .opacity(shown || !motion.allowsAnimation ? 1 : 0)
             } else {
                 switch state {
                 case .training:
-                    Circle().strokeBorder(isPast ? Theme.danger.opacity(0.55) : Theme.accentHighlight.opacity(0.8),
-                                          style: StrokeStyle(lineWidth: 2, dash: isPast ? [3, 3] : []))
+                    Circle()
+                        .trim(from: 0, to: shown || !motion.allowsAnimation ? 1 : 0)
+                        .stroke(isPast ? Theme.danger.opacity(0.55) : Theme.accentHighlight.opacity(0.85),
+                                style: StrokeStyle(lineWidth: 2, lineCap: .round, dash: isPast ? [3, 3] : []))
+                        .rotationEffect(.degrees(-90))
+                        .padding(1)
                 case .rest:
                     Capsule().fill(Theme.textTertiary).frame(width: 10, height: 3)
                 case .unplanned:
@@ -389,6 +407,9 @@ struct DayDot: View {
         }
         .frame(width: 24, height: 24)
         .overlay(Circle().strokeBorder(isToday ? Color.white.opacity(0.45) : .clear, lineWidth: 1).padding(-3))
+        .onAppear {
+            withAnimation(motion.animation(.spring(response: 0.5, dampingFraction: 0.6)).map { $0.delay(0.25 + Double(index) * 0.06) }) { shown = true }
+        }
     }
 }
 
@@ -644,7 +665,7 @@ struct WeeklyVolumeCard: View {
                         .position(by: .value("Week", "Last"))
                         .cornerRadius(3)
                     BarMark(x: .value("Day", Weekday.shortNames[index]), y: .value("Volume", unit.fromKilograms(thisWeek[index]) * scale), width: .ratio(0.5))
-                        .foregroundStyle(index == todayIndex ? AnyShapeStyle(Theme.accentGradient) : AnyShapeStyle(Theme.accent.opacity(0.8)))
+                        .foregroundStyle(index <= todayIndex ? AnyShapeStyle(Theme.barGradient) : AnyShapeStyle(Theme.barGradientDim))
                         .position(by: .value("Week", "This"))
                         .cornerRadius(3)
                 }

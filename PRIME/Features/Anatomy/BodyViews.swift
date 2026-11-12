@@ -2,7 +2,10 @@ import SwiftUI
 
 enum AnatomyPalette {
     static let body = Color(hex: 0x16213A)
+    static let bodyLight = Color(hex: 0x1E2C4A)
+    static let bodyDark = Color(hex: 0x0E1628)
     static let idle = Color(hex: 0x22314F)
+    static let idleLight = Color(hex: 0x2B3C5E)
     static let outline = Color(hex: 0x05070B)
 
     static func fill(for emphasis: MuscleEmphasis) -> Color {
@@ -11,6 +14,59 @@ enum AnatomyPalette {
         case .secondary: return Theme.accentHighlight.opacity(0.42)
         case .primary: return Theme.accent
         case .heat(let level): return level <= 0 ? idle : Theme.accent.opacity(0.28 + 0.72 * min(1, level))
+        }
+    }
+
+    /// How strongly a muscle is lit, 0 for idle up to 1 for primary.
+    static func intensity(for emphasis: MuscleEmphasis) -> Double {
+        switch emphasis {
+        case .none: return 0
+        case .secondary: return 0.45
+        case .primary: return 1
+        case .heat(let level): return max(0, min(1, level))
+        }
+    }
+
+    /// Lighter at the top of the muscle, deeper at the bottom, so it reads as a form.
+    static func gradient(for emphasis: MuscleEmphasis, in rect: CGRect) -> GraphicsContext.Shading {
+        let level = intensity(for: emphasis)
+        let top: Color = level == 0 ? idleLight : Color.white.opacity(0.18 + 0.1 * level)
+        let base = fill(for: emphasis)
+        return .linearGradient(Gradient(stops: [.init(color: top, location: 0), .init(color: base, location: 0.35), .init(color: base.opacity(level == 0 ? 1 : 0.9), location: 1)]),
+                               startPoint: CGPoint(x: rect.midX, y: rect.minY), endPoint: CGPoint(x: rect.midX, y: rect.maxY))
+    }
+
+    /// Draws the whole figure with depth: shaded body, lit muscles, glow on active ones.
+    static func draw(view: AnatomyFigure.View2D, transform: CGAffineTransform, emphasis: [MuscleGroup: MuscleEmphasis], in context: inout GraphicsContext) {
+        let lineWidth = max(0.5, transform.a * 2.2)
+        var bounds = CGRect.null
+        for part in view.base { bounds = bounds.union(part.applying(transform).boundingRect) }
+        let bodyShading = GraphicsContext.Shading.linearGradient(Gradient(colors: [bodyLight, body, bodyDark]),
+                                                                 startPoint: CGPoint(x: bounds.midX, y: bounds.minY), endPoint: CGPoint(x: bounds.midX, y: bounds.maxY))
+        for part in view.base {
+            let path = part.applying(transform)
+            context.fill(path, with: bodyShading)
+            context.stroke(path, with: .color(.white.opacity(0.05)), lineWidth: lineWidth)
+        }
+        // Glow pass first so it sits under every muscle outline.
+        for shape in view.muscles {
+            let level = intensity(for: emphasis[shape.muscle] ?? .none)
+            guard level > 0.05 else { continue }
+            let path = shape.path.applying(transform)
+            context.drawLayer { layer in
+                layer.addFilter(.blur(radius: max(2, transform.a * 7)))
+                layer.fill(path, with: .color(Theme.accent.opacity(0.35 + 0.45 * level)))
+            }
+        }
+        for shape in view.muscles {
+            let item = emphasis[shape.muscle] ?? .none
+            let level = intensity(for: item)
+            let path = shape.path.applying(transform)
+            context.fill(path, with: gradient(for: item, in: path.boundingRect))
+            context.stroke(path, with: .color(outline), lineWidth: lineWidth)
+            if level > 0.05 {
+                context.stroke(path, with: .color(Theme.accentHighlight.opacity(0.25 + 0.55 * level)), lineWidth: lineWidth * 0.8)
+            }
         }
     }
 }
@@ -50,15 +106,7 @@ struct AnatomyCanvas: View {
             let region = focusOn.flatMap { figure.focusRegion(for: $0, side: side) }
             let transform = figure.transform(fitting: size, region: region)
             let view = figure.view(side)
-            let lineWidth = max(0.5, transform.a * 2.2)
-            for part in view.base {
-                context.fill(part.applying(transform), with: .color(AnatomyPalette.body))
-            }
-            for shape in view.muscles {
-                let path = shape.path.applying(transform)
-                context.fill(path, with: .color(AnatomyPalette.fill(for: emphasis[shape.muscle] ?? .none)))
-                context.stroke(path, with: .color(AnatomyPalette.outline), lineWidth: lineWidth)
-            }
+            AnatomyPalette.draw(view: view, transform: transform, emphasis: emphasis, in: &context)
         }
         .accessibilityHidden(true)
     }
@@ -133,16 +181,23 @@ struct InteractiveBodyView: View {
             let transform = figure.transform(fitting: proxy.size)
             let view = figure.view(side)
             ZStack {
-                ForEach(Array(view.base.enumerated()), id: \.offset) { item in
-                    item.element.applying(transform).fill(AnatomyPalette.body)
+                // The shaded body and lit muscles are one drawing; only the selection sits on top.
+                Canvas { context, _ in
+                    AnatomyPalette.draw(view: view, transform: transform, emphasis: emphasis, in: &context)
                 }
+                .allowsHitTesting(false)
                 ForEach(view.muscles) { shape in
                     let path = shape.path.applying(transform)
                     let isSelected = selection == shape.muscle
                     path
-                        .fill(isSelected ? Theme.accentGradient : LinearGradient(colors: [AnatomyPalette.fill(for: emphasis[shape.muscle] ?? .none)], startPoint: .top, endPoint: .bottom))
-                        .overlay(path.stroke(isSelected ? Color.white.opacity(0.9) : AnatomyPalette.outline, lineWidth: isSelected ? 1.6 : 1))
-                        .shadow(color: isSelected ? Theme.accent.opacity(0.6) : .clear, radius: 8)
+                        .fill(isSelected ? AnyShapeStyle(Theme.accentGradient) : AnyShapeStyle(Color.clear))
+                        .overlay(
+                            path.stroke(Color.white.opacity(isSelected ? 0.95 : 0), lineWidth: 1.8)
+                                .phaseAnimator([false, true], trigger: isSelected) { content, phase in
+                                    content
+                                        .shadow(color: Theme.accentHighlight.opacity(isSelected ? (phase ? 0.9 : 0.3) : 0), radius: phase ? 14 : 4)
+                                } animation: { _ in motion.allowsMovement ? .easeInOut(duration: 0.45) : nil }
+                        )
                         .contentShape(path)
                         .onTapGesture {
                             Haptics.selection()

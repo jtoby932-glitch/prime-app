@@ -3,34 +3,112 @@ import UIKit
 
 // MARK: - Surfaces
 
+/// How much a surface stands off the page. Most content is `.raised`; lists use `.flat`;
+/// the one thing a screen is about uses `.hero`.
+enum CardLevel: Equatable {
+    case flat, inset, raised, hero(Color)
+}
+
 struct CardModifier: ViewModifier {
     var padding: CGFloat = Theme.padding
-    var raised = false
+    var level: CardLevel = .raised
     var highlight: Color? = nil
+
+    private var shape: RoundedRectangle { RoundedRectangle(cornerRadius: Theme.radius, style: .continuous) }
 
     func body(content: Content) -> some View {
         content
             .padding(padding)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(
-                RoundedRectangle(cornerRadius: Theme.radius, style: .continuous)
-                    .fill(raised ? AnyShapeStyle(Theme.cardRaised) : AnyShapeStyle(Theme.cardGradient))
+            .background(surface)
+            .overlay(shape.strokeBorder(border, lineWidth: 1))
+            .shadow(color: .black.opacity(shadowOpacity), radius: shadowRadius, y: shadowRadius / 2)
+            .shadow(color: heroTint?.opacity(0.22) ?? .clear, radius: 26, y: 12)
+    }
+
+    private var heroTint: Color? {
+        if case .hero(let tint) = level { return tint }
+        return nil
+    }
+
+    @ViewBuilder
+    private var surface: some View {
+        switch level {
+        case .flat:
+            shape.fill(Theme.surface)
+        case .inset:
+            shape.fill(Theme.cardRaised)
+        case .raised:
+            shape.fill(Theme.cardGradient)
+                .overlay(shape.fill(Theme.sheen).mask(Rectangle().frame(height: 60).frame(maxHeight: .infinity, alignment: .top)))
+        case .hero(let tint):
+            HeroSurface(tint: tint)
+        }
+    }
+
+    private var border: LinearGradient {
+        switch level {
+        case .flat, .inset:
+            return LinearGradient(colors: [Theme.border, Theme.border.opacity(0.7)], startPoint: .top, endPoint: .bottom)
+        case .raised:
+            return LinearGradient(colors: [(highlight ?? Color.white).opacity(highlight == nil ? 0.12 : 0.5), Theme.border.opacity(0.6)],
+                                  startPoint: .top, endPoint: .bottom)
+        case .hero(let tint):
+            return LinearGradient(colors: [.white.opacity(0.28), tint.opacity(0.35), Theme.border.opacity(0.5)], startPoint: .top, endPoint: .bottom)
+        }
+    }
+
+    private var shadowOpacity: Double {
+        switch level {
+        case .flat, .inset: return 0
+        case .raised: return 0.35
+        case .hero: return 0.5
+        }
+    }
+
+    private var shadowRadius: CGFloat {
+        switch level {
+        case .flat, .inset: return 0
+        case .raised: return 12
+        case .hero: return 20
+        }
+    }
+}
+
+/// The hero card background: deep navy with a soft accent light in one corner and a lit top edge.
+struct HeroSurface: View {
+    var tint: Color
+    var radius: CGFloat = Theme.radius
+
+    var body: some View {
+        let shape = RoundedRectangle(cornerRadius: radius, style: .continuous)
+        shape.fill(Theme.heroGradient)
+            .overlay(
+                shape.fill(
+                    RadialGradient(colors: [tint.opacity(0.42), tint.opacity(0.08), .clear], center: .topLeading, startRadius: 0, endRadius: 320)
+                )
             )
             .overlay(
-                RoundedRectangle(cornerRadius: Theme.radius, style: .continuous)
-                    .strokeBorder(
-                        LinearGradient(colors: [(highlight ?? Color.white).opacity(highlight == nil ? 0.08 : 0.5), Theme.border.opacity(0.6)],
-                                       startPoint: .top, endPoint: .bottom),
-                        lineWidth: 1
-                    )
+                shape.fill(
+                    RadialGradient(colors: [tint.opacity(0.16), .clear], center: .bottomTrailing, startRadius: 0, endRadius: 240)
+                )
             )
-            .shadow(color: .black.opacity(0.35), radius: 12, y: 6)
+            .overlay(shape.fill(Theme.sheen).mask(Rectangle().frame(height: 90).frame(maxHeight: .infinity, alignment: .top)))
     }
 }
 
 extension View {
     func primeCard(padding: CGFloat = Theme.padding, raised: Bool = false, highlight: Color? = nil) -> some View {
-        modifier(CardModifier(padding: padding, raised: raised, highlight: highlight))
+        modifier(CardModifier(padding: padding, level: raised ? .inset : .raised, highlight: highlight))
+    }
+
+    func primeCard(_ level: CardLevel, padding: CGFloat = Theme.padding) -> some View {
+        modifier(CardModifier(padding: padding, level: level))
+    }
+
+    /// The one card a screen is about.
+    func primeHero(tint: Color? = nil, padding: CGFloat = 18) -> some View {
+        modifier(CardModifier(padding: padding, level: .hero(tint ?? Theme.accent)))
     }
 
     /// Standard screen background with faint navy light from the top.
@@ -81,29 +159,28 @@ struct StatTile: View {
     var format: ((Double) -> String)? = nil
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 10) {
             if let symbol {
-                Image(systemName: symbol)
-                    .font(.caption.weight(.bold))
-                    .foregroundStyle(tint)
-                    .accessibilityHidden(true)
+                IconBubble(symbol: symbol, tint: tint, size: 28)
             }
-            Group {
-                if let numeric, let format {
-                    CountUp(value: numeric, format: format)
-                } else {
-                    Text(value)
+            VStack(alignment: .leading, spacing: 1) {
+                Group {
+                    if let numeric, let format {
+                        CountUp(value: numeric, format: format)
+                    } else {
+                        Text(value)
+                    }
                 }
-            }
-            .font(.primeNumber(26))
-            .foregroundStyle(Theme.textPrimary)
-            .lineLimit(1)
-            .minimumScaleFactor(0.55)
-            Text(label)
-                .font(.primeCaption)
-                .foregroundStyle(Theme.textSecondary)
+                .font(.primeDisplay(28))
+                .foregroundStyle(Theme.textPrimary)
                 .lineLimit(1)
-                .minimumScaleFactor(0.8)
+                .minimumScaleFactor(0.55)
+                Text(label)
+                    .font(.primeCaption)
+                    .foregroundStyle(Theme.textSecondary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .primeCard(padding: 14)
@@ -181,11 +258,14 @@ extension ButtonStyle where Self == PrimeButtonStyle {
 
 /// Subtle press feedback for tappable cards.
 struct PressableStyle: ButtonStyle {
+    var scale: CGFloat = 0.97
+    @Environment(\.motion) private var motion
+
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .scaleEffect(configuration.isPressed ? 0.98 : 1)
-            .brightness(configuration.isPressed ? 0.04 : 0)
-            .animation(.easeOut(duration: 0.15), value: configuration.isPressed)
+            .scaleEffect(configuration.isPressed && motion.allowsMovement ? scale : 1)
+            .brightness(configuration.isPressed ? 0.05 : 0)
+            .animation(.spring(response: 0.28, dampingFraction: 0.6), value: configuration.isPressed)
     }
 }
 
@@ -354,6 +434,57 @@ struct ProgressBar: View {
         .onChange(of: progress) { _, value in withAnimation(motion.animation()) { shown = value } }
         .accessibilityElement()
         .accessibilityValue(Format.percent(progress))
+    }
+}
+
+/// A small ring with the percentage inside, for list rows.
+struct MiniRing: View {
+    var progress: Double
+    var size: CGFloat = 40
+    var tint: Color = Theme.accentHighlight
+    @Environment(\.motion) private var motion
+    @State private var shown: Double = 0
+
+    var body: some View {
+        ZStack {
+            Circle().stroke(Theme.field, lineWidth: 3.5)
+            Circle()
+                .trim(from: 0, to: max(0.001, min(1, motion.allowsAnimation ? shown : progress)))
+                .stroke(AngularGradient(colors: [tint.opacity(0.6), tint], center: .center), style: StrokeStyle(lineWidth: 3.5, lineCap: .round))
+                .rotationEffect(.degrees(-90))
+            Text(Format.percent(progress))
+                .font(.system(size: size * 0.27, weight: .bold).width(.condensed).monospacedDigit())
+                .foregroundStyle(Theme.textPrimary)
+        }
+        .frame(width: size, height: size)
+        .onAppear { withAnimation(motion.animation(.spring(response: 0.9, dampingFraction: 0.85)).map { $0.delay(0.15) }) { shown = progress } }
+        .onChange(of: progress) { _, value in withAnimation(motion.animation()) { shown = value } }
+        .accessibilityElement()
+        .accessibilityLabel("\(Format.percent(progress)) of the way")
+    }
+}
+
+/// "Gold → Platinum" with both emblems, for rank-change rows.
+struct TierPill: View {
+    let from: RankTier?
+    let to: RankTier
+
+    var body: some View {
+        HStack(spacing: 5) {
+            if let from {
+                RankEmblem(tier: from, size: 16)
+                Image(systemName: "arrow.right").font(.system(size: 9, weight: .bold)).foregroundStyle(Theme.textTertiary)
+            }
+            RankEmblem(tier: to, size: 16)
+            Text(to.name).font(.caption.weight(.bold)).foregroundStyle(to.color)
+        }
+        .padding(.leading, 5)
+        .padding(.trailing, 8)
+        .padding(.vertical, 3)
+        .background(Capsule().fill(to.color.opacity(0.12)))
+        .overlay(Capsule().strokeBorder(to.color.opacity(0.25), lineWidth: 1))
+        .accessibilityElement()
+        .accessibilityLabel(from.map { "\($0.name) to \(to.name)" } ?? to.name)
     }
 }
 

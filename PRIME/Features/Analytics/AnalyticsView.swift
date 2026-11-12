@@ -119,6 +119,7 @@ struct VolumeOverTimeCard: View {
     let bucket: BucketSize
     let unit: WeightUnit
     @State private var selected: Date?
+    @State private var growth: Double = 0
 
     var body: some View {
         let buckets = Analytics.volume(samples, by: bucket, in: interval)
@@ -137,15 +138,22 @@ struct VolumeOverTimeCard: View {
             Chart {
                 ForEach(buckets) { item in
                     BarMark(x: .value("Period", item.start, unit: bucket == .week ? .weekOfYear : .month),
-                            y: .value("Volume", unit.fromKilograms(item.value)))
-                        .foregroundStyle(selectedBucket?.start == item.start ? AnyShapeStyle(Color.white) : AnyShapeStyle(Theme.accentGradient))
-                        .cornerRadius(3)
+                            y: .value("Volume", unit.fromKilograms(item.value) * growth))
+                        .foregroundStyle(selectedBucket == nil || selectedBucket?.start == item.start ? AnyShapeStyle(Theme.barGradient) : AnyShapeStyle(Theme.barGradientDim))
+                        .cornerRadius(4)
+                }
+                if let selectedBucket {
+                    RuleMark(x: .value("Selected", selectedBucket.start, unit: bucket == .week ? .weekOfYear : .month))
+                        .foregroundStyle(Color.white.opacity(0.25))
+                        .lineStyle(StrokeStyle(lineWidth: 1, dash: [3, 3]))
                 }
             }
+            .chartGrowth($growth)
+            .animation(.spring(response: 0.5, dampingFraction: 0.85), value: buckets.count)
             .chartXSelection(value: $selected)
             .chartYAxis {
                 AxisMarks(position: .trailing, values: .automatic(desiredCount: 3)) { _ in
-                    AxisGridLine().foregroundStyle(Theme.stroke)
+                    AxisGridLine().foregroundStyle(Theme.stroke.opacity(0.6))
                     AxisValueLabel().foregroundStyle(Theme.textTertiary)
                 }
             }
@@ -253,6 +261,7 @@ struct MuscleActivitySheet: View {
     let bucket: BucketSize
     let unit: WeightUnit
     @Environment(\.bodyModel) private var model
+    @State private var growth: Double = 0
 
     var body: some View {
         let trend = Analytics.sets(for: muscle, in: samples, by: bucket, interval: interval)
@@ -278,13 +287,14 @@ struct MuscleActivitySheet: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("\(bucket.displayName) sets").eyebrow()
                         Chart(trend) { item in
-                            BarMark(x: .value("Period", item.start, unit: bucket == .week ? .weekOfYear : .month), y: .value("Sets", item.value))
-                                .foregroundStyle(Theme.accentGradient)
-                                .cornerRadius(3)
+                            BarMark(x: .value("Period", item.start, unit: bucket == .week ? .weekOfYear : .month), y: .value("Sets", item.value * growth))
+                                .foregroundStyle(Theme.barGradient)
+                                .cornerRadius(4)
                         }
+                        .chartGrowth($growth)
                         .chartYAxis {
                             AxisMarks(position: .trailing, values: .automatic(desiredCount: 3)) { _ in
-                                AxisGridLine().foregroundStyle(Theme.stroke)
+                                AxisGridLine().foregroundStyle(Theme.stroke.opacity(0.6))
                                 AxisValueLabel().foregroundStyle(Theme.textTertiary)
                             }
                         }
@@ -474,7 +484,7 @@ struct StrengthProgressCard: View {
                 .chartXSelection(value: $selected)
                 .chartYAxis {
                     AxisMarks(position: .trailing, values: .automatic(desiredCount: 4)) { _ in
-                        AxisGridLine().foregroundStyle(Theme.stroke)
+                        AxisGridLine().foregroundStyle(Theme.stroke.opacity(0.6))
                         AxisValueLabel().foregroundStyle(Theme.textTertiary)
                     }
                 }
@@ -509,6 +519,7 @@ struct ConsistencyCard: View {
     let plannedPerWeek: Int
     let weeklyGoal: Int
     @Environment(TrainingStore.self) private var store
+    @State private var growth: Double = 0
 
     var body: some View {
         let weekly = Analytics.frequency(sessions, by: .week, in: interval)
@@ -528,9 +539,9 @@ struct ConsistencyCard: View {
             }
             Chart {
                 ForEach(weekly) { item in
-                    BarMark(x: .value("Week", item.start, unit: .weekOfYear), y: .value("Workouts", item.value))
-                        .foregroundStyle(item.value >= Double(target) ? AnyShapeStyle(Theme.accent) : AnyShapeStyle(Theme.accent.opacity(0.35)))
-                        .cornerRadius(3)
+                    BarMark(x: .value("Week", item.start, unit: .weekOfYear), y: .value("Workouts", item.value * growth))
+                        .foregroundStyle(item.value >= Double(target) ? AnyShapeStyle(Theme.barGradient) : AnyShapeStyle(Theme.barGradientDim))
+                        .cornerRadius(4)
                 }
                 RuleMark(y: .value("Target", target))
                     .foregroundStyle(Theme.warning.opacity(0.7))
@@ -539,9 +550,10 @@ struct ConsistencyCard: View {
                         Text("Target \(target)").font(.caption2).foregroundStyle(Theme.warning)
                     }
             }
+            .chartGrowth($growth)
             .chartYAxis {
                 AxisMarks(position: .trailing, values: .automatic(desiredCount: 3)) { _ in
-                    AxisGridLine().foregroundStyle(Theme.stroke)
+                    AxisGridLine().foregroundStyle(Theme.stroke.opacity(0.6))
                     AxisValueLabel().foregroundStyle(Theme.textTertiary)
                 }
             }

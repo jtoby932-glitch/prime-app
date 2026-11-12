@@ -148,28 +148,43 @@ struct RankingsView: View {
 struct LadderOverviewCard: View {
     let distribution: RankDistribution
     let peak: RankTier?
+    @Environment(\.motion) private var motion
+    @State private var shown = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            HStack(alignment: .center, spacing: 16) {
-                RankEmblem(tier: distribution.highest ?? .unranked, size: 86, dimmed: distribution.highest == nil, animated: true)
+        let highest = distribution.highest
+        let maxCount = max(1, distribution.tierCounts.values.max() ?? 1)
+        VStack(alignment: .leading, spacing: 18) {
+            HStack(alignment: .center, spacing: 18) {
+                RankEmblem(tier: highest ?? .unranked, size: 96, dimmed: highest == nil, animated: true, aura: true)
+                    .scaleEffect(shown || !motion.allowsMovement ? 1 : 0.6)
+                    .opacity(shown || !motion.allowsAnimation ? 1 : 0)
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Highest current rank").eyebrow()
-                    Text(distribution.highest?.name ?? "None yet")
+                    Text(highest?.name ?? "None yet")
                         .font(.primeLargeTitle)
-                        .foregroundStyle(distribution.highest?.color ?? Theme.textSecondary)
+                        .foregroundStyle(highest?.color ?? Theme.textSecondary)
                     Text("\(distribution.rankedCount) ranked lift\(distribution.rankedCount == 1 ? "" : "s")" + (peak.map { " · peak ever \($0.name)" } ?? ""))
                         .font(.caption).foregroundStyle(Theme.textSecondary)
                 }
                 Spacer(minLength: 0)
             }
-            HStack(alignment: .bottom, spacing: 4) {
-                ForEach(RankTier.ranked) { tier in
+            // Tier spread: a bar per tier, scaled to the busiest one.
+            HStack(alignment: .bottom, spacing: 5) {
+                ForEach(Array(RankTier.ranked.enumerated()), id: \.element) { index, tier in
                     let count = distribution.tierCounts[tier] ?? 0
-                    VStack(spacing: 6) {
-                        Text("\(count)").font(.primeNumber(15)).foregroundStyle(count > 0 ? Theme.textPrimary : Theme.textTertiary)
-                        RankEmblem(tier: tier, size: 28, dimmed: count == 0)
-                        Text(tier.name).font(.system(size: 9, weight: .semibold)).foregroundStyle(Theme.textSecondary).lineLimit(1).minimumScaleFactor(0.7)
+                    let height = CGFloat(count) / CGFloat(maxCount)
+                    VStack(spacing: 5) {
+                        Text("\(count)").font(.primeNumber(14)).foregroundStyle(count > 0 ? Theme.textPrimary : Theme.textTertiary)
+                        ZStack(alignment: .bottom) {
+                            RoundedRectangle(cornerRadius: 3).fill(Theme.field.opacity(0.6)).frame(height: 30)
+                            RoundedRectangle(cornerRadius: 3).fill(tier.gradient)
+                                .frame(height: max(count > 0 ? 4 : 0, 30 * (shown || !motion.allowsAnimation ? height : 0)))
+                                .shadow(color: tier.glow.opacity(count > 0 ? 0.5 : 0), radius: 4)
+                                .animation(motion.animation(.spring(response: 0.6, dampingFraction: 0.75)).map { $0.delay(0.25 + Double(index) * 0.05) }, value: shown)
+                        }
+                        RankEmblem(tier: tier, size: 26, dimmed: count == 0, aura: false)
+                        Text(tier.name).font(.system(size: 8.5, weight: .semibold)).foregroundStyle(count > 0 ? Theme.textSecondary : Theme.textTertiary).lineLimit(1).minimumScaleFactor(0.7)
                     }
                     .frame(maxWidth: .infinity)
                 }
@@ -177,7 +192,8 @@ struct LadderOverviewCard: View {
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(RankTier.ranked.map { "\(distribution.tierCounts[$0] ?? 0) \($0.name)" }.joined(separator: ", "))
         }
-        .primeCard(padding: 18, highlight: distribution.highest?.color)
+        .primeHero(tint: highest?.glow ?? Theme.accent)
+        .onAppear { withAnimation(motion.animation(.spring(response: 0.6, dampingFraction: 0.7)).map { $0.delay(0.1) }) { shown = true } }
     }
 }
 
@@ -218,16 +234,16 @@ struct CloseRankRow: View {
     var body: some View {
         let result = rank.currentResult
         let target = result.flatMap { NextTierTarget.make(for: $0, increment: unit.toKilograms(unit.increment)) }
+        let next = rank.currentTier.next ?? .master
         HStack(spacing: 12) {
-            RankEmblem(tier: rank.currentTier, size: 34)
-            Image(systemName: "arrow.right").font(.caption.weight(.bold)).foregroundStyle(Theme.textTertiary)
-            RankEmblem(tier: rank.currentTier.next ?? .master, size: 34, dimmed: true)
-            VStack(alignment: .leading, spacing: 2) {
+            MiniRing(progress: result?.placement.progress ?? 0, size: 44, tint: next.color)
+            VStack(alignment: .leading, spacing: 5) {
                 Text(rank.exercise.name).font(.subheadline.weight(.semibold)).foregroundStyle(Theme.textPrimary).lineLimit(1)
+                TierPill(from: rank.currentTier, to: next)
                 Text(RankFormat.targetText(target, unit: unit) ?? "").font(.caption).foregroundStyle(Theme.textSecondary).lineLimit(2)
             }
             Spacer(minLength: 0)
-            Text(Format.percent(result?.placement.progress ?? 0)).font(.primeNumber(17)).foregroundStyle(Theme.accentHighlight)
+            Image(systemName: "chevron.right").font(.caption.weight(.bold)).foregroundStyle(Theme.textTertiary)
         }
         .primeCard(padding: 12)
     }

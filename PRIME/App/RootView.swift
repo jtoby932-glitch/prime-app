@@ -125,10 +125,13 @@ struct MainTabView: View {
         ZStack {
             ForEach(AppTab.allCases) { tab in
                 if visited.contains(tab) {
+                    let selected = appState.selectedTab == tab
                     tabContent(tab)
-                        .opacity(appState.selectedTab == tab ? 1 : 0)
-                        .offset(y: appState.selectedTab == tab || !motion.allowsMovement ? 0 : 8)
-                        .allowsHitTesting(appState.selectedTab == tab)
+                        .opacity(selected ? 1 : 0)
+                        .scaleEffect(selected || !motion.allowsMovement ? 1 : 0.985)
+                        .offset(y: selected || !motion.allowsMovement ? 0 : 6)
+                        .animation(motion.animation(.spring(response: 0.4, dampingFraction: 0.86)), value: appState.selectedTab)
+                        .allowsHitTesting(selected)
                         .accessibilityHidden(appState.selectedTab != tab)
                 }
             }
@@ -184,14 +187,22 @@ struct BottomChrome: View {
     @Environment(\.motion) private var motion
 
     var body: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 10) {
             if let session = appState.activeSession, !appState.isWorkoutPresented, session.modelContext != nil {
                 ActiveWorkoutBar(session: session)
-                    .padding(.horizontal, 12)
+                    .padding(.horizontal, 14)
                     .transition(.move(edge: .bottom).combined(with: .opacity))
             }
             PrimeTabBar()
         }
+        .padding(.bottom, 4)
+        .background(
+            // Content fades out under the floating bar instead of hitting a hard edge.
+            LinearGradient(colors: [Theme.background.opacity(0), Theme.background.opacity(0.85), Theme.background], startPoint: .top, endPoint: .bottom)
+                .padding(.top, -36)
+                .ignoresSafeArea(edges: .bottom)
+                .allowsHitTesting(false)
+        )
         .animation(motion.animation(), value: appState.activeSession?.uuid)
     }
 }
@@ -200,6 +211,7 @@ struct PrimeTabBar: View {
     @Environment(AppState.self) private var appState
     @Environment(\.motion) private var motion
     @Namespace private var indicator
+    @State private var bounce: AppTab?
 
     var body: some View {
         HStack(spacing: 0) {
@@ -208,28 +220,30 @@ struct PrimeTabBar: View {
                 Button {
                     guard !selected else { return }
                     Haptics.selection()
-                    withAnimation(motion.animation(.spring(response: 0.38, dampingFraction: 0.82))) { appState.selectedTab = tab }
+                    withAnimation(motion.animation(.spring(response: 0.42, dampingFraction: 0.78))) { appState.selectedTab = tab }
+                    bounce = tab
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { if bounce == tab { bounce = nil } }
                 } label: {
-                    VStack(spacing: 4) {
+                    VStack(spacing: 3) {
                         ZStack {
                             if selected {
                                 Capsule()
-                                    .fill(Theme.accent.opacity(0.18))
-                                    .overlay(Capsule().strokeBorder(Theme.accent.opacity(0.35), lineWidth: 1))
-                                    .frame(width: 52, height: 30)
+                                    .fill(Theme.accentGradient)
+                                    .frame(width: 54, height: 32)
+                                    .shadow(color: Theme.accent.opacity(0.55), radius: 10, y: 3)
                                     .matchedGeometryEffect(id: "indicator", in: indicator)
                             }
                             Image(systemName: selected ? tab.selectedSymbol : tab.symbol)
-                                .font(.system(size: 17, weight: selected ? .semibold : .regular))
-                                .foregroundStyle(selected ? Theme.accentHighlight : Theme.textSecondary)
-                                .scaleEffect(selected && motion.allowsMovement ? 1.06 : 1)
+                                .font(.system(size: 17, weight: selected ? .bold : .regular))
+                                .foregroundStyle(selected ? Theme.onAccent : Theme.textSecondary)
+                                .symbolEffect(.bounce.up, value: bounce == tab)
                         }
-                        .frame(height: 30)
+                        .frame(height: 32)
                         Text(tab.title)
-                            .font(.system(size: 10, weight: selected ? .semibold : .medium))
+                            .font(.system(size: 10, weight: selected ? .bold : .medium))
                             .foregroundStyle(selected ? Theme.textPrimary : Theme.textSecondary)
                     }
-                    .frame(maxWidth: .infinity, minHeight: 50)
+                    .frame(maxWidth: .infinity, minHeight: 54)
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
@@ -237,16 +251,16 @@ struct PrimeTabBar: View {
                 .accessibilityAddTraits(selected ? [.isSelected, .isButton] : .isButton)
             }
         }
-        .padding(.horizontal, 6)
-        .padding(.top, 8)
-        .padding(.bottom, 2)
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
         .background(
-            Rectangle()
+            Capsule()
                 .fill(.ultraThinMaterial)
-                .overlay(Color(hex: 0x05070B).opacity(0.72))
-                .overlay(alignment: .top) { Rectangle().fill(Theme.border).frame(height: 1) }
-                .ignoresSafeArea(edges: .bottom)
+                .overlay(Capsule().fill(Theme.glassTint.opacity(0.78)))
+                .overlay(Capsule().strokeBorder(LinearGradient(colors: [.white.opacity(0.18), Theme.border.opacity(0.4)], startPoint: .top, endPoint: .bottom), lineWidth: 1))
+                .shadow(color: .black.opacity(0.5), radius: 18, y: 8)
         )
+        .padding(.horizontal, 14)
     }
 }
 

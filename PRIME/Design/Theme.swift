@@ -101,7 +101,23 @@ enum Theme {
         LinearGradient(colors: [accentHighlight, accent, accentDeep], startPoint: .topLeading, endPoint: .bottomTrailing)
     }
 
+    /// Vertical fill for chart bars: lit at the top, deep at the base.
+    static var barGradient: LinearGradient {
+        LinearGradient(colors: [accentHighlight, accent, accentDeep.opacity(0.85)], startPoint: .top, endPoint: .bottom)
+    }
+    static var barGradientDim: LinearGradient {
+        LinearGradient(colors: [accent.opacity(0.45), accentDeep.opacity(0.3)], startPoint: .top, endPoint: .bottom)
+    }
+
     static let cardGradient = LinearGradient(colors: [Color(hex: 0x13203A), Color(hex: 0x0E1728)], startPoint: .top, endPoint: .bottom)
+    /// Deeper navy for hero cards; the accent light is layered on top by HeroSurface.
+    static let heroGradient = LinearGradient(colors: [Color(hex: 0x172A52), Color(hex: 0x0E1830), Color(hex: 0x080D18)], startPoint: .topLeading, endPoint: .bottomTrailing)
+    /// Thin light along the top edge of raised surfaces.
+    static var sheen: LinearGradient {
+        LinearGradient(colors: [.white.opacity(0.14), .white.opacity(0.03), .clear], startPoint: .top, endPoint: .bottom)
+    }
+    /// The navy the frosted tab bar and sheets tint their blur with.
+    static let glassTint = Color(hex: 0x070C16)
 
     /// Faint navy light from the top of the screen.
     static var backdrop: some View {
@@ -186,7 +202,12 @@ extension Font {
         .system(size: size, weight: weight, design: .default).width(.condensed).monospacedDigit()
     }
 
-    static let primeLargeTitle = Font.system(.largeTitle, design: .default, weight: .bold)
+    /// Big hero numerals: condensed and heavy, so a 3-digit stat reads at a glance.
+    static func primeDisplay(_ size: CGFloat) -> Font {
+        .system(size: size, weight: .heavy, design: .default).width(.condensed).monospacedDigit()
+    }
+
+    static let primeLargeTitle = Font.system(size: 32, weight: .heavy, design: .default)
     static let primeTitle = Font.system(.title2, design: .default, weight: .bold)
     static let primeTitle3 = Font.system(.title3, design: .default, weight: .semibold)
     static let primeHeadline = Font.system(.headline, design: .default, weight: .semibold)
