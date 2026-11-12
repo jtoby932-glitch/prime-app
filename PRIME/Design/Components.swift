@@ -40,10 +40,16 @@ struct CardModifier: ViewModifier {
             shape.fill(Theme.cardRaised)
         case .raised:
             shape.fill(Theme.cardGradient)
-                .overlay(shape.fill(Theme.sheen).mask(Rectangle().frame(height: 60).frame(maxHeight: .infinity, alignment: .top)))
+                .overlay(shape.fill(Theme.sheen).mask(sheenMask))
         case .hero(let tint):
             HeroSurface(tint: tint)
         }
+    }
+
+    /// Fades the top light out softly so it reads as a lit edge, not a band.
+    private var sheenMask: some View {
+        LinearGradient(stops: [.init(color: .white, location: 0), .init(color: .white.opacity(0.4), location: 0.25), .init(color: .clear, location: 1)],
+                       startPoint: .top, endPoint: .bottom)
     }
 
     private var border: LinearGradient {
@@ -93,7 +99,12 @@ struct HeroSurface: View {
                     RadialGradient(colors: [tint.opacity(0.16), .clear], center: .bottomTrailing, startRadius: 0, endRadius: 240)
                 )
             )
-            .overlay(shape.fill(Theme.sheen).mask(Rectangle().frame(height: 90).frame(maxHeight: .infinity, alignment: .top)))
+            .overlay(
+                shape.fill(Theme.sheen).mask(
+                    LinearGradient(stops: [.init(color: .white, location: 0), .init(color: .white.opacity(0.35), location: 0.3), .init(color: .clear, location: 1)],
+                                   startPoint: .top, endPoint: .bottom)
+                )
+            )
     }
 }
 

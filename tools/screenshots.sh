@@ -43,9 +43,6 @@ shot 20-preferences 6 -demo -route preferences
 shot 21-exercise-plank 7 -demo -route exercise:plank
 shot 22-guide-bench 7 -demo -guide barbell-bench-press
 shot 23-detail-bench 7 -demo -route exercise:barbell-bench-press
-# Last: the workout it starts persists and would cover later screens.
-shot 24-active-workout 8 -demo -activeWorkout
-
 # Short recordings of the motion, converted to GIFs for review.
 record() {
   local name="$1" seconds="$2"; shift 2
@@ -67,6 +64,10 @@ record() {
 record m1-tour 14 -demo -tour
 record m2-reveal 11 -demo -reveal barbell-bench-press -revealStage play
 record m3-onboarding 6
+
+# Last: the workout it starts persists and would cover later screens.
+shot 24-active-workout 8 -demo -activeWorkout
+record m4-workout 6 -demo -activeWorkout
 
 # Crash reports, if any, help diagnose a blank screenshot.
 find ~/Library/Logs/DiagnosticReports -name "PRIME*" -newer "$APP" -exec cp {} "$OUT/" \; 2>/dev/null || true

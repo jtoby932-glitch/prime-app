@@ -114,7 +114,7 @@ enum Theme {
     static let heroGradient = LinearGradient(colors: [Color(hex: 0x172A52), Color(hex: 0x0E1830), Color(hex: 0x080D18)], startPoint: .topLeading, endPoint: .bottomTrailing)
     /// Thin light along the top edge of raised surfaces.
     static var sheen: LinearGradient {
-        LinearGradient(colors: [.white.opacity(0.14), .white.opacity(0.03), .clear], startPoint: .top, endPoint: .bottom)
+        LinearGradient(colors: [.white.opacity(0.09), .white.opacity(0.02), .clear], startPoint: .top, endPoint: .bottom)
     }
     /// The navy the frosted tab bar and sheets tint their blur with.
     static let glassTint = Color(hex: 0x070C16)

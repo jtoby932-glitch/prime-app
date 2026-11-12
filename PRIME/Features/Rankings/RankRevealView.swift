@@ -65,7 +65,8 @@ struct RankRevealView: View {
                             .position(x: proxy.size.width / 2, y: proxy.size.height * 0.32)
                     }
                     .ignoresSafeArea()
-                    .opacity(burst ? 0.35 + 0.25 * tier.prestige : 0)
+                    .opacity(burst ? (stage == .breakdown ? 0.12 : 0.3 + 0.25 * tier.prestige) : 0)
+                    .animation(.easeInOut(duration: 0.8), value: stage)
                     .allowsHitTesting(false)
                 }
                 if tier >= .gold && motion.allowsMovement {

@@ -195,7 +195,7 @@ struct SelectedDayCard: View {
                 }
             }
         }
-        .primeHero(tint: day.plan.map { Theme.planColor($0.colorIndex) } ?? (day.state == .rest ? Theme.textSecondary : Theme.accent))
+        .primeHero(tint: day.plan.map { Theme.planColor($0.colorIndex) } ?? Theme.accent)
     }
 }
 
