@@ -163,7 +163,7 @@ struct RankRevealView: View {
                     Text(tier.name.uppercased())
                         .font(.system(size: 40, weight: .heavy).width(.expanded))
                         .tracking(emblemIn ? 4 : 18)
-                        .foregroundStyle(tier == .unranked ? AnyShapeStyle(Theme.textSecondary) : AnyShapeStyle(tier.gradient))
+                        .foregroundStyle(tier == .unranked ? AnyShapeStyle(Theme.textSecondary) : AnyShapeStyle(tier.textGradient))
                         .shimmer(repeats: tier >= .elite, color: .white)
                         .shadow(color: tier.glow.opacity(0.5), radius: 16)
                         .opacity(emblemIn ? 1 : 0)

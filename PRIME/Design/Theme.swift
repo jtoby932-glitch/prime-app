@@ -181,6 +181,11 @@ extension RankTier {
         LinearGradient(colors: gradientStops, startPoint: .topLeading, endPoint: .bottomTrailing)
     }
 
+    /// For large text: lit at the top, the tier colour below, so every letter stays readable.
+    var textGradient: LinearGradient {
+        LinearGradient(colors: [.white, gradientStops.first ?? color, color], startPoint: .top, endPoint: .bottom)
+    }
+
     /// Light colour behind the emblem during a reveal.
     var glow: Color {
         switch self {
