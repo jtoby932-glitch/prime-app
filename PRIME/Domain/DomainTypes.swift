@@ -147,12 +147,6 @@ struct MuscleInfo {
     }
 }
 
-enum AnatomySide: String, CaseIterable, Identifiable {
-    case front, back
-    var id: String { rawValue }
-    var displayName: String { self == .front ? "Front" : "Back" }
-}
-
 enum BodyRegion: String, CaseIterable {
     case push, pull, legs, core
     var displayName: String {
