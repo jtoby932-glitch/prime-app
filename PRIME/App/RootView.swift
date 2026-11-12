@@ -158,6 +158,9 @@ struct MainTabView: View {
         .fullScreenCover(item: $appState.reveal) { reveal in
             RankRevealView(reveal: reveal, initialStage: appState.revealStage, frozen: appState.revealFrozen)
         }
+        .sheet(item: $appState.guideRequest) { request in
+            ExerciseLoader(slug: request.id) { ExerciseGuideSheet(exercise: $0) }
+        }
         .sheet(item: $appState.debugRoute) { route in
             NavigationStack { RouteDestination(route: route).primeDestinations() }
         }

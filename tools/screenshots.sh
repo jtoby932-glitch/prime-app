@@ -32,7 +32,6 @@ shot 08-muscle-map 7 -demo -route muscle:chest
 shot 09-rank-bench 7 -demo -route rank:barbell-bench-press
 shot 10-exercise-squat 7 -demo -route exercise:barbell-back-squat
 shot 11-records 6 -demo -route records
-shot 12-active-workout 8 -demo -activeWorkout
 shot 13-reveal-analysis 6 -demo -reveal barbell-bench-press -revealStage analysis
 shot 14-reveal-tier 7 -demo -reveal barbell-bench-press -revealStage reveal
 shot 15-reveal-breakdown 7 -demo -reveal barbell-bench-press -revealStage breakdown
@@ -42,6 +41,10 @@ shot 18-category-back 6 -demo -route category:back
 shot 19-methodology 6 -demo -route methodology
 shot 20-preferences 6 -demo -route preferences
 shot 21-exercise-plank 7 -demo -route exercise:plank
+shot 22-guide-bench 7 -demo -guide barbell-bench-press
+shot 23-detail-bench 7 -demo -route exercise:barbell-bench-press
+# Last: the workout it starts persists and would cover later screens.
+shot 24-active-workout 8 -demo -activeWorkout
 
 # Crash reports, if any, help diagnose a blank screenshot.
 find ~/Library/Logs/DiagnosticReports -name "PRIME*" -newer "$APP" -exec cp {} "$OUT/" \; 2>/dev/null || true

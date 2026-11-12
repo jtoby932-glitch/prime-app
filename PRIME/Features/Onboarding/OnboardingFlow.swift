@@ -92,7 +92,7 @@ struct OnboardingFlow: View {
                 }
                 Spacer()
                 VStack(spacing: 10) {
-                    feature("calendar", "Splits and a weekly timetable that fits your days")
+                    feature("calendar", "Training splits that fit your week")
                     feature("book.pages", "Step-by-step guides for every exercise")
                     feature("chart.xyaxis.line", "Records, analytics and progress insights")
                 }
@@ -300,8 +300,8 @@ struct OnboardingFlow: View {
     private func feature(_ symbol: String, _ title: String) -> some View {
         HStack(spacing: 12) {
             IconBubble(symbol: symbol, size: 36)
-            Text(title).font(.subheadline).foregroundStyle(Theme.textPrimary)
-            Spacer()
+            Text(title).font(.subheadline).foregroundStyle(Theme.textPrimary).fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: 0)
         }
     }
 

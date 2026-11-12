@@ -93,7 +93,9 @@ struct AnalyticsView: View {
 
     private func summaryTiles(samples: [SetSample], sessions: [SessionSummary]) -> some View {
         let average = sessions.isEmpty ? 0 : sessions.reduce(0) { $0 + $1.duration } / Double(sessions.count)
-        let weeks = max(1, interval.duration / (7 * 86_400))
+        // Weeks since tracking began within the range, so a new user isn't averaged over empty months.
+        let from = max(interval.start, history.firstSessionDate ?? interval.start)
+        let weeks = max(1, interval.end.timeIntervalSince(from) / (7 * 86_400))
         return VStack(alignment: .leading, spacing: 8) {
             LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)], spacing: 10) {
                 StatTile(count: sessions.count, label: "Workouts", symbol: "checkmark.seal.fill")

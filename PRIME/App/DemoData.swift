@@ -49,6 +49,7 @@ enum DemoData {
         case "presets": appState.showSplitPresets = true
         default: break
         }
+        if let slug = value(after: "-guide") { appState.guideRequest = GuideRequest(id: slug) }
         if arguments.contains("-activeWorkout") { startWorkout(context: context, store: store, appState: appState) }
         if let slug = value(after: "-reveal") { showReveal(slug: slug, context: context, store: store, appState: appState) }
     }

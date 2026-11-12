@@ -50,6 +50,11 @@ struct RankEntryRequest: Identifiable {
     let exerciseSlug: String?
 }
 
+/// A technique guide to show in a sheet, by exercise slug.
+struct GuideRequest: Identifiable {
+    let id: String
+}
+
 /// App-wide UI state: tabs, the workout in progress, sheets and transient banners.
 @MainActor
 @Observable
@@ -67,6 +72,7 @@ final class AppState {
     var showSearch = false
     var rankEntry: RankEntryRequest?
     var reveal: RankReveal?
+    var guideRequest: GuideRequest?
     /// Debug screenshots open the reveal at a fixed stage.
     var revealStage: RankRevealView.Stage = .analysis
     var revealFrozen = false
